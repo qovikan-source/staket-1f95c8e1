@@ -1,26 +1,86 @@
 <!doctype html>
-<html lang="en">
+<html lang="sv">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
-
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <title>Stäket Företagscenter — Lokaler &amp; företag i Järfälla, Stockholm</title>
+    <meta name="description" content="Välkommen till Stäket Företagscenter i Järfälla. Här drivs olika verksamheter i 30 lokaler. Kontakta oss för att hyra lediga kontors- &amp; verkstadslokaler!" />
+    
+    <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta property="og:url" content="https://staketforetagscenter.se/" />
+    <meta property="og:title" content="Stäket Företagscenter — Lokaler &amp; företag i Järfälla, Stockholm" />
+    <meta property="og:description" content="Välkommen till Stäket Företagscenter i Järfälla. Här drivs olika verksamheter i 30 lokaler. Kontakta oss för att hyra lediga kontors- &amp; verkstadslokaler!" />
+    <meta property="og:image" content="https://staketforetagscenter.se/images/staket-foretagscenter-hero.jpg" />
 
+    <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
-  </head>
+    <meta name="twitter:url" content="https://staketforetagscenter.se/" />
+    <meta name="twitter:title" content="Stäket Företagscenter — Lokaler &amp; företag i Järfälla, Stockholm" />
+    <meta name="twitter:description" content="Välkommen till Stäket Företagscenter i Järfälla. Här drivs olika verksamheter i 30 lokaler. Kontakta oss för att hyra lediga kontors- &amp; verkstadslokaler!" />
+    <meta name="twitter:image" content="https://staketforetagscenter.se/images/staket-foretagscenter-hero.jpg" />
 
+    <link rel="canonical" href="https://staketforetagscenter.se/" />
+
+    <!-- JSON-LD Structured Data (LocalBusiness & Organization SCHEMA) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "LocalBusiness",
+            "@id": "https://staketforetagscenter.se/#localbusiness",
+            "name": "Stäket Företagscenter",
+            "image": "https://staketforetagscenter.se/images/staket-foretagscenter-hero.jpg",
+            "url": "https://staketforetagscenter.se/",
+            "telephone": "+46-70-777-2111",
+            "email": "brfsfc@gmail.com",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Skarprättarvägen 7",
+              "addressLocality": "Järfälla",
+              "postalCode": "176 77",
+              "addressCountry": "SE"
+            },
+            "geo": {
+              "@type": "GeoCoordinates",
+              "latitude": 59.4586,
+              "longitude": 17.7847
+            },
+            "openingHoursSpecification": {
+              "@type": "OpeningHoursSpecification",
+              "dayOfWeek": [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday"
+              ],
+              "opens": "08:00",
+              "closes": "17:00"
+            }
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://staketforetagscenter.se/#organization",
+            "name": "Brf Stäkets Företagscenter",
+            "url": "https://staketforetagscenter.se/",
+            "logo": "https://staketforetagscenter.se/images/staket-foretagscenter-hero.jpg",
+            "address": {
+              "@type": "PostalAddress",
+              "streetAddress": "Skarprättarvägen 7",
+              "addressLocality": "Järfälla",
+              "postalCode": "176 77",
+              "addressCountry": "SE"
+            }
+          }
+        ]
+      }
+    </script>
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
