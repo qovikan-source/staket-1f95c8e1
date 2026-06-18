@@ -62,11 +62,15 @@ function mapNoticeToDb(n: Partial<NoticePost>) {
 }
 
 function mapFileToFrontend(db: any): FileItem {
+  let folderVal = db.folder;
+  if (folderVal === "Pantbrev Lgh Betekn.") {
+    folderVal = "Pantbrev";
+  }
   return {
     id: db.id,
     name: db.name,
     category: db.category as FileCategory,
-    folder: db.folder as BoardFolder | undefined,
+    folder: folderVal as BoardFolder | undefined,
     uploadedAt: db.uploaded_at,
     fileSize: db.file_size,
     mimeType: db.mime_type || "application/pdf",
@@ -159,12 +163,18 @@ export const dbService = {
     return (data || []).map(mapNoticeToFrontend);
   },
 
-  async insertNotice(n: Omit<NoticePost, "id" | "date">): Promise<NoticePost> {
+  async insertNotice(n: Omit<NoticePost, "id" | "date"> & { date?: string }): Promise<NoticePost> {
     const noticeData = {
       ...n,
-      date: new Date().toISOString().split("T")[0],
+      date: n.date || new Date().toISOString().split("T")[0],
     };
     const { data, error } = await supabase.from("notices").insert(mapNoticeToDb(noticeData)).select().single();
+    if (error) throw error;
+    return mapNoticeToFrontend(data);
+  },
+
+  async updateNotice(id: string, n: Partial<NoticePost>): Promise<NoticePost> {
+    const { data, error } = await supabase.from("notices").update(mapNoticeToDb(n)).eq("id", id).select().single();
     if (error) throw error;
     return mapNoticeToFrontend(data);
   },
@@ -199,15 +209,24 @@ export const dbService = {
     return (data || []).map(mapFileToFrontend);
   },
 
-  async deleteFile(id: string, name: string, category: FileCategory): Promise<void> {
+  async deleteFile(id: string, name: string, category: FileCategory, folder?: BoardFolder): Promise<void> {
     // 1. Delete from database
     const { error: dbError } = await supabase.from("files").delete().eq("id", id);
     if (dbError) throw dbError;
 
     // 2. Delete from Supabase Storage using sanitized name
     const sanitizedName = sanitizeFilename(name);
-    const subfolder = category === "Styrelsefiler" ? "styrelse" : "medlemmar";
-    const { error: storageError } = await supabase.storage.from("documents").remove([`${subfolder}/${sanitizedName}`]);
+    const pathsToDelete = [
+      `medlemmar/${sanitizedName}`,
+      `styrelse/${sanitizedName}`,
+    ];
+    if (folder) {
+      pathsToDelete.push(`${folder}/${sanitizedName}`);
+      if (folder === "Pantbrev") {
+        pathsToDelete.push(`Pantbrev Lgh Betekn./${sanitizedName}`);
+      }
+    }
+    const { error: storageError } = await supabase.storage.from("documents").remove(pathsToDelete);
     if (storageError) {
       console.warn("Deleted database row, but failed to delete storage object:", storageError.message);
     }
@@ -223,7 +242,7 @@ export const dbService = {
     customDate?: string
   ): Promise<FileItem> {
     const sanitizedName = sanitizeFilename(file.name);
-    const subfolder = category === "Styrelsefiler" ? "styrelse" : "medlemmar";
+    const subfolder = (category === "Styrelsefiler" && folder) ? folder : "medlemmar";
     const filePath = `${subfolder}/${sanitizedName}`;
 
     // 1. Upload file binary to storage bucket
@@ -255,7 +274,7 @@ export const dbService = {
     const dbRecord = {
       name: file.name, // Keep the original Swedish name for frontend display!
       category: category,
-      folder: folder || null,
+      folder: folder === "Pantbrev" ? "Pantbrev Lgh Betekn." : (folder || null),
       file_size: formatBytes(file.size),
       mime_type: file.type || "application/octet-stream",
       url: publicUrl,

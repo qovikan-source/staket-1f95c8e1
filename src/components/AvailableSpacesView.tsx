@@ -194,7 +194,7 @@ export default function AvailableSpacesView({
                             {space.securityInfo}
                           </span>
 
-                          {(role === "Administrator" || role === "Styrelse") && (
+                          {role === "Administrator" && (
                             <button
                               onClick={() => {
                                 if (confirm(`Är du säker på att du vill radera annonsen "${space.title}"?`)) {

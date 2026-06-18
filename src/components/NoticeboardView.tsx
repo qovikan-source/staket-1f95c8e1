@@ -4,15 +4,17 @@
  */
 
 import React, { useState } from "react";
-import { Search, Plus, ThumbsUp, Pin, Trash2, Calendar, User, Tag, AlertTriangle } from "lucide-react";
+import { Search, Plus, ThumbsUp, Pin, Trash2, Calendar, User, Tag, AlertTriangle, X, Pencil } from "lucide-react";
 import { NoticePost, NoticeboardCategory, NOTICEBOARD_CATEGORIES, UserRole } from "../types";
 
 interface NoticeboardViewProps {
   notices: NoticePost[];
   role: UserRole;
   currentUserName: string;
-  onAddNotice: (notice: Omit<NoticePost, "id" | "date">) => void;
+  onAddNotice: (notice: Omit<NoticePost, "id" | "date"> & { date?: string }) => void;
   onDeleteNotice: (id: string) => void;
+  onUpdateNotice?: (notice: NoticePost) => void;
+  highlightedNoticeId?: string;
 }
 
 export default function NoticeboardView({
@@ -21,6 +23,8 @@ export default function NoticeboardView({
   currentUserName,
   onAddNotice,
   onDeleteNotice,
+  onUpdateNotice,
+  highlightedNoticeId,
 }: NoticeboardViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<NoticeboardCategory | "Alla">("Alla");
@@ -31,9 +35,44 @@ export default function NoticeboardView({
   const [newCategory, setNewCategory] = useState<NoticeboardCategory>("Information från Föreningsstyrelse");
   const [newContent, setNewContent] = useState("");
   const [newIsPinned, setNewIsPinned] = useState(false);
+  const [newDate, setNewDate] = useState(new Date().toISOString().split("T")[0]);
 
   // Likes simulation per notice
   const [likes, setLikes] = useState<Record<string, number>>({});
+  const [selectedNoticeForDetail, setSelectedNoticeForDetail] = useState<NoticePost | null>(null);
+
+  // Edit notice states
+  const [editingNotice, setEditingNotice] = useState<NoticePost | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editCategory, setEditCategory] = useState<NoticeboardCategory>("Information från Föreningsstyrelse");
+  const [editContent, setEditContent] = useState("");
+  const [editIsPinned, setEditIsPinned] = useState(false);
+  const [editDate, setEditDate] = useState("");
+
+  React.useEffect(() => {
+    if (editingNotice) {
+      setEditTitle(editingNotice.title);
+      setEditCategory(editingNotice.category);
+      setEditContent(editingNotice.content);
+      setEditIsPinned(editingNotice.isPinned);
+      setEditDate(editingNotice.date);
+    }
+  }, [editingNotice]);
+
+  React.useEffect(() => {
+    if (highlightedNoticeId) {
+      const found = notices.find(n => n.id === highlightedNoticeId);
+      if (found) {
+        setSelectedNoticeForDetail(found);
+      }
+      setTimeout(() => {
+        const element = document.getElementById(`notice-card-${highlightedNoticeId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }, 300);
+    }
+  }, [highlightedNoticeId, notices]);
 
   const handleLike = (id: string) => {
     setLikes((prev) => ({
@@ -51,7 +90,8 @@ export default function NoticeboardView({
       category: newCategory,
       content: newContent,
       isPinned: newIsPinned,
-      author: `${currentUserName} (${role})`,
+      author: currentUserName,
+      date: newDate,
     });
 
     // Reset states
@@ -59,7 +99,26 @@ export default function NoticeboardView({
     setNewCategory("Information från Föreningsstyrelse");
     setNewContent("");
     setNewIsPinned(false);
+    setNewDate(new Date().toISOString().split("T")[0]);
     setShowAddModal(false);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingNotice || !editTitle || !editContent) return;
+
+    if (onUpdateNotice) {
+      onUpdateNotice({
+        ...editingNotice,
+        title: editTitle,
+        category: editCategory,
+        content: editContent,
+        isPinned: editIsPinned,
+        date: editDate,
+      });
+    }
+
+    setEditingNotice(null);
   };
 
   // Filter & Search logic
@@ -92,8 +151,8 @@ export default function NoticeboardView({
           </p>
         </div>
 
-        {/* Styrelse controls */}
-        {role === "Styrelse" && (
+        {/* Administrator controls */}
+        {role === "Administrator" && (
           <button
             id="btn-new-notice"
             onClick={() => setShowAddModal(true)}
@@ -180,35 +239,56 @@ export default function NoticeboardView({
               <Pin className="w-3.5 h-3.5 text-emerald-600 fill-emerald-600" /> Fastnålade Viktiga Anslag
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {pinnedNotices.map((post) => (
-                <div
-                  key={post.id}
-                  className="bg-white border-2 border-emerald-500 p-6 rounded-2xl shadow-xs relative overflow-hidden flex flex-col justify-between hover:shadow-md transition-shadow"
-                >
-                  <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500 rounded-bl-full opacity-5 pointer-events-none"></div>
+              {pinnedNotices.map((post) => {
+                const isHighlighted = post.id === highlightedNoticeId;
+                return (
+                  <div
+                    key={post.id}
+                    id={`notice-card-${post.id}`}
+                    onClick={() => setSelectedNoticeForDetail(post)}
+                    className={`bg-white border-2 p-6 rounded-2xl shadow-xs relative overflow-hidden flex flex-col justify-between hover:shadow-md transition-all cursor-pointer group/card ${
+                      isHighlighted
+                        ? "border-[#B68F52] ring-4 ring-[#B68F52]/40 scale-[1.01]"
+                        : "border-emerald-500 hover:border-emerald-600"
+                    }`}
+                  >
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500 rounded-bl-full opacity-5 pointer-events-none"></div>
                   
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-2">
                       <span className="inline-block px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-emerald-800 bg-emerald-50 rounded-md uppercase border border-emerald-100">
                         {post.category}
                       </span>
-                      {role === "Styrelse" && (
-                        <button
-                          onClick={() => {
-                            if (window.confirm(`Är du säker på att du vill radera anslaget "${post.title}"?`)) {
-                              onDeleteNotice(post.id);
-                            }
-                          }}
-                          title="Radera anslag"
-                          className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      {role === "Administrator" && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingNotice(post);
+                            }}
+                            title="Redigera anslag"
+                            className="p-1 rounded-md text-slate-400 hover:text-blue-550 hover:bg-blue-50 transition-colors cursor-pointer"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Är du säker på att du vill radera anslaget "${post.title}"?`)) {
+                                onDeleteNotice(post.id);
+                              }
+                            }}
+                            title="Radera anslag"
+                            className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       )}
                     </div>
 
                     <div className="space-y-1.5">
-                      <h3 className="font-bold text-slate-900 text-base flex items-center gap-1.5">
+                      <h3 className="font-bold text-slate-900 text-base flex items-center gap-1.5 group-hover/card:text-[#B68F52] transition-colors">
                         {post.title}
                       </h3>
                       <p className="text-xs text-slate-600 whitespace-pre-wrap leading-relaxed">
@@ -226,17 +306,10 @@ export default function NoticeboardView({
                         <Calendar className="w-3 h-3" /> {post.date}
                       </div>
                     </div>
-
-                    <button
-                      onClick={() => handleLike(post.id)}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors text-xs font-semibold cursor-pointer"
-                    >
-                      <ThumbsUp className="w-3 h-3" />
-                      Gilla ({likes[post.id] || 0})
-                    </button>
                   </div>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -257,33 +330,54 @@ export default function NoticeboardView({
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
-              {regularNotices.map((post) => (
-                <div
-                  key={post.id}
-                  className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs hover:shadow-xs transition-all flex flex-col justify-between hover:border-slate-200"
-                >
+              {regularNotices.map((post) => {
+                const isHighlighted = post.id === highlightedNoticeId;
+                return (
+                  <div
+                    key={post.id}
+                    id={`notice-card-${post.id}`}
+                    onClick={() => setSelectedNoticeForDetail(post)}
+                    className={`p-5 rounded-2xl border transition-all flex flex-col justify-between hover:shadow-xs cursor-pointer group/card ${
+                      isHighlighted
+                        ? "bg-white border-[#B68F52] ring-4 ring-[#B68F52]/40 scale-[1.01]"
+                        : "bg-white border-slate-100 hover:border-slate-200 shadow-2xs"
+                    }`}
+                  >
                   <div className="space-y-4">
                     <div className="flex items-start justify-between gap-2">
                       <span className="inline-block px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-slate-600 bg-slate-50 border border-slate-100 rounded-md uppercase">
                         {post.category}
                       </span>
-                      {role === "Styrelse" && (
-                        <button
-                          onClick={() => {
-                            if (window.confirm(`Är du säker på att du vill radera anslaget "${post.title}"?`)) {
-                              onDeleteNotice(post.id);
-                            }
-                          }}
-                          title="Radera anslag"
-                          className="p-1.5 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                      {role === "Administrator" && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingNotice(post);
+                            }}
+                            title="Redigera anslag"
+                            className="p-1 rounded-md text-slate-400 hover:text-blue-550 hover:bg-blue-50 transition-colors cursor-pointer"
+                          >
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Är du säker på att du vill radera anslaget "${post.title}"?`)) {
+                                onDeleteNotice(post.id);
+                              }
+                            }}
+                            title="Radera anslag"
+                            className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       )}
                     </div>
 
                     <div className="space-y-1.5">
-                      <h4 className="font-bold text-slate-800 text-sm leading-snug">{post.title}</h4>
+                      <h4 className="font-bold text-slate-800 text-sm leading-snug group-hover/card:text-[#B68F52] transition-colors">{post.title}</h4>
                       <p className="text-xs text-slate-500 whitespace-pre-wrap leading-relaxed line-clamp-6">
                         {post.content}
                       </p>
@@ -299,17 +393,10 @@ export default function NoticeboardView({
                         <Calendar className="w-3 h-3" /> {post.date}
                       </span>
                     </div>
-
-                    <button
-                      onClick={() => handleLike(post.id)}
-                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-all text-[11px] font-medium cursor-pointer"
-                    >
-                      <ThumbsUp className="w-3 h-3" />
-                      Gilla ({likes[post.id] || 0})
-                    </button>
                   </div>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -346,7 +433,7 @@ export default function NoticeboardView({
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1">
                   <label htmlFor="form-category" className="text-xs font-bold text-slate-600">Kategori *</label>
                   <select
@@ -363,6 +450,18 @@ export default function NoticeboardView({
                   </select>
                 </div>
 
+                <div className="space-y-1">
+                  <label htmlFor="form-date" className="text-xs font-bold text-slate-600">Publiceringsdatum *</label>
+                  <input
+                    id="form-date"
+                    type="date"
+                    required
+                    value={newDate}
+                    onChange={(e) => setNewDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                  />
+                </div>
+
                 <div className="flex items-center gap-2 pt-5">
                   <input
                     id="form-pin"
@@ -372,7 +471,7 @@ export default function NoticeboardView({
                     className="w-4 h-4 text-emerald-500 accent-emerald-500 cursor-pointer"
                   />
                   <label htmlFor="form-pin" className="text-xs font-semibold text-slate-700 cursor-pointer">
-                    📌 Nåla fast högst upp i flödet
+                    📌 Nåla fast
                   </label>
                 </div>
               </div>
@@ -406,6 +505,166 @@ export default function NoticeboardView({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Redigera post Modal */}
+      {editingNotice && (
+        <div className="fixed inset-0 bg-slate-950/45 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-xl overflow-hidden animate-scale-up">
+            <div className="flex items-center justify-between p-5 bg-slate-900 text-white">
+              <div className="space-y-0.5">
+                <h3 className="font-bold text-base">Redigera anslag</h3>
+                <p className="text-[10px] text-slate-300">Ändringarna uppdateras direkt i medlemslistan.</p>
+              </div>
+              <button
+                onClick={() => setEditingNotice(null)}
+                className="text-slate-400 hover:text-white text-xs font-semibold px-2 py-1 bg-slate-800 rounded-lg cursor-pointer"
+              >
+                Stäng
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+              <div className="space-y-1">
+                <label htmlFor="edit-form-title" className="text-xs font-bold text-slate-600">Rubrik / Titel *</label>
+                <input
+                  id="edit-form-title"
+                  type="text"
+                  required
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  placeholder="Skriv en informativ rubrik"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label htmlFor="edit-form-category" className="text-xs font-bold text-slate-600">Kategori *</label>
+                  <select
+                    id="edit-form-category"
+                    value={editCategory}
+                    onChange={(e) => setEditCategory(e.target.value as NoticeboardCategory)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                  >
+                    {NOTICEBOARD_CATEGORIES.map((cat, idx) => (
+                      <option key={idx} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label htmlFor="edit-form-date" className="text-xs font-bold text-slate-600">Publiceringsdatum *</label>
+                  <input
+                    id="edit-form-date"
+                    type="date"
+                    required
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-5">
+                  <input
+                    id="edit-form-pin"
+                    type="checkbox"
+                    checked={editIsPinned}
+                    onChange={(e) => setEditIsPinned(e.target.checked)}
+                    className="w-4 h-4 text-emerald-500 accent-emerald-500 cursor-pointer"
+                  />
+                  <label htmlFor="edit-form-pin" className="text-xs font-semibold text-slate-700 cursor-pointer">
+                    📌 Nåla fast
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label htmlFor="edit-form-content" className="text-xs font-bold text-slate-600">Innehåll / Beskrivning *</label>
+                <textarea
+                  id="edit-form-content"
+                  required
+                  rows={5}
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  placeholder="Beskriv anslaget utförligt med datum, koder, tider eller eventuella anvisningar..."
+                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs resize-none"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingNotice(null)}
+                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 rounded-lg bg-white border border-slate-200 cursor-pointer"
+                >
+                  Avbryt
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg border border-emerald-500 cursor-pointer shadow-2xs"
+                >
+                  Spara ändringar
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {selectedNoticeForDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <div className="bg-white max-w-2xl w-full rounded-3xl border border-slate-200/80 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
+            {/* Header */}
+            <div className="bg-[#0B2C24] text-white p-6 relative">
+              <button
+                onClick={() => setSelectedNoticeForDetail(null)}
+                className="absolute top-4 right-4 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-1.5 rounded-full transition-colors cursor-pointer"
+                title="Stäng fönster"
+              >
+                <X className="w-4 h-4" />
+              </button>
+              <div className="space-y-2.5">
+                <span className="inline-block px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-emerald-100 bg-emerald-800/60 rounded-md uppercase border border-emerald-700/50">
+                  {selectedNoticeForDetail.category}
+                </span>
+                <h3 className="text-xl font-sans font-bold leading-snug pr-8 text-white">
+                  {selectedNoticeForDetail.title}
+                </h3>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 md:p-8 overflow-y-auto space-y-6 flex-1">
+              <div className="text-sm text-slate-700 whitespace-pre-wrap leading-relaxed font-normal">
+                {selectedNoticeForDetail.content}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="bg-slate-50 border-t border-slate-100 px-6 py-4 flex items-center justify-between">
+              <div className="space-y-0.5">
+                <div className="text-[10px] text-slate-400 flex items-center gap-1.5">
+                  <User className="w-3.5 h-3.5" /> Skrivet av: &nbsp;<span className="font-semibold text-slate-600">{selectedNoticeForDetail.author}</span>
+                </div>
+                <div className="text-[10px] text-slate-400 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" /> Publicerat: &nbsp;<span className="font-semibold text-slate-600">{selectedNoticeForDetail.date}</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedNoticeForDetail(null)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200/60 rounded-xl bg-slate-100 transition-colors cursor-pointer"
+                >
+                  Stäng
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

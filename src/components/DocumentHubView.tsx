@@ -4,14 +4,14 @@
  */
 
 import React, { useState } from "react";
-import { Search, Folder, FileText, Download, Plus, Trash2, Eye, ShieldAlert, CheckCircle } from "lucide-react";
+import { Search, Folder, FileText, Download, Plus, Trash2, Eye, ShieldAlert, CheckCircle, Settings } from "lucide-react";
 import { FileItem, FileCategory, BoardFolder, BOARD_FOLDERS, UserRole } from "../types";
 
 interface DocumentHubViewProps {
   files: FileItem[];
   role: UserRole;
-  onAddFile: (file: Omit<FileItem, "id">, realFile?: File, createNotice?: boolean) => Promise<void>;
-  onDeleteFile: (id: string, name: string, category: FileCategory) => void;
+  onAddFile: (file: Omit<FileItem, "id">, realFile?: File) => Promise<void>;
+  onDeleteFile: (id: string, name: string, category: FileCategory, folder?: BoardFolder) => void;
 }
 
 interface UploadQueueItem {
@@ -21,7 +21,6 @@ interface UploadQueueItem {
   category: FileCategory;
   folder?: BoardFolder;
   customDate: string;
-  createNotice: boolean;
   fileSize: string;
 }
 
@@ -44,6 +43,45 @@ export default function DocumentHubView({
   const [uploadQueue, setUploadQueue] = useState<UploadQueueItem[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState("");
+
+  // Bulk defaults state
+  const [bulkCategory, setBulkCategory] = useState<FileCategory | "">("");
+  const [bulkFolder, setBulkFolder] = useState<BoardFolder | "">("");
+  const [bulkDate, setBulkDate] = useState<string>("");
+
+  const applyBulkCategory = (cat: FileCategory) => {
+    setBulkCategory(cat);
+    setUploadQueue((prev) =>
+      prev.map((item) => {
+        const updated = { ...item, category: cat };
+        if (cat === "Medlemsfiler") {
+          updated.folder = undefined;
+        } else if (cat === "Styrelsefiler" && !updated.folder) {
+          updated.folder = bulkFolder || "Administration";
+        }
+        return updated;
+      })
+    );
+  };
+
+  const applyBulkFolder = (fld: BoardFolder) => {
+    setBulkFolder(fld);
+    setUploadQueue((prev) =>
+      prev.map((item) => {
+        if (item.category === "Styrelsefiler") {
+          return { ...item, folder: fld };
+        }
+        return item;
+      })
+    );
+  };
+
+  const applyBulkDate = (dateStr: string) => {
+    setBulkDate(dateStr);
+    setUploadQueue((prev) =>
+      prev.map((item) => ({ ...item, customDate: dateStr }))
+    );
+  };
 
   const handleDownload = (file: FileItem) => {
     setDownloadingFileId(file.id);
@@ -69,10 +107,9 @@ export default function DocumentHubView({
           id: `queue-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 5)}`,
           file,
           name: file.name,
-          category: activeCategory,
-          folder: activeCategory === "Styrelsefiler" ? "Administration" : undefined,
-          customDate: new Date().toISOString().split("T")[0],
-          createNotice: false,
+          category: bulkCategory || activeCategory,
+          folder: (bulkCategory || activeCategory) === "Styrelsefiler" ? (bulkFolder || "Administration") : undefined,
+          customDate: bulkDate || new Date().toISOString().split("T")[0],
           fileSize: sizeStr,
         };
       });
@@ -124,12 +161,14 @@ export default function DocumentHubView({
             uploadedAt: item.customDate,
             mimeType: item.file.type || "application/pdf",
           },
-          item.file,
-          item.createNotice
+          item.file
         );
       }
       setDownloadSuccessText(`Laddade upp ${uploadQueue.length} dokument.`);
       setUploadQueue([]);
+      setBulkCategory("");
+      setBulkFolder("");
+      setBulkDate("");
       setShowUploadModal(false);
       setTimeout(() => setDownloadSuccessText(null), 4000);
     } catch (err) {
@@ -171,7 +210,7 @@ export default function DocumentHubView({
         </div>
 
         {/* Styrelse/Admin controls */}
-        {(role === "Styrelse" || role === "Administrator") && (
+        {role === "Administrator" && (
           <button
             id="btn-upload-file"
             onClick={() => setShowUploadModal(true)}
@@ -211,7 +250,7 @@ export default function DocumentHubView({
           }`}
         >
           🔒 Styrelsefiler (Endast Styrelse & Admin)
-          {role !== "Styrelse" && (
+          {role !== "Styrelse" && role !== "Administrator" && (
             <span className="absolute top-1 right-1 flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
@@ -221,7 +260,7 @@ export default function DocumentHubView({
       </div>
 
       {/* RLS Guard notification for Board Files */}
-      {activeCategory === "Styrelsefiler" && role !== "Styrelse" && (
+      {activeCategory === "Styrelsefiler" && role !== "Styrelse" && role !== "Administrator" && (
         <div className="bg-rose-50 border border-rose-100 p-8 rounded-2xl flex flex-col items-center justify-center text-center space-y-4 max-w-xl mx-auto my-12 animate-fade-in shadow-3xs">
           <div className="w-14 h-14 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center">
             <ShieldAlert className="w-8 h-8" />
@@ -237,7 +276,7 @@ export default function DocumentHubView({
       )}
 
       {/* Allowed files section */}
-      {(activeCategory === "Medlemsfiler" || role === "Styrelse") && (
+      {(activeCategory === "Medlemsfiler" || role === "Styrelse" || role === "Administrator") && (
         <div className="space-y-6">
           {/* Subfolders for Board Files strictly subdivided */}
           {activeCategory === "Styrelsefiler" && (
@@ -354,11 +393,11 @@ export default function DocumentHubView({
                       )}
                     </button>
 
-                    {(role === "Styrelse" || role === "Administrator") && (
+                    {role === "Administrator" && (
                       <button
                         onClick={() => {
                           if (window.confirm(`Är du säker på att du vill radera filen "${file.name}" permanent?`)) {
-                            onDeleteFile(file.id, file.name, file.category);
+                            onDeleteFile(file.id, file.name, file.category, file.folder);
                           }
                         }}
                         className="p-2 rounded-xl text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
@@ -389,6 +428,9 @@ export default function DocumentHubView({
                 onClick={() => {
                   if (!isUploading) {
                     setUploadQueue([]);
+                    setBulkCategory("");
+                    setBulkFolder("");
+                    setBulkDate("");
                     setShowUploadModal(false);
                   }
                 }}
@@ -420,7 +462,59 @@ export default function DocumentHubView({
                 <div className="space-y-4">
                   <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Uppladdningskö ({uploadQueue.length}st dokument)</div>
                   
-                  <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+                  {/* Bulk Settings Card */}
+                  <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-4 space-y-3 shadow-3xs">
+                    <div className="flex items-center gap-2 text-emerald-800">
+                      <Settings className="w-4 h-4 text-emerald-600" />
+                      <span className="text-xs font-bold uppercase tracking-wider">⚡ Bulk-inställningar (Applicera på alla filer i kön)</span>
+                    </div>
+                    <p className="text-[10px] text-slate-500">
+                      Välj värden nedan för att uppdatera kategori, undermapp och dokumentdatum för alla filer i kön samtidigt. Du kan fortfarande finjustera enskilda filer efteråt.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-500 uppercase">Gemensam Kategori</label>
+                        <select
+                          value={bulkCategory}
+                          onChange={(e) => applyBulkCategory(e.target.value as FileCategory)}
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg bg-white text-slate-750 focus:outline-emerald-500 text-xs"
+                          disabled={isUploading}
+                        >
+                          <option value="">-- Välj kategori --</option>
+                          <option value="Medlemsfiler">🔓 Medlemsfiler</option>
+                          <option value="Styrelsefiler">🔒 Styrelsefiler</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-500 uppercase">Gemensam Mapp</label>
+                        <select
+                          value={bulkFolder}
+                          onChange={(e) => applyBulkFolder(e.target.value as BoardFolder)}
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg bg-white text-slate-750 focus:outline-emerald-500 text-xs disabled:opacity-50"
+                          disabled={isUploading || bulkCategory !== "Styrelsefiler"}
+                        >
+                          <option value="">-- Välj mapp --</option>
+                          {BOARD_FOLDERS.map((f, i) => (
+                            <option key={i} value={f}>{f}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[9px] font-bold text-slate-500 uppercase">Gemensamt Datum</label>
+                        <input
+                          type="date"
+                          value={bulkDate}
+                          onChange={(e) => applyBulkDate(e.target.value)}
+                          className="w-full px-2.5 py-1.5 border border-slate-200 rounded-lg bg-white text-slate-750 focus:outline-emerald-500 text-xs"
+                          disabled={isUploading}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 max-h-[40vh] overflow-y-auto pr-1">
                     {uploadQueue.map((item) => (
                       <div key={item.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3 relative">
                         <div className="flex items-start justify-between gap-2">
@@ -499,19 +593,6 @@ export default function DocumentHubView({
                           )}
                         </div>
 
-                        <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
-                          <input
-                            type="checkbox"
-                            id={`notice-${item.id}`}
-                            checked={item.createNotice}
-                            onChange={(e) => handleUpdateQueueItem(item.id, { createNotice: e.target.checked })}
-                            className="w-3.5 h-3.5 text-emerald-500 accent-emerald-500 rounded cursor-pointer border-slate-300"
-                            disabled={isUploading}
-                          />
-                          <label htmlFor={`notice-${item.id}`} className="text-xs font-semibold text-slate-650 cursor-pointer">
-                            📢 Skapa ett anslag på anslagstavlan för denna fil
-                          </label>
-                        </div>
                       </div>
                     ))}
                   </div>
@@ -549,6 +630,9 @@ export default function DocumentHubView({
                   type="button"
                   onClick={() => {
                     setUploadQueue([]);
+                    setBulkCategory("");
+                    setBulkFolder("");
+                    setBulkDate("");
                     setShowUploadModal(false);
                   }}
                   disabled={isUploading}

@@ -38,7 +38,19 @@ We have transitioned the **Stäket Företagscenter Portal** from a local-storage
 ### E. Document Hub & Bulk Upload Controls
 - **Bulk Uploading**: Redesigned the upload modal to support selecting multiple files at once.
 - **Custom Document Dates**: Allowed administrators to specify the actual date of each document in the upload queue (stored in `uploaded_at`), decoupling file timestamps from the system upload date.
-- **Opt-in Noticeboard Announcements**: Added checkbox toggles to let admins selectively create linked Noticeboard announcements for specific uploads, preventing noticeboard spam during historical imports.
+
+### F. Noticeboard & Security Guards
+- **Login Guarded Homepage Notices**: Prompts visitors/unauthenticated users when clicking homepage news cards, taking them to the login page. After successful authentication, they are redirected directly to the specific post they clicked.
+- **Dynamic Post Highlighting & Detail Modal**: The targeted notice is scrolled into view, highlighted with an elegant brand gold border and ring outline, and automatically opened in a detailed reading modal.
+- **Announcement Expand Modal**: Added a detail modal to the noticeboard allowing users to click on any notice card to read the full body content, Category, Author, and Publish Date without layout constraints.
+- **Noticeboard Post Editing**: Added Pencil button edit controls for the `Administrator` role on notice cards, allowing updating of titles, categories, publish dates, pinned status, and content directly synced to Supabase database.
+- **Removed Like Reactions**: Cleaned up the noticeboard UI by completely removing the Likes simulation and "Gilla" buttons from all notice cards and detail views.
+- **Real-Time Profile Resolution**: Updated the app to automatically load the signed-in user's profile from the database on mount/login, showing the user's registered name (e.g., `'Roh'`) instead of hardcoded fallbacks like `'Admin Adminsson'`.
+- **Admin-Only Permissions Restructuring**: Restructured create, edit, and delete controls across noticeboards, documents, and vacant spaces so that only the authenticated `Administrator` role can execute these changes, aligning with the website's administrative security requirements.
+- **Notice Custom Dates**: Integrated a publish date selector inside the "Skapa Post" modal, allowing administrators to publish notices backdated or scheduled with precise calendar dates.
+- **Persisted Session States**: Configured `localStorage` storage for the user role and current view tab so page reloads do not log the user out or lose their active context.
+- **Removed Demo Bar Entirely**: Fully removed the prototype role selector warning bar from the application, leaving a clean production-ready layout where roles can only be acquired via actual database profiles.
+- **Fixed-Height Dashboard Layout**: Constrained the main portal viewport height to `h-screen overflow-hidden` and enabled independent scrolling for the workspace canvas. This keeps the side panel/menu at a fixed 100% height, ensuring the profile box containing the logged-in user name is always visible at the bottom of the sidebar without scrolling.
 
 ---
 
@@ -52,10 +64,12 @@ We have transitioned the **Stäket Företagscenter Portal** from a local-storage
 
 ### B. Supabase Storage Setup (The `documents` Bucket)
 - A public bucket named **`documents`** is configured.
-- Inside it, the root subfolders are:
-  - `medlemmar/` (Files categorized under *Medlemsfiler*)
-  - `styrelse/` (Files categorized under *Styrelsefiler*)
-    - Inside `styrelse/`, directories exist for `Administration`, `Arkiv`, `Ekonomi`, and `Pantbrev`.
+- Root folders inside the bucket match the file categories:
+  - `medlemmar/` (for documents categorized under *Medlemsfiler*)
+  - `Administration/` (for board files under the *Administration* folder)
+  - `Arkiv/` (for board files under the *Arkiv* folder)
+  - `Ekonomi/` (for board files under the *Ekonomi* folder)
+  - `Pantbrev/` (for board files under the *Pantbrev* folder)
 - **Note**: Files must be uploaded *through the website portal UI* rather than directly dragged into the Supabase Console. Uploading through the website inserts corresponding metadata in the `public.files` DB table; direct bucket uploads will not show up in the document hub.
 
 ---

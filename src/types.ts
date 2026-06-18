@@ -55,12 +55,12 @@ export const NOTICEBOARD_CATEGORIES: NoticeboardCategory[] = [
 
 export type FileCategory = "Medlemsfiler" | "Styrelsefiler";
 
-export type BoardFolder = "Administration" | "Ekonomi" | "Pantbrev Lgh Betekn." | "Arkiv";
+export type BoardFolder = "Administration" | "Ekonomi" | "Pantbrev" | "Arkiv";
 
 export const BOARD_FOLDERS: BoardFolder[] = [
   "Administration",
   "Ekonomi",
-  "Pantbrev Lgh Betekn.",
+  "Pantbrev",
   "Arkiv"
 ];
 

@@ -52,9 +52,10 @@ interface HomeViewProps {
   onSetRole: (role: UserRole) => void;
   activeTab: string;
   profiles?: UserProfile[];
+  onSelectNotice?: (id: string) => void;
 }
 
-export default function HomeView({ notices = [], role, onNavigate, onSetRole, activeTab, profiles }: HomeViewProps) {
+export default function HomeView({ notices = [], role, onNavigate, onSetRole, activeTab, profiles, onSelectNotice }: HomeViewProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Helper for scrolling to sections
@@ -297,7 +298,7 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
               </div>
               <div>
                 <h3 className="font-bold text-[#0B2C24] text-[15px]">Verkstad &amp; Lager</h3>
-                <p className="text-gray-500 text-[11.5px] leading-snug mt-0.5 max-w-[190px]">Lokaler med portar på ca 150–300 kvm</p>
+                <p className="text-gray-500 text-[11.5px] leading-snug mt-0.5 max-w-[190px]">Lokaler med portar på ca 215 kvm</p>
               </div>
             </div>
 
@@ -396,7 +397,7 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
                      <h3 className="text-[17px] font-bold text-[#0B2C24]">Verkstad &amp; Lager</h3>
                     <ArrowRight className="w-5 h-5 text-[#0B2C24] group-hover:text-[#B68F52] transition-colors" />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">Rymliga verkstads- och lagerlokaler i Stockholm på ca 150–300 kvm med smidiga rullportar och ordentlig takhöjd.</p>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">Rymliga verkstads- och lagerlokaler i Stockholm på ca 215 kvm med smidiga rullportar och ordentlig takhöjd.</p>
                 </div>
               </div>
             </div>
@@ -460,13 +461,21 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
                   ? notice.content.substring(0, 120) + "..."
                   : notice.content;
                 return (
-                  <div key={notice.id} className="flex gap-4 items-start bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:bg-[#F9FAF9] transition-all hover:shadow-2xs">
+                  <div 
+                    key={notice.id} 
+                    onClick={() => {
+                      if (onSelectNotice) {
+                        onSelectNotice(notice.id);
+                      }
+                    }}
+                    className="flex gap-4 items-start bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:bg-[#F9FAF9] transition-all hover:shadow-2xs cursor-pointer group"
+                  >
                     <div className="bg-[#0B2C24] text-white px-2.5 py-1.5 flex flex-col items-center justify-center shrink-0 min-w-[55px] rounded-lg shadow-2xs">
                       <span className="text-lg font-bold font-mono tracking-tight leading-none text-white">{day}</span>
                       <span className="text-[9px] uppercase font-bold tracking-wider text-white/85 mt-1">{month}</span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h5 className="font-bold text-[#0B2C24] text-sm hover:text-[#B68F52] hover:underline cursor-pointer leading-snug truncate">
+                      <h5 className="font-bold text-[#0B2C24] text-sm group-hover:text-[#B68F52] group-hover:underline leading-snug truncate">
                         {notice.title}
                       </h5>
                       <p className="text-gray-500 text-xs leading-relaxed mt-2 line-clamp-3">

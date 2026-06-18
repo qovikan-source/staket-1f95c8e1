@@ -55,13 +55,41 @@ export default function Index() {
   const [spaces, setSpaces] = useState<VacantSpace[]>([]);
 
   // Selected Page Tab
-  const [activeTab, setActiveTab] = useState<string>("hem");
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const saved = localStorage.getItem("staket_active_tab");
+    return saved || "hem";
+  });
 
   // Selected Demo Role for evaluation
-  const [role, setRole] = useState<UserRole>("Besökare");
+  const [role, setRole] = useState<UserRole>(() => {
+    const saved = localStorage.getItem("staket_user_role");
+    return (saved as UserRole) || "Besökare";
+  });
 
   // Mobile menu open trigger
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Current logged in profile state
+  const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
+
+  // Notice highlighting and redirect state
+  const [pendingNoticeId, setPendingNoticeId] = useState<string | null>(null);
+  const [highlightedNoticeId, setHighlightedNoticeId] = useState<string | null>(null);
+
+  // Save role and activeTab to localStorage and sanitize page paths on role changes
+  useEffect(() => {
+    localStorage.setItem("staket_user_role", role);
+    localStorage.setItem("staket_active_tab", activeTab);
+
+    const isMemberTab = ["anslagstavlan", "filer", "kontaktboken"].includes(activeTab);
+    const isAdminTab = activeTab === "administration";
+    if (role === "Besökare" && isMemberTab) {
+      setActiveTab("hem");
+    }
+    if (role !== "Styrelse" && role !== "Administrator" && isAdminTab) {
+      setActiveTab("anslagstavlan");
+    }
+  }, [role, activeTab]);
 
   // Load database on mount and sanitize URL hash if present
   useEffect(() => {
@@ -70,6 +98,21 @@ export default function Index() {
     setNotices(loadNotices());
     setFiles(loadFiles());
     setSpaces(loadSpaces());
+
+    // Check active session on load
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (session?.user) {
+        try {
+          const profile = await dbService.getProfileByEmail(session.user.email!);
+          if (profile) {
+            setCurrentUserProfile(profile);
+            setRole(profile.role);
+          }
+        } catch (e) {
+          console.error("Failed to load user profile on mount:", e);
+        }
+      }
+    });
 
     // 2. Fetch fresh database data from Supabase asynchronously
     async function fetchFromSupabase() {
@@ -319,7 +362,8 @@ export default function Index() {
   }, [activeTab]);
 
   // Sync state triggers
-  const handleAddNotice = async (notice: Omit<NoticePost, "id" | "date">) => {
+  // Sync state triggers
+  const handleAddNotice = async (notice: Omit<NoticePost, "id" | "date"> & { date?: string }) => {
     try {
       const dbNotice = await dbService.insertNotice(notice);
       const updated = [dbNotice, ...notices];
@@ -330,7 +374,7 @@ export default function Index() {
       const fresh: NoticePost = {
         ...notice,
         id: `n-${Date.now()}`,
-        date: new Date().toISOString().split("T")[0],
+        date: notice.date || new Date().toISOString().split("T")[0],
       };
       const updated = [fresh, ...notices];
       setNotices(updated);
@@ -352,10 +396,23 @@ export default function Index() {
     }
   };
 
+  const handleUpdateNotice = async (notice: NoticePost) => {
+    try {
+      const dbNotice = await dbService.updateNotice(notice.id, notice);
+      const updated = notices.map((n) => (n.id === notice.id ? dbNotice : n));
+      setNotices(updated);
+      saveNotices(updated);
+    } catch (e) {
+      console.error("Failed to update notice in Supabase, updating locally:", e);
+      const updated = notices.map((n) => (n.id === notice.id ? notice : n));
+      setNotices(updated);
+      saveNotices(updated);
+    }
+  };
+
   const handleAddFile = async (
     file: Omit<FileItem, "id">,
-    realFile?: File,
-    createNotice?: boolean
+    realFile?: File
   ) => {
     try {
       let dbFile: FileItem;
@@ -365,7 +422,7 @@ export default function Index() {
         const dbRecord = {
           name: file.name,
           category: file.category,
-          folder: file.folder || null,
+          folder: file.folder === "Pantbrev" ? "Pantbrev Lgh Betekn." : (file.folder || null),
           file_size: file.fileSize,
           mime_type: file.mimeType || "application/pdf",
           url: "https://example.com/dummy.pdf",
@@ -377,7 +434,7 @@ export default function Index() {
           id: data.id,
           name: data.name,
           category: data.category as FileCategory,
-          folder: data.folder as BoardFolder | undefined,
+          folder: (data.folder === "Pantbrev Lgh Betekn." ? "Pantbrev" : data.folder) as BoardFolder | undefined,
           uploadedAt: data.uploaded_at,
           fileSize: data.file_size,
           mimeType: data.mime_type,
@@ -386,34 +443,15 @@ export default function Index() {
       const updated = [dbFile, ...files];
       setFiles(updated);
       saveFiles(updated);
-
-      if (createNotice) {
-        let noticeCategory: NoticeboardCategory = "Information från Föreningsstyrelse";
-        if (file.category === "Styrelsefiler" && file.folder === "Ekonomi") {
-          noticeCategory = "Ekonomi";
-        } else if (file.category === "Styrelsefiler" && file.folder === "Administration") {
-          noticeCategory = "Årsmöten & Föreningens Styrelse";
-        }
-
-        await handleAddNotice({
-          title: `Nytt dokument: ${file.name.replace(/\.[^/.]+$/, "")}`,
-          category: noticeCategory,
-          content: `Ett nytt dokument har lagts till i arkivet under fliken "${file.category}"${
-            file.folder ? ` -> ${file.folder}` : ""
-          }.\n\nDokumentnamn: ${file.name}\nDokumentdatum: ${file.uploadedAt}`,
-          isPinned: false,
-          author: getCurrentUserName(),
-        });
-      }
     } catch (e) {
       console.error("Failed to upload/add file to Supabase:", e);
       throw e;
     }
   };
 
-  const handleDeleteFile = async (id: string, name: string, category: FileCategory) => {
+  const handleDeleteFile = async (id: string, name: string, category: FileCategory, folder?: BoardFolder) => {
     try {
-      await dbService.deleteFile(id, name, category);
+      await dbService.deleteFile(id, name, category, folder);
       const updated = files.filter((f) => f.id !== id);
       setFiles(updated);
       saveFiles(updated);
@@ -536,103 +574,72 @@ export default function Index() {
     setMobileMenuOpen(false);
   };
 
+  const handleSelectNotice = (id: string) => {
+    if (role === "Besökare") {
+      setPendingNoticeId(id);
+      setActiveTab("login");
+    } else {
+      setHighlightedNoticeId(id);
+      setActiveTab("anslagstavlan");
+      setTimeout(() => {
+        setHighlightedNoticeId(null);
+      }, 5000);
+    }
+  };
+
   // Helper current user representation based on role
   const getCurrentUserName = () => {
     if (role === "Besökare") return "Anonym Besökare";
-    if (role === "Medlem") return "Thomas Berglund (Medlem)";
-    if (role === "Styrelse") return "Alexander Krasar (Styrelse)";
-    return "Admin Adminsson (Administrator)";
+    if (currentUserProfile) return currentUserProfile.name;
+    if (role === "Medlem") return "Thomas Berglund";
+    if (role === "Styrelse") return "Alexander Krasar";
+    return "Admin Adminsson";
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f2f5] font-sans text-slate-800 flex flex-col" id="applet-root">
-      
-      {/* Dynamic Demo Warning Box with Instruction Header */}
-      <div className="bg-slate-900 text-slate-100 border-b border-slate-800 px-4 py-2.5 text-xs flex flex-col xl:flex-row xl:items-center justify-between gap-3 shadow-sm z-30">
-        <div className="flex items-center gap-2">
-          <span className="flex h-2 w-2 relative">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-          </span>
-          <p className="font-medium text-slate-300">
-            🇸🇪 <span className="text-white font-bold">Interaktiv Prototyp:</span> Fastigheten <span className="text-emerald-400 font-semibold">Smeden 14</span>. Testa behörigheter genom att ändra demo-roll till höger.
-          </p>
-        </div>
-
-        {/* Demo role selectors badge selector */}
-        <div className="flex items-center gap-2 shrink-0 flex-wrap">
-          <span className="text-slate-400 font-semibold text-[11px]">Välj Demo-roll:</span>
-          <div className="inline-flex rounded-lg bg-slate-800 p-0.5 border border-slate-700 flex-wrap">
-            <button
-              onClick={() => {
-                setRole("Besökare");
-                if (["anslagstavlan", "filer", "kontaktboken", "administration"].includes(activeTab)) {
-                  setActiveTab("hem");
-                }
-              }}
-              className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
-                role === "Besökare"
-                  ? "bg-slate-700 text-white shadow-xs"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              👤 Besökare
-            </button>
-            <button
-              onClick={() => {
-                setRole("Medlem");
-                if (activeTab === "administration") {
-                  setActiveTab("anslagstavlan");
-                }
-              }}
-              className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
-                role === "Medlem"
-                  ? "bg-blue-600 text-white shadow-xs"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              👥 Medlem
-            </button>
-            <button
-              onClick={() => {
-                setRole("Styrelse");
-              }}
-              className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
-                role === "Styrelse"
-                  ? "bg-violet-600 text-white shadow-xs font-bold"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              👑 Styrelse
-            </button>
-            <button
-              onClick={() => {
-                setRole("Administrator");
-              }}
-              className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
-                role === "Administrator"
-                  ? "bg-emerald-600 text-white shadow-xs font-bold"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              ⚡ Administrator
-            </button>
-          </div>
-        </div>
-      </div>
+    <div className="h-screen overflow-hidden bg-[#f0f2f5] font-sans text-slate-800 flex flex-col" id="applet-root">
 
       {activeTab === "login" ? (
         <div className="flex-1 overflow-y-auto bg-slate-50 flex flex-col min-h-0">
           <LoginView
-            onLoginSuccess={(selectedRole) => {
+            onLoginSuccess={async (selectedRole) => {
               setRole(selectedRole);
-              if (selectedRole === "Styrelse" || selectedRole === "Administrator") {
-                setActiveTab("administration");
-              } else {
+              try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                  const profile = await dbService.getProfileByEmail(session.user.email!);
+                  if (profile) {
+                    setCurrentUserProfile(profile);
+                  }
+                } else {
+                  setCurrentUserProfile({
+                    id: "quick-user",
+                    name: selectedRole === "Styrelse" ? "Alexander Krasar" : selectedRole === "Medlem" ? "Thomas Berglund" : "Admin Adminsson",
+                    role: selectedRole,
+                    email: "",
+                  });
+                }
+              } catch (e) {
+                console.error("Failed to load user profile on login:", e);
+              }
+              if (pendingNoticeId) {
+                const id = pendingNoticeId;
+                setHighlightedNoticeId(id);
+                setPendingNoticeId(null);
                 setActiveTab("anslagstavlan");
+                setTimeout(() => {
+                  setHighlightedNoticeId(null);
+                }, 5000);
+              } else {
+                if (selectedRole === "Styrelse" || selectedRole === "Administrator") {
+                  setActiveTab("administration");
+                } else {
+                  setActiveTab("anslagstavlan");
+                }
               }
             }}
             onCancel={() => {
+              setPendingNoticeId(null);
               setActiveTab("hem");
             }}
           />
@@ -645,6 +652,7 @@ export default function Index() {
             onSetRole={setRole}
             onNavigate={handleTabClick}
             activeTab={activeTab}
+            onSelectNotice={handleSelectNotice}
           />
         </div>
       ) : (
@@ -852,8 +860,7 @@ export default function Index() {
               {(role as string) === "Besökare" ? (
                 <button
                   onClick={() => {
-                    setRole("Medlem");
-                    setActiveTab("anslagstavlan");
+                    setActiveTab("login");
                   }}
                   className="bg-blue-600 text-white text-[11px] font-black tracking-tight px-3 py-1.5 rounded-md hover:bg-blue-700 transition"
                 >
@@ -861,8 +868,10 @@ export default function Index() {
                 </button>
               ) : (
                 <button
-                  onClick={() => {
+                  onClick={async () => {
+                    await supabase.auth.signOut();
                     setRole("Besökare");
+                    setCurrentUserProfile(null);
                     setActiveTab("hem");
                   }}
                   className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold px-3 py-1.5 rounded-md transition"
@@ -883,6 +892,7 @@ export default function Index() {
                 onNavigate={handleTabClick}
                 activeTab={activeTab}
                 profiles={profiles}
+                onSelectNotice={handleSelectNotice}
               />
             )}
 
@@ -907,6 +917,8 @@ export default function Index() {
                 currentUserName={getCurrentUserName()}
                 onAddNotice={handleAddNotice}
                 onDeleteNotice={handleDeleteNotice}
+                onUpdateNotice={handleUpdateNotice}
+                highlightedNoticeId={highlightedNoticeId || undefined}
               />
             )}
 
