@@ -434,6 +434,20 @@ export default function Index() {
     }
   };
 
+  const handleUpdateProfile = async (id: string, updatedFields: Partial<UserProfile>) => {
+    try {
+      await dbService.updateProfile(id, updatedFields);
+      const updated = profiles.map((p) => (p.id === id ? { ...p, ...updatedFields } : p));
+      setProfiles(updated);
+      saveProfiles(updated);
+    } catch (e) {
+      console.error("Failed to update profile in Supabase:", e);
+      const updated = profiles.map((p) => (p.id === id ? { ...p, ...updatedFields } : p));
+      setProfiles(updated);
+      saveProfiles(updated);
+    }
+  };
+
   const handleDeleteProfile = async (id: string) => {
     try {
       await dbService.deleteProfile(id);
@@ -749,7 +763,7 @@ export default function Index() {
             </div>
 
             {/* Administration Section */}
-            {role === "Styrelse" && (
+            {(role === "Styrelse" || role === "Administrator") && (
               <div>
                 <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2">Administration</div>
                 <button
@@ -761,7 +775,7 @@ export default function Index() {
                   }`}
                 >
                   <Shield className="w-3.5 h-3.5 shrink-0" />
-                  Ändra användare
+                  Alla användare
                 </button>
               </div>
             )}
@@ -895,6 +909,7 @@ export default function Index() {
                 spaces={spaces}
                 onAddProfile={handleAddProfile}
                 onUpdateRole={handleUpdateRole}
+                onUpdateProfile={handleUpdateProfile}
                 onDeleteProfile={handleDeleteProfile}
                 onDeleteNotice={handleDeleteNotice}
                 onDeleteFile={handleDeleteFile}

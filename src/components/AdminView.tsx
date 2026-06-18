@@ -16,6 +16,7 @@ interface AdminViewProps {
   spaces: VacantSpace[];
   onAddProfile: (profile: Omit<UserProfile, "id">) => void;
   onUpdateRole: (id: string, role: UserRole) => void;
+  onUpdateProfile: (id: string, profile: Partial<UserProfile>) => void;
   onDeleteProfile: (id: string) => void;
   onDeleteNotice: (id: string) => void;
   onDeleteFile: (id: string, name: string, category: FileCategory) => void;
@@ -33,6 +34,7 @@ export default function AdminView({
   spaces = [],
   onAddProfile,
   onUpdateRole,
+  onUpdateProfile,
   onDeleteProfile,
   onDeleteNotice,
   onDeleteFile,
@@ -46,6 +48,25 @@ export default function AdminView({
   // Sorting state for profiles
   const [sortField, setSortField] = useState<keyof UserProfile>("unit");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
+  // Filtering state for profiles
+  const [roleFilter, setRoleFilter] = useState<"Alla" | "Medlemmar" | "Styrelse" | "Administrator">("Alla");
+
+  // Editing profile states
+  const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editRole, setEditRole] = useState<UserRole>("Medlem");
+  const [editEmail, setEditEmail] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editCompany, setEditCompany] = useState("");
+  const [editOrgNr, setEditOrgNr] = useState("");
+  const [editUnit, setEditUnit] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editWebsite, setEditWebsite] = useState("");
+  const [editLogoFileName, setEditLogoFileName] = useState("");
+  const [editLogoFile, setEditLogoFile] = useState<File | null>(null);
+  const [isUpdatingUser, setIsUpdatingUser] = useState(false);
 
   // Form states for new available space
   const [spaceTitle, setSpaceTitle] = useState("");
@@ -138,6 +159,54 @@ export default function AdminView({
     setShowAddUserModal(false);
   };
 
+  const startEditing = (p: UserProfile) => {
+    setEditingProfile(p);
+    setEditName(p.name || "");
+    setEditRole(p.role || "Medlem");
+    setEditEmail(p.email || "");
+    setEditPhone(p.phone || "");
+    setEditCompany(p.company || "");
+    setEditOrgNr(p.orgNr || "");
+    setEditUnit(p.unit ? p.unit.replace("Lokal ", "") : "");
+    setEditAddress(p.address || "");
+    setEditDescription(p.description || "");
+    setEditWebsite(p.website || "");
+    setEditLogoFileName(p.logo || "");
+    setEditLogoFile(null);
+  };
+
+  const handleEditUserSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProfile) return;
+
+    setIsUpdatingUser(true);
+    let logoUrl = editingProfile.logo || "";
+    if (editLogoFile) {
+      try {
+        logoUrl = await dbService.uploadCompanyLogo(editLogoFile);
+      } catch (err) {
+        console.error("Failed to upload company logo:", err);
+      }
+    }
+
+    onUpdateProfile(editingProfile.id, {
+      name: editName,
+      role: editRole,
+      email: editEmail,
+      phone: editPhone || "Ej angivet",
+      orgNr: editOrgNr || "Xxxxxx-xxxx",
+      company: editCompany || "Enskild Firma / Privat",
+      unit: editUnit ? (editUnit.startsWith("Lokal") ? editUnit : `Lokal ${editUnit}`) : "Ej angivet",
+      address: editAddress || "Regeringsgatan 48, Stockholm",
+      description: editDescription,
+      website: editWebsite,
+      logo: logoUrl
+    });
+
+    setEditingProfile(null);
+    setIsUpdatingUser(false);
+  };
+
   const handleAddSpaceSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!spaceTitle || !spaceDescription || !spaceTotalArea) {
@@ -175,20 +244,29 @@ export default function AdminView({
     setShowAddSpaceModal(false);
   };
 
-  // Sort profiles based on field
-  const sortedProfiles = [...profiles].sort((a, b) => {
+  // Filter profiles by roleFilter, then sort based on field
+  const filteredProfilesForTable = profiles.filter((p) => {
+    if (roleFilter === "Alla") return true;
+    if (roleFilter === "Medlemmar") return p.role === "Medlem";
+    return p.role === roleFilter;
+  });
+
+  const sortedProfiles = [...filteredProfilesForTable].sort((a, b) => {
     let aVal = a[sortField];
     let bVal = b[sortField];
 
     // Extraction helper for units since they come formatted as "Lokal 22" or "Lokal 5"
     if (sortField === "unit") {
-      const aNum = parseInt(a.unit.replace(/\D/g, ""), 10) || 0;
-      const bNum = parseInt(b.unit.replace(/\D/g, ""), 10) || 0;
+      const aNum = parseInt((a.unit || "").replace(/\D/g, ""), 10) || 0;
+      const bNum = parseInt((b.unit || "").replace(/\D/g, ""), 10) || 0;
       return sortDirection === "asc" ? aNum - bNum : bNum - aNum;
     }
 
-    if (aVal.toLowerCase() < bVal.toLowerCase()) return sortDirection === "asc" ? -1 : 1;
-    if (aVal.toLowerCase() > bVal.toLowerCase()) return sortDirection === "asc" ? 1 : -1;
+    const aStr = String(aVal || "").toLowerCase();
+    const bStr = String(bVal || "").toLowerCase();
+
+    if (aStr < bStr) return sortDirection === "asc" ? -1 : 1;
+    if (aStr > bStr) return sortDirection === "asc" ? 1 : -1;
     return 0;
   });
 
@@ -299,6 +377,29 @@ export default function AdminView({
             )}
           </div>
 
+          {/* Role Filter Tabs */}
+          <div className="flex flex-wrap gap-1.5 pb-1">
+            {([
+              { key: "Alla", label: "Alla" },
+              { key: "Medlemmar", label: "Medlemmar" },
+              { key: "Styrelse", label: "Styrelse" },
+              { key: "Administrator", label: "Administrator" }
+            ] as const).map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setRoleFilter(opt.key)}
+                className={`px-3.5 py-1.5 rounded-xl text-[11px] font-bold border transition-colors cursor-pointer ${
+                  roleFilter === opt.key
+                    ? "bg-slate-900 text-white border-slate-950 shadow-2xs"
+                    : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
           <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-2xs">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -314,9 +415,26 @@ export default function AdminView({
                         Namn {sortField === "name" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
                       </div>
                     </th>
-                    <th className="px-5 py-3.5">Företag</th>
-                    <th className="px-5 py-3.5">E-post</th>
-                    <th className="px-5 py-3.5">Telefon</th>
+                    <th className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 hover:text-slate-800 transition-colors" onClick={() => handleSort("company")}>
+                      <div className="flex items-center gap-1">
+                        Företag {sortField === "company" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                      </div>
+                    </th>
+                    <th className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 hover:text-slate-800 transition-colors" onClick={() => handleSort("orgNr")}>
+                      <div className="flex items-center gap-1">
+                        Org.nr {sortField === "orgNr" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                      </div>
+                    </th>
+                    <th className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 hover:text-slate-800 transition-colors" onClick={() => handleSort("email")}>
+                      <div className="flex items-center gap-1">
+                        E-post {sortField === "email" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                      </div>
+                    </th>
+                    <th className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 hover:text-slate-800 transition-colors" onClick={() => handleSort("phone")}>
+                      <div className="flex items-center gap-1">
+                        Telefon {sortField === "phone" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                      </div>
+                    </th>
                     <th className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 hover:text-slate-800 transition-colors" onClick={() => handleSort("role")}>
                       <div className="flex items-center gap-1">
                         Roll {sortField === "role" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
@@ -331,6 +449,7 @@ export default function AdminView({
                       <td className="px-5 py-4 font-bold text-slate-800">{p.unit}</td>
                       <td className="px-5 py-4 font-semibold text-slate-700">{p.name}</td>
                       <td className="px-5 py-4 text-slate-500 truncate max-w-[140px]">{p.company}</td>
+                      <td className="px-5 py-4 text-slate-500 font-mono">{p.orgNr}</td>
                       <td className="px-5 py-4 text-slate-500 font-mono">{p.email}</td>
                       <td className="px-5 py-4 text-slate-500 whitespace-nowrap">{p.phone}</td>
                       <td className="px-5 py-4">
@@ -348,13 +467,21 @@ export default function AdminView({
                         </select>
                       </td>
                       {activeUserRole === "Administrator" && (
-                        <td className="px-5 py-4 text-right">
+                        <td className="px-5 py-4 text-right whitespace-nowrap space-x-1">
+                          <button
+                            onClick={() => startEditing(p)}
+                            className="p-1.5 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
+                            title="Redigera användare"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                            <span className="hidden lg:inline text-[10px] font-semibold">Ändra</span>
+                          </button>
                           <button
                             onClick={() => onDeleteProfile(p.id)}
                             className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
                             title="Radera användare"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-3.5 h-3.5" />
                             <span className="hidden lg:inline text-[10px] font-semibold">Ta bort</span>
                           </button>
                         </td>
@@ -502,25 +629,27 @@ export default function AdminView({
         </div>
       )}
 
-      {/* Add Member Slidover/Modal */}
+      {/* Add Member Modal */}
       {showAddUserModal && (
         <div className="fixed inset-0 bg-slate-950/45 flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-xl overflow-hidden animate-scale-up">
-            <div className="flex items-center justify-between p-5 bg-slate-900 text-white">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
+            <div className="flex items-center justify-between p-5 bg-slate-900 text-white shrink-0">
               <div className="space-y-0.5">
                 <h3 className="font-bold text-base">Registrera ny medlem</h3>
                 <p className="text-[10px] text-slate-300">Medlemmen läggs automatiskt in i medlemsmatrikeln och kontaktboken.</p>
               </div>
               <button
+                type="button"
                 onClick={() => setShowAddUserModal(false)}
-                className="text-slate-400 hover:text-white text-xs font-semibold px-2 py-1 bg-slate-800 rounded-lg cursor-pointer"
+                className="text-slate-400 hover:text-white text-xs font-semibold px-2.5 py-1 bg-slate-800 rounded-lg cursor-pointer transition-colors"
               >
                 Stäng
               </button>
             </div>
 
-            <form onSubmit={handleAddUser} className="p-6 space-y-4 text-xs">
+            <form onSubmit={handleAddUser} className="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
               <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Namn *</label>
                 <input
                   id="user-name"
                   type="text"
@@ -533,6 +662,7 @@ export default function AdminView({
               </div>
 
               <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">E-postadress *</label>
                 <input
                   id="user-email"
                   type="email"
@@ -545,6 +675,7 @@ export default function AdminView({
               </div>
 
               <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Roll *</label>
                 <select
                   id="user-role"
                   value={role}
@@ -558,6 +689,7 @@ export default function AdminView({
               </div>
 
               <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Lösenord *</label>
                 <input
                   id="user-password"
                   type="password"
@@ -569,6 +701,7 @@ export default function AdminView({
               </div>
 
               <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Upprepa Lösenord *</label>
                 <input
                   id="user-repeat-password"
                   type="password"
@@ -589,68 +722,89 @@ export default function AdminView({
 
               {role === "Medlem" && (
                 <div className="space-y-4">
-                  <input
-                    id="user-company"
-                    type="text"
-                    placeholder="Företag"
-                    value={company}
-                    onChange={(e) => setCompany(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                  />
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Företag</label>
+                    <input
+                      id="user-company"
+                      type="text"
+                      placeholder="Företag"
+                      value={company}
+                      onChange={(e) => setCompany(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
 
-                  <input
-                    id="user-unit"
-                    type="text"
-                    placeholder="Lokal NR"
-                    value={unit}
-                    onChange={(e) => setUnit(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                  />
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Lokal NR</label>
+                    <input
+                      id="user-unit"
+                      type="text"
+                      placeholder="Lokal NR"
+                      value={unit}
+                      onChange={(e) => setUnit(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
 
-                  <input
-                    id="user-address"
-                    type="text"
-                    placeholder="Adress"
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                  />
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Adress</label>
+                    <input
+                      id="user-address"
+                      type="text"
+                      placeholder="Adress"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
 
-                  <input
-                    id="user-phone"
-                    type="text"
-                    placeholder="Telefon"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                  />
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Telefon</label>
+                    <input
+                      id="user-phone"
+                      type="text"
+                      placeholder="Telefon"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
 
-                  <input
-                    id="user-orgnr"
-                    type="text"
-                    placeholder="Org. Nr."
-                    value={orgNr}
-                    onChange={(e) => setOrgNr(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                  />
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Org. Nr.</label>
+                    <input
+                      id="user-orgnr"
+                      type="text"
+                      placeholder="Org. Nr."
+                      value={orgNr}
+                      onChange={(e) => setOrgNr(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
 
-                  <textarea
-                    id="user-description"
-                    placeholder="Beskrivning"
-                    rows={3}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                  />
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Beskrivning</label>
+                    <textarea
+                      id="user-description"
+                      placeholder="Beskrivning"
+                      rows={3}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
 
-                  <input
-                    id="user-website"
-                    type="text"
-                    placeholder="Webbaddress"
-                    value={website}
-                    onChange={(e) => setWebsite(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                  />
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Webbaddress</label>
+                    <input
+                      id="user-website"
+                      type="text"
+                      placeholder="Webbaddress"
+                      value={website}
+                      onChange={(e) => setWebsite(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
 
                   <div className="space-y-1">
                     <label className="text-[10px] text-slate-500 font-semibold mb-1 block">Logotyp:</label>
@@ -669,13 +823,199 @@ export default function AdminView({
                 </div>
               )}
 
-              <div className="pt-2 flex flex-col gap-3">
+              <div className="pt-2 shrink-0">
                 <button
                   type="submit"
                   disabled={isUploadingLogo}
-                  className="w-full px-5 py-3 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-950 cursor-pointer shadow-md rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-5 py-3 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-950 cursor-pointer shadow-md rounded-lg disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"
                 >
                   {isUploadingLogo ? "LADDAR UPP LOGOTYP..." : "SKAPA ANVÄNDARE"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Member Modal */}
+      {editingProfile && (
+        <div className="fixed inset-0 bg-slate-950/45 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
+            <div className="flex items-center justify-between p-5 bg-slate-900 text-white shrink-0">
+              <div className="space-y-0.5">
+                <h3 className="font-bold text-base">Redigera medlemsinformation</h3>
+                <p className="text-[10px] text-slate-300">Ändra uppgifterna för {editingProfile.name}.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingProfile(null)}
+                className="text-slate-400 hover:text-white text-xs font-semibold px-2.5 py-1 bg-slate-800 rounded-lg cursor-pointer transition-colors"
+              >
+                Avbryt
+              </button>
+            </div>
+
+            <form onSubmit={handleEditUserSubmit} className="flex-1 overflow-y-auto p-6 space-y-4 text-xs">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Namn *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Namn"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">E-postadress *</label>
+                <input
+                  type="email"
+                  required
+                  placeholder="E-postadress"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs bg-slate-50"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Roll *</label>
+                <select
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value as UserRole)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md bg-slate-50 text-xs"
+                >
+                  <option value="Administrator">Administrator</option>
+                  <option value="Styrelse">Styrelse</option>
+                  <option value="Medlem">Medlem</option>
+                </select>
+              </div>
+
+              {editRole === "Medlem" && (
+                <div className="pt-4 pb-2 border-t border-slate-100 flex items-center justify-center">
+                  <span className="text-[10px] text-slate-500 font-semibold tracking-wide uppercase">
+                    Medlemsinformation
+                  </span>
+                </div>
+              )}
+
+              {editRole === "Medlem" && (
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Företag</label>
+                    <input
+                      type="text"
+                      placeholder="Företagsnamn"
+                      value={editCompany}
+                      onChange={(e) => setEditCompany(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Lokal NR</label>
+                    <input
+                      type="text"
+                      placeholder="t.ex. 22"
+                      value={editUnit}
+                      onChange={(e) => setEditUnit(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Adress</label>
+                    <input
+                      type="text"
+                      placeholder="Gatuadress"
+                      value={editAddress}
+                      onChange={(e) => setEditAddress(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Telefon</label>
+                    <input
+                      type="text"
+                      placeholder="Telefonnummer"
+                      value={editPhone}
+                      onChange={(e) => setEditPhone(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Org. Nr.</label>
+                    <input
+                      type="text"
+                      placeholder="Organisationsnummer"
+                      value={editOrgNr}
+                      onChange={(e) => setEditOrgNr(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Beskrivning</label>
+                    <textarea
+                      placeholder="Beskrivning av verksamheten..."
+                      rows={3}
+                      value={editDescription}
+                      onChange={(e) => setEditDescription(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Webbaddress</label>
+                    <input
+                      type="text"
+                      placeholder="t.ex. www.foretaget.se"
+                      value={editWebsite}
+                      onChange={(e) => setEditWebsite(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] text-slate-500 font-semibold mb-1 block">Logotyp:</label>
+                    {editLogoFileName && (
+                      <div className="text-[10px] text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 mb-2 flex items-center justify-between">
+                        <span className="truncate">{editLogoFileName}</span>
+                        <button
+                          type="button"
+                          onClick={() => setEditLogoFileName("")}
+                          className="text-rose-500 font-bold hover:underline"
+                        >
+                          Ta bort
+                        </button>
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setEditLogoFile(file);
+                        setEditLogoFileName(file ? file.name : "");
+                      }}
+                      className="w-full text-[10px] text-slate-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border file:border-slate-300 file:bg-white file:text-xs file:font-semibold hover:file:bg-slate-50 cursor-pointer"
+                    />
+                    <p className="text-[9px] text-slate-400 mt-1">(önskad storlek: 400x240)</p>
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-2 shrink-0">
+                <button
+                  type="submit"
+                  disabled={isUpdatingUser}
+                  className="w-full px-5 py-3 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-950 cursor-pointer shadow-md rounded-lg disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"
+                >
+                  {isUpdatingUser ? "Sparar ändringar..." : "SPARA MEDLEM"}
                 </button>
               </div>
             </form>

@@ -18,6 +18,8 @@ import {
   ShieldCheck 
 } from "lucide-react";
 import { VacantSpace, UserRole } from "../types";
+import bildImage from "../../images/bild.jpg";
+import bild2Image from "../../images/bild2.jpg";
 
 interface AvailableSpacesViewProps {
   spaces?: VacantSpace[];
@@ -53,82 +55,32 @@ export default function AvailableSpacesView({
 
   return (
     <div className="space-y-12 animate-fade-in" id="available-spaces-container">
-      
-      {/* Visual Header Banner */}
+            {/* Visual Header Banner */}
       <div className="relative rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 text-slate-100 p-8 md:p-12 shadow-md">
         <div className="absolute inset-0 z-0 opacity-15">
           <img 
-            src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=1200" 
+            src={bildImage} 
             alt="Stäket Företagscenter kommersiella lokaler i Järfälla" 
             className="w-full h-full object-cover"
           />
         </div>
         
         <div className="relative z-10 max-w-3xl space-y-4">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/10 text-amber-450 border border-amber-500/20 text-[10px] font-bold uppercase tracking-wider rounded-full">
-            <span className="w-1.5 h-1.5 bg-amber-450 rounded-full animate-ping"></span>
-            Fakturabaserad Info &amp; Annonser
-          </span>
           <h1 className="text-3xl md:text-4xl font-sans font-bold tracking-tight">
             Lediga lokaler i Järfälla — Hitta ert nya kontor eller verkstad
           </h1>
           <p className="text-sm text-slate-300 leading-relaxed max-w-2xl">
-            Söker ni efter kombilokaler, verkstadslokaler, lagerytor eller kontor i Järfälla? Stäket Företagscenter på Skarprättarvägen 7 erbjuder ändamålsenliga och fräscha lokallösningar intill E18, idealiska för tillväxtföretag och etablerade verksamheter.
+            Söker ni efter kombilokaler, verkstadslokaler, lagerytor eller kontor i Järfälla? Stäket Företagscenter på Skarprättarvägen 7 erbjuder ändamånsenliga och fräscha lokallösningar intill E18, idealiska för tillväxtföretag och etablerade verksamheter.
           </p>
         </div>
       </div>
 
-      {/* Structured SEO Navigation Bar */}
-      <div className="bg-slate-100/80 backdrop-blur-xs p-1.5 rounded-2xl border border-slate-200/60 flex flex-wrap gap-1 md:gap-1.5 justify-start">
-        <button
-          onClick={() => setActiveSubTab("lediga-lokaler")}
-          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all relative cursor-pointer ${
-            activeSubTab === "lediga-lokaler" 
-              ? "bg-white text-blue-600 shadow-xs border border-slate-200/30" 
-              : "text-slate-600 hover:bg-white/50 hover:text-slate-900"
-          }`}
-        >
-          Lediga Lokaler Järfälla ({spaces.length})
-        </button>
-        <button
-          onClick={() => setActiveSubTab("kontorshotell")}
-          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all relative cursor-pointer ${
-            activeSubTab === "kontorshotell" 
-              ? "bg-white text-blue-600 shadow-xs border border-slate-200/30" 
-              : "text-slate-600 hover:bg-white/50 hover:text-slate-900"
-          }`}
-        >
-          Kontor &amp; Showroom
-        </button>
-        <button
-          onClick={() => setActiveSubTab("verkstad-lager")}
-          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all relative cursor-pointer ${
-            activeSubTab === "verkstad-lager" 
-              ? "bg-white text-blue-600 shadow-xs border border-slate-200/30" 
-              : "text-slate-600 hover:bg-white/50 hover:text-slate-900"
-          }`}
-        >
-          Verkstad &amp; Lager Stockholm
-        </button>
-        <button
-          onClick={() => setActiveSubTab("omradesguide")}
-          className={`px-5 py-2.5 rounded-xl text-xs font-bold transition-all relative cursor-pointer ${
-            activeSubTab === "omradesguide" 
-              ? "bg-white text-blue-600 shadow-xs border border-slate-200/30" 
-              : "text-slate-600 hover:bg-white/50 hover:text-slate-900"
-          }`}
-        >
-          Områdesguide Stäket Järfälla
-        </button>
-      </div>
-
       {/* Main Tab Content Routing */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        <div className="lg:col-span-8 space-y-8">
+        <div className="lg:col-span-8 space-y-12">
           
-          {/* TAB 1: LEDIGA LOKALER JÄRFÄLLA */}
-          {activeSubTab === "lediga-lokaler" && (
-            <div className="space-y-6" id="seo-tab-lediga-lokaler">
+          {/* SECTION 1: LEDIGA LOKALER JÄRFÄLLA */}
+          <div className="space-y-6" id="seo-tab-lediga-lokaler">
               <div className="space-y-3">
                 <h2 className="text-xl font-bold text-slate-900 border-l-4 border-blue-600 pl-3">
                   Att hyra lokal i Järfälla hos Brf. Stäkets Företagscenter
@@ -262,10 +214,10 @@ export default function AvailableSpacesView({
                 )}
               </div>
             </div>
-          )}
 
-          {/* TAB 2: KONTORSHOTELL JÄRFÄLLA */}
-          {activeSubTab === "kontorshotell" && (
+            <hr className="border-slate-200/60 my-8" />
+
+            {/* SECTION 2: KONTORSHOTELL JÄRFÄLLA */}
             <div className="space-y-6" id="seo-tab-kontorshotell">
               <div className="space-y-3">
                 <h2 className="text-xl font-bold text-slate-900 border-l-4 border-blue-600 pl-3">
@@ -301,14 +253,14 @@ export default function AvailableSpacesView({
                 </div>
               </div>
             </div>
-          )}
 
-          {/* TAB 3: VERKSTADSLOKAL STOCKHOLM */}
-          {activeSubTab === "verkstad-lager" && (
+            <hr className="border-slate-200/60 my-8" />
+
+            {/* SECTION 3: VERKSTADSLOKAL STOCKHOLM */}
             <div className="space-y-6" id="seo-tab-verkstad-lager">
               <div className="space-y-3">
                 <h2 className="text-xl font-bold text-slate-900 border-l-4 border-blue-600 pl-3">
-                  Verkstads- &amp; Lagerlokaler i Järfälla — Tekniska specifikationer
+                  Verkstäds- &amp; Lagerlokaler i Järfälla — Tekniska specifikationer
                 </h2>
                 <p className="text-xs text-slate-600 leading-relaxed">
                   Söker ni en funktionell <strong className="text-slate-800 font-semibold">verkstad eller lagerlokal i Järfälla</strong>? Våra kombilokaler erbjuder en totalyta om ca 215 kvm fördelat lika på två plan med tillhörande egen parkering, rymlig vikport och mycket goda tekniska standarder.
@@ -349,10 +301,10 @@ export default function AvailableSpacesView({
                 </table>
               </div>
             </div>
-          )}
 
-          {/* TAB 4: OMRÅDESGUIDE STÄKET JÄRFÄLLA */}
-          {activeSubTab === "omradesguide" && (
+            <hr className="border-slate-200/60 my-8" />
+
+            {/* SECTION 4: OMRÅDESGUIDE STÄKET JÄRFÄLLA */}
             <div className="space-y-6" id="seo-tab-omradesguide">
               <div className="space-y-3">
                 <h2 className="text-xl font-bold text-slate-900 border-l-4 border-blue-600 pl-3">
@@ -360,7 +312,7 @@ export default function AvailableSpacesView({
                 </h2>
                 <div className="relative h-48 rounded-2xl overflow-hidden mb-4">
                   <img 
-                    src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=800" 
+                    src={bild2Image} 
                     alt="Stäket Järfälla strategiskt företagscenter mälardalen" 
                     className="w-full h-full object-cover" 
                   />
@@ -368,31 +320,30 @@ export default function AvailableSpacesView({
                     <p className="text-xs font-bold text-white">Stäket, Järfälla — Strategiskt placerat intill E18 &amp; E4:an</p>
                   </div>
                 </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-650 leading-relaxed">
                   Området <strong className="text-slate-800 font-semibold">Stäket i Järfälla</strong> (nordvästra Stockholm) har ett fantastiskt läge i köpstarkt område intill E18 samt Rotebro/Stäketleden och E4:an. Med välkända grannar som K-Rauta, Bilprovningen, Scania, Hemköp och McDonalds har området ständigt högt flöde av kunder och tung fordonstrafik.
                 </p>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-slate-650 leading-relaxed">
                   Detta gör geografin helt ovärderlig för hantverkare, bilhandlare, transportfirmor och lokala utlämningsställen som värdesätter smidig och omedelbar logistikkoppling till hela Storstockholmsregionen.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl space-y-2">
-                  <h4 className="font-bold text-slate-800 text-xs">🚗 Transportleder</h4>
+                  <h4 className="font-bold text-slate-800 text-xs">Transportleder</h4>
                   <p className="text-xs text-slate-500 leading-relaxed">
                     Direkt anslutning till E18 och Rotebro/Stäketleden. Det tar ca 20 minuter med bil till centrala Stockholm och ca 25 minuter till Arlanda.
                   </p>
                 </div>
 
                 <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl space-y-2">
-                  <h4 className="font-bold text-slate-800 text-xs">🛠️ Leverantörstäthet</h4>
+                  <h4 className="font-bold text-slate-800 text-xs">Leverantörstäthet</h4>
                   <p className="text-xs text-slate-500 leading-relaxed">
                     Direkt tillgång till tunga företagspartners, byggmaterialleverantörer, bilprovningsstationer och fackmässig verkstadskompetens på samma och närliggande gator.
                   </p>
                 </div>
               </div>
             </div>
-          )}
 
         </div>
 

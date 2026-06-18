@@ -12,17 +12,18 @@ import {
 } from "lucide-react";
 import { NoticePost, UserRole, UserProfile } from "../types";
 import heroImage from "../../images/staket-foretagscenter-hero.jpg";
+import bildImage from "../../images/bild.jpg";
 
 import OurCompaniesView from "./OurCompaniesView";
 import AvailableSpacesView from "./AvailableSpacesView";
 import AboutUsView from "./AboutUsView";
 import ContactPublicView from "./ContactPublicView";
 
-// Import custom font for the cursive text in the design
+// Import custom font for the cursive/italic text in the design
 const style = document.createElement("style");
 style.innerHTML = `
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@500;600;700&display=swap');
-.font-cursive { font-family: 'Dancing Script', cursive; }
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,400;1,600&display=swap');
+.font-cursive { font-family: 'Playfair Display', serif; font-style: italic; }
 `;
 document.head.appendChild(style);
 
@@ -101,12 +102,12 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
               HEM
             </button>
             <button
-              onClick={() => onNavigate("lediga_lokaler")}
+              onClick={() => onNavigate("om_oss")}
               className={`hover:text-[#B68F52] transition-colors cursor-pointer pb-1 ${
-                activeTab === "lediga_lokaler" ? "font-bold text-[#B68F52]" : ""
+                activeTab === "om_oss" ? "font-bold text-[#B68F52]" : ""
               }`}
             >
-              LEDIGA LOKALER
+              OM OSS
             </button>
             <button
               onClick={() => onNavigate("vara_foretag")}
@@ -117,12 +118,12 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
               VÅRA FÖRETAG
             </button>
             <button
-              onClick={() => onNavigate("om_oss")}
+              onClick={() => onNavigate("lediga_lokaler")}
               className={`hover:text-[#B68F52] transition-colors cursor-pointer pb-1 ${
-                activeTab === "om_oss" ? "font-bold text-[#B68F52]" : ""
+                activeTab === "lediga_lokaler" ? "font-bold text-[#B68F52]" : ""
               }`}
             >
-              OM OSS
+              LEDIGA LOKALER
             </button>
             <button
               onClick={() => onNavigate("kontakt")}
@@ -167,14 +168,14 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
             </button>
             <button
               onClick={() => {
-                onNavigate("lediga_lokaler");
+                onNavigate("om_oss");
                 setMobileMenuOpen(false);
               }}
               className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
-                activeTab === "lediga_lokaler" ? "text-[#B68F52]" : ""
+                activeTab === "om_oss" ? "text-[#B68F52]" : ""
               }`}
             >
-              LEDIGA LOKALER
+              OM OSS
             </button>
             <button
               onClick={() => {
@@ -189,14 +190,14 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
             </button>
             <button
               onClick={() => {
-                onNavigate("om_oss");
+                onNavigate("lediga_lokaler");
                 setMobileMenuOpen(false);
               }}
               className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
-                activeTab === "om_oss" ? "text-[#B68F52]" : ""
+                activeTab === "lediga_lokaler" ? "text-[#B68F52]" : ""
               }`}
             >
-              OM OSS
+              LEDIGA LOKALER
             </button>
             <button
               onClick={() => {
@@ -233,8 +234,8 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
             <div className="max-w-2xl space-y-6">
               
               <h1 className="text-5xl lg:text-7xl font-sans font-bold leading-[1.1] tracking-tight text-white drop-shadow-md">
-                Din plats för arbete,<br />
-                service och <span className="font-cursive text-[#8CA899] font-normal tracking-normal pr-4 inline-block translate-y-1">tillväxt</span>
+                Välkommen till<br />
+                Stäket Företagscenter
               </h1>
               
               <p className="text-base lg:text-lg text-gray-200 leading-relaxed max-w-xl font-medium drop-shadow-sm pb-2">
@@ -330,7 +331,7 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
             {/* Card 1 */}
             <div className="group rounded-2xl overflow-hidden bg-white shadow-xl shadow-gray-200/50 flex flex-col items-center cursor-pointer" onClick={() => onNavigate("lediga_lokaler")}>
               <div className="w-full h-64 overflow-hidden mask-image-bottom relative">
-                <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=800" alt="Flexibla kombilokaler i Järfälla" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <img src={bildImage} alt="Flexibla kombilokaler i Järfälla" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
               </div>
               <div className="px-6 pb-8 pt-4 w-full relative z-10 flex items-start gap-4">
@@ -398,63 +399,49 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
 
         {/* SECTION: OM STÄKET */}
         <section id="omoss" className="py-24 overflow-hidden bg-transparent scroll-mt-10">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Left Image grid block mock */}
-            <div className="relative">
-              <div className="rounded-[40px] overflow-hidden shadow-xl relative z-10 w-full h-[540px]">
-                <img src="https://images.unsplash.com/photo-1605810230434-7631ac76ec81?q=80&w=800" alt="Bekväm lounge för nätverkande och kaffepauser på Stäket Företagscenter" className="w-full h-full object-cover" />
+          <div className="max-w-3xl mx-auto px-6 text-center space-y-6">
+            <span className="font-cursive text-3xl text-[#B68F52]">Om Stäket Företagscenter</span>
+            <h2 className="text-[38px] lg:text-[46px] font-bold text-[#0B2C24] leading-[1.2] tracking-tight">
+              En plats där företag trivs <br />
+              och <span className="font-cursive text-[#0B2C24] font-normal px-1 tracking-normal inline-block">utvecklas</span>
+            </h2>
+            
+            <p className="text-[#0B2C24]/80 text-[15px] leading-relaxed max-w-lg mx-auto pb-4 font-medium italic border-l-4 border-[#B68F52] pl-4 text-left">
+              "Behöver du tjänster, konsultationer eller bara byta däck eller serva bilen är du alltid välkommen över på en kopp kaffe till vårt trevliga företagscenter, vi tar gärna hand om dig."
+            </p>
+
+            <div className="max-w-[480px] mx-auto grid grid-cols-2 gap-4 pb-6">
+              <div className="flex items-center gap-2.5 justify-start">
+                <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+                <span className="text-[13px] font-bold text-[#0B2C24] text-left">Kombilokaler (ca 215 m²)</span>
               </div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[110%] bg-[#B68F52]/10 rounded-full blur-3xl -z-10"></div>
-              {/* Pattern mock element */}
-              <div className="absolute -bottom-10 -right-10 w-48 h-48 opacity-10 rotate-45 -z-10" style={{ backgroundImage: 'radial-gradient(#B68F52 2px, transparent 2px)', backgroundSize: '16px 16px'}}></div>
+              <div className="flex items-center gap-2.5 justify-start">
+                <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+                <span className="text-[13px] font-bold text-[#0B2C24] text-left">Strategiskt intill E18</span>
+              </div>
+              <div className="flex items-center gap-2.5 justify-start">
+                <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+                <span className="text-[13px] font-bold text-[#0B2C24] text-left">Mångsidig branschbredd</span>
+              </div>
+              <div className="flex items-center gap-2.5 justify-start">
+                <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+                <span className="text-[13px] font-bold text-[#0B2C24] text-left">Fria parkeringsplatser</span>
+              </div>
             </div>
 
-            {/* Right content */}
-            <div className="space-y-6">
-              <span className="font-cursive text-3xl text-[#B68F52]">Om Stäket Företagscenter</span>
-              <h2 className="text-[38px] lg:text-[46px] font-bold text-[#0B2C24] leading-[1.1] tracking-tight">
-                En plats där företag trivs <br />
-                och <span className="font-cursive text-[#0B2C24] font-normal px-1 tracking-normal inline-block translate-y-1">utvecklas</span>
-              </h2>
-              
-              <p className="text-[#0B2C24]/80 text-[15px] leading-relaxed max-w-lg pb-4 font-medium italic border-l-4 border-[#B68F52] pl-4">
-                "Behöver du tjänster, konsultationer eller bara byta däck eller serva bilen är du alltid välkommen över på en kopp kaffe till vårt trevliga företagscenter, vi tar gärna hand om dig."
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-5 gap-x-8 pb-6">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  </div>
-                  <span className="text-[13px] font-bold text-[#0B2C24]">Kombilokaler (ca 215 m²)</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  </div>
-                  <span className="text-[13px] font-bold text-[#0B2C24]">Strategiskt intill E18</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  </div>
-                  <span className="text-[13px] font-bold text-[#0B2C24]">Mångsidig branschbredd</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
-                    <Check className="w-3.5 h-3.5 stroke-[3]" />
-                  </div>
-                  <span className="text-[13px] font-bold text-[#0B2C24]">Fria parkeringsplatser</span>
-                </div>
-              </div>
-
-              <button className="flex items-center justify-center gap-2 bg-[#0B2C24] text-white px-7 py-3.5 rounded text-[11px] font-bold tracking-wider hover:bg-[#081e18] transition-colors w-max" onClick={() => onNavigate("om_oss")}>
-                LÄS MER OM OSS <ArrowRight className="w-4 h-4 ml-1" />
-              </button>
-            </div>
+            <button className="flex items-center justify-center gap-2 bg-[#0B2C24] text-white px-7 py-3.5 rounded text-[11px] font-bold tracking-wider hover:bg-[#081e18] transition-colors mx-auto" onClick={() => onNavigate("om_oss")}>
+              LÄS MER OM OSS <ArrowRight className="w-4 h-4 ml-1" />
+            </button>
           </div>
         </section>
-
 
         </>
         ) : (
@@ -468,74 +455,83 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
           </div>
         )}
 
+
+        {/* ANSLAGSTAVLA SECTION RIGHT ABOVE FOOTER */}
+        <section className="bg-white border-t border-gray-150 py-12 px-6">
+          <div className="max-w-7xl mx-auto space-y-6">
+            <div className="flex items-center justify-between border-b border-gray-100 pb-3">
+              <div className="space-y-1">
+                <span className="font-cursive text-2xl text-[#B68F52]">Anslagstavlan</span>
+                <h3 className="font-bold text-[#0B2C24] text-xl tracking-tight">Senaste nytt från föreningen</h3>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {notices && notices.slice(0, 3).map((notice) => {
+                const { day, month } = getNoticeAbbreviation(notice.date);
+                const cleanExcerpt = notice.content.length > 120 
+                  ? notice.content.substring(0, 120) + "..."
+                  : notice.content;
+                return (
+                  <div key={notice.id} className="flex gap-4 items-start bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:bg-[#F9FAF9] transition-all hover:shadow-2xs">
+                    <div className="bg-[#0B2C24] text-white px-2.5 py-1.5 flex flex-col items-center justify-center shrink-0 min-w-[55px] rounded-lg shadow-2xs">
+                      <span className="text-lg font-bold font-mono tracking-tight leading-none text-white">{day}</span>
+                      <span className="text-[9px] uppercase font-bold tracking-wider text-white/85 mt-1">{month}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h5 className="font-bold text-[#0B2C24] text-sm hover:text-[#B68F52] hover:underline cursor-pointer leading-snug truncate">
+                        {notice.title}
+                      </h5>
+                      <p className="text-gray-500 text-xs leading-relaxed mt-2 line-clamp-3">
+                        {cleanExcerpt}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+              {(!notices || notices.length === 0) && (
+                <div className="col-span-full text-center py-6">
+                  <p className="text-gray-400 text-xs italic">Inga meddelanden publicerade ännu.</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+
         {/* FOOTER */}
         <footer id="kontakt" className="bg-[#F8F9FA] border-t border-gray-200">
-          <div className="max-w-7xl mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-3 gap-12 lg:gap-16">
+          <div className="max-w-7xl mx-auto px-6 py-12 space-y-8">
             
-            {/* Column 1: Om Oss */}
-            <div className="space-y-4">
-              <h4 className="font-bold text-[#0B2C24] text-[13px] uppercase tracking-wider border-b border-[#0B2C24]/10 pb-2">
-                Om Oss
-              </h4>
-              <div className="space-y-2">
+            {/* Top row: Om Oss and Contact Row */}
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8 border-b border-gray-200 pb-8">
+              
+              {/* Om Oss */}
+              <div className="max-w-md space-y-2">
                 <p className="text-[#0B2C24] font-bold text-base tracking-tight">Stäket Företagscenter</p>
-                <p className="text-gray-500 text-[13px] leading-relaxed font-medium mt-1">
-                  Företagstjänster - Konsultationer - Service
+                <p className="text-gray-500 text-[13px] leading-relaxed font-medium">
+                  Företagstjänster - Konsultationer - Service. Ett komplett företagscenter i Järfälla med 30 aktiva bolag.
                 </p>
               </div>
-            </div>
 
-            {/* Column 2: Anslagstavlan (Latest 3 posts) */}
-            <div className="space-y-4">
-              <h4 className="font-bold text-[#0B2C24] text-[13px] uppercase tracking-wider border-b border-[#0B2C24]/10 pb-2">
-                Anslagstavlan
-              </h4>
-              <div className="space-y-5">
-                {notices && notices.slice(0, 3).map((notice) => {
-                  const { day, month } = getNoticeAbbreviation(notice.date);
-                  const cleanExcerpt = notice.content.length > 80 
-                    ? notice.content.substring(0, 80) + "..."
-                    : notice.content;
-                  return (
-                    <div key={notice.id} className="flex gap-3.5 items-start bg-white/50 p-2.5 rounded border border-gray-100/50 hover:bg-white transition-colors">
-                      <div className="bg-[#0B2C24] text-white px-2 py-1 flex flex-col items-center justify-center shrink-0 min-w-[50px] rounded shadow-xs">
-                        <span className="text-base font-bold font-mono tracking-tight leading-none text-white">{day}</span>
-                        <span className="text-[9px] uppercase font-bold tracking-wider text-white/85 mt-1">{month}</span>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h5 className="font-bold text-[#0B2C24] text-[13px] hover:text-[#B68F52] hover:underline cursor-pointer leading-tight truncate">
-                          {notice.title}
-                        </h5>
-                        <p className="text-gray-500 text-[11px] leading-normal mt-1 line-clamp-2">
-                          {cleanExcerpt}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-                {(!notices || notices.length === 0) && (
-                  <p className="text-gray-400 text-xs italic">Inga meddelanden publicerade ännu.</p>
-                )}
-              </div>
-            </div>
-
-            {/* Column 3: Kontakta Oss */}
-            <div className="space-y-4">
-              <h4 className="font-bold text-[#0B2C24] text-[13px] uppercase tracking-wider border-b border-[#0B2C24]/10 pb-2">
-                Kontakta Oss
-              </h4>
-              <div className="space-y-4 text-[13px] text-[#0B2C24] font-medium leading-relaxed">
+              {/* Contact details in a row */}
+              <div className="flex flex-col sm:flex-row sm:items-center gap-6 lg:gap-10 text-[13px] text-[#0B2C24] font-medium">
                 <div>
                   <span className="block font-bold text-gray-400 text-[10px] uppercase tracking-wider mb-0.5">Adress:</span>
                   <span className="block text-[#0B2C24]">Skarprättarvägen 7</span>
                   <span className="block text-[#0B2C24]">176 77 Järfälla</span>
                 </div>
+                
+                <div className="w-px h-8 bg-gray-200 hidden sm:block"></div>
+
                 <div>
                   <span className="block font-bold text-gray-400 text-[10px] uppercase tracking-wider mb-0.5">Telefon:</span>
                   <a href="tel:0707772111" className="block text-[#0B2C24] hover:text-[#B68F52] transition-colors font-semibold">
-                    070 777 2111 - Mobil
+                    070 777 2111
                   </a>
                 </div>
+
+                <div className="w-px h-8 bg-gray-200 hidden sm:block"></div>
+
                 <div>
                   <span className="block font-bold text-gray-400 text-[10px] uppercase tracking-wider mb-0.5">Email:</span>
                   <a href="mailto:brfsfc@gmail.com" className="block text-[#0B2C24] hover:text-[#B68F52] transition-colors underline decoration-dotted">
@@ -543,19 +539,22 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
                   </a>
                 </div>
               </div>
+
             </div>
 
-          </div>
-
-          <div className="bg-[#093325] text-white/70 py-4 px-6 flex flex-col md:flex-row items-center justify-between text-[11px] gap-2 font-medium tracking-wide">
-            <span>© 2026 Brf. Stäkets Företagscenter. Alla rättigheter förbehållna.</span>
-            <div className="space-x-4 flex items-center">
-              <a href="#" className="hover:text-white transition-colors">Integritetspolicy</a>
-              <span className="text-white/30">|</span>
-              <a href="#" className="hover:text-white transition-colors">Cookies</a>
+            {/* Bottom Row */}
+            <div className="flex flex-col md:flex-row items-center justify-between text-[11px] text-gray-500 gap-4 font-medium tracking-wide">
+              <span>© 2026 Brf. Stäkets Företagscenter. Alla rättigheter förbehållna.</span>
+              <div className="space-x-4 flex items-center">
+                <a href="#" className="hover:text-gray-800 transition-colors">Integritetspolicy</a>
+                <span className="text-gray-300">|</span>
+                <a href="#" className="hover:text-gray-800 transition-colors">Cookies</a>
+              </div>
             </div>
+
           </div>
         </footer>
+
 
         {/* Demo Controller Button overlay (so user can switch back to member easily) */}
         <div className="fixed bottom-16 left-6 z-50">

@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { Search, Mail, Phone, MapPin, Building, Copy, FileText, Check } from "lucide-react";
+import { Search, Mail, Phone, MapPin, Building, Copy, FileText, Check, List, Grid } from "lucide-react";
 import { UserProfile } from "../types";
 
 interface ContactBookViewProps {
@@ -14,6 +14,7 @@ interface ContactBookViewProps {
 export default function ContactBookView({ profiles = [] }: ContactBookViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"list" | "card">("list");
 
   const handleCopyEmail = (email: string, id: string) => {
     navigator.clipboard.writeText(email);
@@ -21,13 +22,24 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // Instant filter by name, company, unit, or email
+  // Filter out:
+  // 1. Administrators
+  // 2. Profiles without a valid unit (Lokal) and company (Företag)
   const filteredProfiles = profiles.filter((p) => {
+    if (p.role === "Administrator") return false;
+
+    const unitVal = (p.unit || "").trim();
+    const compVal = (p.company || "").trim();
+    const hasUnit = unitVal !== "" && unitVal !== "Ej angivet";
+    const hasCompany = compVal !== "" && compVal !== "Ej angivet" && compVal !== "Enskild Firma / Privat";
+
+    if (!hasUnit && !hasCompany) return false;
+
     const q = searchQuery.toLowerCase();
     return (
       p.name.toLowerCase().includes(q) ||
-      p.company.toLowerCase().includes(q) ||
-      p.unit.toLowerCase().includes(q) ||
+      (p.company && p.company.toLowerCase().includes(q)) ||
+      (p.unit && p.unit.toLowerCase().includes(q)) ||
       p.email.toLowerCase().includes(q)
     );
   });
@@ -38,11 +50,11 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
       <div className="space-y-1">
         <h1 className="text-3xl font-sans font-bold tracking-tight text-slate-900">Kontaktboken</h1>
         <p className="text-slate-500 text-sm">
-          Sök och kontakta andra medlemmar eller företag i huset. Ange lokalnummer eller företagsnamn för att filtrera.
+          Sök och kontakta andra medlemmar eller företag i fastigheten.
         </p>
       </div>
 
-      {/* Sökfält & Tips banner */}
+      {/* Control bar: Search input + View Mode switcher */}
       <div className="bg-white p-4 rounded-xl border border-slate-100 shadow-3xs flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -56,18 +68,102 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
           />
         </div>
 
-        <div className="text-[11px] text-slate-400 font-medium">
-          Hittade {filteredProfiles.length} medlemmar
+        <div className="flex items-center gap-4 shrink-0">
+          <div className="flex border border-slate-200 rounded-xl overflow-hidden shrink-0">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                viewMode === "list" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <List className="w-3.5 h-3.5" />
+              Lista
+            </button>
+            <button
+              onClick={() => setViewMode("card")}
+              className={`px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                viewMode === "card" ? "bg-slate-900 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <Grid className="w-3.5 h-3.5" />
+              Kort
+            </button>
+          </div>
+          <div className="text-[11px] text-slate-400 font-medium">
+            Hittade {filteredProfiles.length} medlemmar
+          </div>
         </div>
       </div>
 
-      {/* Profiles list */}
+      {/* Profiles display */}
       {filteredProfiles.length === 0 ? (
         <div className="border border-dashed border-slate-200 p-12 rounded-2xl text-center bg-slate-50/50 space-y-2">
           <p className="font-bold text-slate-700 text-sm">Ingen medlem hittades</p>
           <p className="text-xs text-slate-400">Pröva att söka på ett annat lokalnummer eller efternamn.</p>
         </div>
+      ) : viewMode === "list" ? (
+        /* List View */
+        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-2xs">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold text-[10px] uppercase tracking-wider">
+                  <th className="px-5 py-3.5">Lokal</th>
+                  <th className="px-5 py-3.5">Företag</th>
+                  <th className="px-5 py-3.5">Org.nr</th>
+                  <th className="px-5 py-3.5">Kontaktperson</th>
+                  <th className="px-5 py-3.5">E-post</th>
+                  <th className="px-5 py-3.5">Telefon</th>
+                  <th className="px-5 py-3.5">Adress</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-xs">
+                {filteredProfiles.map((p) => (
+                  <tr key={p.id} className="hover:bg-slate-50/55 transition-colors">
+                    <td className="px-5 py-4 font-bold text-slate-800">
+                      <span className="inline-block px-2 py-0.5 text-[10.5px] font-bold tracking-wider text-slate-700 bg-slate-100 rounded-md">
+                        {p.unit}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 font-semibold text-slate-800">
+                      {p.company}
+                    </td>
+                    <td className="px-5 py-4 text-slate-500 font-mono">{p.orgNr}</td>
+                    <td className="px-5 py-4">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-medium text-slate-700">{p.name}</span>
+                        {p.role === "Styrelse" && (
+                          <span className="inline-block px-1.5 py-0.2 text-[8px] font-bold text-emerald-700 bg-emerald-50 rounded uppercase border border-emerald-100">
+                            Styrelse
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 text-slate-500 font-mono">
+                      <div className="flex items-center gap-1.5">
+                        <a href={`mailto:${p.email}`} className="text-emerald-600 hover:underline">{p.email}</a>
+                        <button
+                          onClick={() => handleCopyEmail(p.email, p.id)}
+                          className="p-0.5 rounded text-slate-400 hover:text-slate-600 hover:bg-slate-100 shrink-0 transition-colors cursor-pointer"
+                        >
+                          {copiedId === p.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-5 py-4 text-slate-500">
+                      <a href={`tel:${p.phone}`} className="hover:underline">{p.phone}</a>
+                    </td>
+                    <td className="px-5 py-4 text-slate-400 truncate max-w-[150px]" title={p.address}>
+                      {p.address}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       ) : (
+        /* Card View */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProfiles.map((p) => (
             <div
@@ -116,7 +212,7 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
                     </a>
                     <button
                       onClick={() => handleCopyEmail(p.email, p.id)}
-                      className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 shrink-0 transition-colors"
+                      className="p-1 rounded-md text-slate-400 hover:text-slate-600 hover:bg-slate-100 shrink-0 transition-colors cursor-pointer"
                       title="Kopiera e-post"
                     >
                       {copiedId === p.id ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
