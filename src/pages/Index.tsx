@@ -21,7 +21,9 @@ import {
   X
 } from "lucide-react";
 
-import { UserRole, UserProfile, NoticePost, FileItem, VacantSpace } from "../types";
+import { UserRole, UserProfile, NoticePost, FileItem, VacantSpace, FileCategory, BoardFolder } from "../types";
+import { dbService } from "../lib/db";
+import { supabase } from "../lib/supabase";
 import {
   loadProfiles,
   saveProfiles,
@@ -62,10 +64,48 @@ export default function Index() {
 
   // Load database on mount and sanitize URL hash if present
   useEffect(() => {
+    // 1. Initial fast load from localStorage cache
     setProfiles(loadProfiles());
     setNotices(loadNotices());
     setFiles(loadFiles());
     setSpaces(loadSpaces());
+
+    // 2. Fetch fresh database data from Supabase asynchronously
+    async function fetchFromSupabase() {
+      try {
+        const dbProfiles = await dbService.getProfiles();
+        setProfiles(dbProfiles);
+        saveProfiles(dbProfiles);
+      } catch (e) {
+        console.warn("Could not fetch profiles from Supabase, using cache:", e);
+      }
+
+      try {
+        const dbNotices = await dbService.getNotices();
+        setNotices(dbNotices);
+        saveNotices(dbNotices);
+      } catch (e) {
+        console.warn("Could not fetch notices from Supabase, using cache:", e);
+      }
+
+      try {
+        const dbFiles = await dbService.getFiles();
+        setFiles(dbFiles);
+        saveFiles(dbFiles);
+      } catch (e) {
+        console.warn("Could not fetch files from Supabase, using cache:", e);
+      }
+
+      try {
+        const dbSpaces = await dbService.getSpaces();
+        setSpaces(dbSpaces);
+        saveSpaces(dbSpaces);
+      } catch (e) {
+        console.warn("Could not fetch vacant spaces from Supabase, using cache:", e);
+      }
+    }
+
+    fetchFromSupabase();
 
     // Clean up any trailing URL hashes (e.g. #omoss) on fresh load to keep the address bar clean at root /
     if (window.location.hash) {
@@ -192,82 +232,166 @@ export default function Index() {
   }, [activeTab]);
 
   // Sync state triggers
-  const handleAddNotice = (notice: Omit<NoticePost, "id" | "date">) => {
-    const fresh: NoticePost = {
-      ...notice,
-      id: `n-${Date.now()}`,
-      date: new Date().toISOString().split("T")[0],
-    };
-    const updated = [fresh, ...notices];
-    setNotices(updated);
-    saveNotices(updated);
+  const handleAddNotice = async (notice: Omit<NoticePost, "id" | "date">) => {
+    try {
+      const dbNotice = await dbService.insertNotice(notice);
+      const updated = [dbNotice, ...notices];
+      setNotices(updated);
+      saveNotices(updated);
+    } catch (e) {
+      console.error("Failed to add notice to Supabase, saving locally:", e);
+      const fresh: NoticePost = {
+        ...notice,
+        id: `n-${Date.now()}`,
+        date: new Date().toISOString().split("T")[0],
+      };
+      const updated = [fresh, ...notices];
+      setNotices(updated);
+      saveNotices(updated);
+    }
   };
 
-  const handleDeleteNotice = (id: string) => {
-    const updated = notices.filter((n) => n.id !== id);
-    setNotices(updated);
-    saveNotices(updated);
+  const handleDeleteNotice = async (id: string) => {
+    try {
+      await dbService.deleteNotice(id);
+      const updated = notices.filter((n) => n.id !== id);
+      setNotices(updated);
+      saveNotices(updated);
+    } catch (e) {
+      console.error("Failed to delete notice from Supabase, deleting locally:", e);
+      const updated = notices.filter((n) => n.id !== id);
+      setNotices(updated);
+      saveNotices(updated);
+    }
   };
 
-  const handleAddFile = (file: Omit<FileItem, "id" | "uploadedAt">) => {
-    const fresh: FileItem = {
-      ...file,
-      id: `f-${Date.now()}`,
-      uploadedAt: new Date().toISOString().split("T")[0],
-    };
-    const updated = [fresh, ...files];
-    setFiles(updated);
-    saveFiles(updated);
-  };
-
-  const handleDeleteFile = (id: string) => {
-    const updated = files.filter((f) => f.id !== id);
-    setFiles(updated);
-    saveFiles(updated);
-  };
-
-  const handleAddProfile = (profile: Omit<UserProfile, "id">) => {
-    const fresh: UserProfile = {
-      ...profile,
-      id: `p-${Date.now()}`,
-    };
-    const updated = [...profiles, fresh];
-    setProfiles(updated);
-    saveProfiles(updated);
-  };
-
-  const handleUpdateRole = (id: string, newRole: UserRole) => {
-    const updated = profiles.map((p) => {
-      if (p.id === id) {
-        return { ...p, role: newRole };
+  const handleAddFile = async (file: Omit<FileItem, "id" | "uploadedAt">, realFile?: File) => {
+    try {
+      let dbFile: FileItem;
+      if (realFile) {
+        dbFile = await dbService.uploadFile(realFile, file.category, file.folder);
+      } else {
+        const dbRecord = {
+          name: file.name,
+          category: file.category,
+          folder: file.folder || null,
+          file_size: file.fileSize,
+          mime_type: "application/pdf",
+          url: "https://example.com/dummy.pdf",
+          uploaded_at: new Date().toISOString().split("T")[0],
+        };
+        const { data, error } = await supabase.from("files").insert(dbRecord).select().single();
+        if (error) throw error;
+        dbFile = {
+          id: data.id,
+          name: data.name,
+          category: data.category as FileCategory,
+          folder: data.folder as BoardFolder | undefined,
+          uploadedAt: data.uploaded_at,
+          fileSize: data.file_size,
+          mimeType: data.mime_type,
+        };
       }
-      return p;
-    });
-    setProfiles(updated);
-    saveProfiles(updated);
+      const updated = [dbFile, ...files];
+      setFiles(updated);
+      saveFiles(updated);
+    } catch (e) {
+      console.error("Failed to upload/add file to Supabase:", e);
+      alert("Kunde inte ladda upp filen: " + (e as Error).message);
+    }
   };
 
-  const handleDeleteProfile = (id: string) => {
-    const updated = profiles.filter((p) => p.id !== id);
-    setProfiles(updated);
-    saveProfiles(updated);
+  const handleDeleteFile = async (id: string, name: string, category: FileCategory) => {
+    try {
+      await dbService.deleteFile(id, name, category);
+      const updated = files.filter((f) => f.id !== id);
+      setFiles(updated);
+      saveFiles(updated);
+    } catch (e) {
+      console.error("Failed to delete file from Supabase, deleting locally:", e);
+      const updated = files.filter((f) => f.id !== id);
+      setFiles(updated);
+      saveFiles(updated);
+    }
   };
 
-  const handleAddSpace = (space: Omit<VacantSpace, "id" | "createdAt">) => {
-    const fresh: VacantSpace = {
-      ...space,
-      id: `s-${Date.now()}`,
-      createdAt: new Date().toISOString().split("T")[0],
-    };
-    const updated = [fresh, ...spaces];
-    setSpaces(updated);
-    saveSpaces(updated);
+  const handleAddProfile = async (profile: Omit<UserProfile, "id">) => {
+    try {
+      const dbProfile = await dbService.insertProfile(profile);
+      const updated = [...profiles, dbProfile];
+      setProfiles(updated);
+      saveProfiles(updated);
+    } catch (e) {
+      console.error("Failed to add profile to Supabase:", e);
+      const fresh: UserProfile = {
+        ...profile,
+        id: `p-${Date.now()}`,
+      };
+      const updated = [...profiles, fresh];
+      setProfiles(updated);
+      saveProfiles(updated);
+    }
   };
 
-  const handleDeleteSpace = (id: string) => {
-    const updated = spaces.filter((s) => s.id !== id);
-    setSpaces(updated);
-    saveSpaces(updated);
+  const handleUpdateRole = async (id: string, newRole: UserRole) => {
+    try {
+      await dbService.updateProfile(id, { role: newRole });
+      const updated = profiles.map((p) => (p.id === id ? { ...p, role: newRole } : p));
+      setProfiles(updated);
+      saveProfiles(updated);
+    } catch (e) {
+      console.error("Failed to update role in Supabase:", e);
+      const updated = profiles.map((p) => (p.id === id ? { ...p, role: newRole } : p));
+      setProfiles(updated);
+      saveProfiles(updated);
+    }
+  };
+
+  const handleDeleteProfile = async (id: string) => {
+    try {
+      await dbService.deleteProfile(id);
+      const updated = profiles.filter((p) => p.id !== id);
+      setProfiles(updated);
+      saveProfiles(updated);
+    } catch (e) {
+      console.error("Failed to delete profile from Supabase:", e);
+      const updated = profiles.filter((p) => p.id !== id);
+      setProfiles(updated);
+      saveProfiles(updated);
+    }
+  };
+
+  const handleAddSpace = async (space: Omit<VacantSpace, "id" | "createdAt">) => {
+    try {
+      const dbSpace = await dbService.insertSpace(space);
+      const updated = [dbSpace, ...spaces];
+      setSpaces(updated);
+      saveSpaces(updated);
+    } catch (e) {
+      console.error("Failed to add vacant space to Supabase:", e);
+      const fresh: VacantSpace = {
+        ...space,
+        id: `s-${Date.now()}`,
+        createdAt: new Date().toISOString().split("T")[0],
+      };
+      const updated = [fresh, ...spaces];
+      setSpaces(updated);
+      saveSpaces(updated);
+    }
+  };
+
+  const handleDeleteSpace = async (id: string) => {
+    try {
+      await dbService.deleteSpace(id);
+      const updated = spaces.filter((s) => s.id !== id);
+      setSpaces(updated);
+      saveSpaces(updated);
+    } catch (e) {
+      console.error("Failed to delete space from Supabase:", e);
+      const updated = spaces.filter((s) => s.id !== id);
+      setSpaces(updated);
+      saveSpaces(updated);
+    }
   };
 
   // Guard routing if tabs are restricted by selected role.
@@ -473,10 +597,10 @@ export default function Index() {
             <div>
               <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2 flex items-center justify-between">
                 <span>Medlemsportal</span>
-                {role === "Besökare" && <Lock className="w-2.5 h-2.5 text-slate-600" />}
+                {(role as string) === "Besökare" && <Lock className="w-2.5 h-2.5 text-slate-600" />}
               </div>
               <div className="space-y-0.5">
-                {role === "Besökare" ? (
+                {(role as string) === "Besökare" ? (
                   <div className="px-3 py-2 bg-slate-800/20 text-slate-500 text-[10px] rounded border border-slate-700/50 mb-1 space-y-1">
                     <p className="leading-tight text-slate-400">Låst för besökare.</p>
                     <p className="text-[9px] text-slate-500">Välj "Medlem" ovan för att ta del av dolda sidor.</p>
@@ -585,7 +709,7 @@ export default function Index() {
                 PORTAL ONLINE
               </span>
               
-              {role === "Besökare" ? (
+              {(role as string) === "Besökare" ? (
                 <button
                   onClick={() => {
                     setRole("Medlem");
@@ -685,7 +809,7 @@ export default function Index() {
                 <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> 
                 Databas Online
               </span>
-              <span>Inloggad som {role === "Besökare" ? "Gäst" : role === "Medlem" ? "Medlem" : "Styrelse"}</span>
+              <span>Inloggad som {(role as string) === "Besökare" ? "Gäst" : role === "Medlem" ? "Medlem" : "Styrelse"}</span>
             </div>
           </footer>
         </div>

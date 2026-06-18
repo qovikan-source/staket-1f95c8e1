@@ -5,7 +5,7 @@
 
 import React, { useState } from "react";
 import { Users, FileText, Bell, Plus, ArrowUp, ArrowDown, Edit2, Trash2, CheckCircle2, AlertTriangle, ShieldCheck, Building2, Sparkles } from "lucide-react";
-import { UserProfile, UserRole, NoticePost, FileItem, VacantSpace } from "../types";
+import { UserProfile, UserRole, NoticePost, FileItem, VacantSpace, FileCategory } from "../types";
 
 interface AdminViewProps {
   role: UserRole;
@@ -17,7 +17,7 @@ interface AdminViewProps {
   onUpdateRole: (id: string, role: UserRole) => void;
   onDeleteProfile: (id: string) => void;
   onDeleteNotice: (id: string) => void;
-  onDeleteFile: (id: string) => void;
+  onDeleteFile: (id: string, name: string, category: FileCategory) => void;
   onAddSpace: (space: Omit<VacantSpace, "id" | "createdAt">) => void;
   onDeleteSpace: (id: string) => void;
 }
@@ -372,7 +372,7 @@ export default function AdminView({
 
                 {activeUserRole === "Administrator" && (
                   <button
-                    onClick={() => onDeleteFile(file.id)}
+                    onClick={() => onDeleteFile(file.id, file.name, file.category)}
                     className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 shrink-0 transition-all cursor-pointer"
                     title="Radera fil permanent"
                   >

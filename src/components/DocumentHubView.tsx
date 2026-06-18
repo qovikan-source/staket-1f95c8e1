@@ -10,8 +10,8 @@ import { FileItem, FileCategory, BoardFolder, BOARD_FOLDERS, UserRole } from "..
 interface DocumentHubViewProps {
   files: FileItem[];
   role: UserRole;
-  onAddFile: (file: Omit<FileItem, "id" | "uploadedAt">) => void;
-  onDeleteFile: (id: string) => void;
+  onAddFile: (file: Omit<FileItem, "id" | "uploadedAt">, realFile?: File) => void;
+  onDeleteFile: (id: string, name: string, category: FileCategory) => void;
 }
 
 export default function DocumentHubView({
@@ -34,6 +34,7 @@ export default function DocumentHubView({
   const [newFileCategory, setNewFileCategory] = useState<FileCategory>("Medlemsfiler");
   const [newFileFolder, setNewFileFolder] = useState<BoardFolder>("Administration");
   const [newFileSize, setNewFileSize] = useState("1.2 MB");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const handleDownload = (file: FileItem) => {
     setDownloadingFileId(file.id);
@@ -42,6 +43,22 @@ export default function DocumentHubView({
       setDownloadSuccessText(`Laddade ner: ${file.name}`);
       setTimeout(() => setDownloadSuccessText(null), 3000);
     }, 1200);
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedFile(file);
+      setNewFileName(file.name);
+      
+      // Format file size
+      const bytes = file.size;
+      const k = 1024;
+      const sizes = ["Bytes", "KB", "MB"];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      const sizeStr = parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+      setNewFileSize(sizeStr);
+    }
   };
 
   const handleUpload = (e: React.FormEvent) => {
@@ -59,14 +76,15 @@ export default function DocumentHubView({
       category: newFileCategory,
       folder: newFileCategory === "Styrelsefiler" ? newFileFolder : undefined,
       fileSize: newFileSize,
-      mimeType: "application/pdf",
-    });
+      mimeType: selectedFile?.type || "application/pdf",
+    }, selectedFile || undefined);
 
     // Reset Form
     setNewFileName("");
     setNewFileCategory("Medlemsfiler");
     setNewFileFolder("Administration");
     setNewFileSize("1.2 MB");
+    setSelectedFile(null);
     setShowUploadModal(false);
   };
 
@@ -285,7 +303,7 @@ export default function DocumentHubView({
 
                     {role === "Styrelse" && (
                       <button
-                        onClick={() => onDeleteFile(file.id)}
+                        onClick={() => onDeleteFile(file.id, file.name, file.category)}
                         className="p-2 rounded-xl text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                         title="Radera fil"
                       >
@@ -390,11 +408,21 @@ export default function DocumentHubView({
                 </div>
               )}
 
-              {/* Simulated D&D Area */}
-              <div className="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center bg-slate-50">
+              {/* Real File Input Area */}
+              <div className="border-2 border-dashed border-slate-200 hover:border-emerald-400 transition-colors rounded-xl p-5 text-center bg-slate-50 relative cursor-pointer">
+                <input
+                  type="file"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg"
+                />
                 <FileText className="w-7 h-7 text-slate-400 mx-auto mb-2" />
-                <span className="text-xs font-semibold text-slate-700 block">Välj fil eller släpp PDF här</span>
-                <span className="text-[10px] text-slate-400">PDF, DOCX upp till 20MB</span>
+                <span className="text-xs font-semibold text-slate-700 block truncate px-2">
+                  {selectedFile ? `Vald fil: ${selectedFile.name}` : "Välj fil eller släpp dokument här"}
+                </span>
+                <span className="text-[10px] text-slate-400">
+                  {selectedFile ? `${newFileSize}` : "PDF, DOCX, XLSX, Bilder upp till 20MB"}
+                </span>
               </div>
 
               <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
