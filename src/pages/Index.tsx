@@ -45,6 +45,7 @@ import NoticeboardView from "../components/NoticeboardView";
 import DocumentHubView from "../components/DocumentHubView";
 import ContactBookView from "../components/ContactBookView";
 import AdminView from "../components/AdminView";
+import LoginView from "../components/LoginView";
 
 export default function Index() {
   // State definitions matching localStorage loaders
@@ -497,7 +498,23 @@ export default function Index() {
         </div>
       </div>
 
-      {role === "Besökare" ? (
+      {activeTab === "login" ? (
+        <div className="flex-1 overflow-y-auto bg-slate-50 flex flex-col min-h-0">
+          <LoginView
+            onLoginSuccess={(selectedRole) => {
+              setRole(selectedRole);
+              if (selectedRole === "Styrelse" || selectedRole === "Administrator") {
+                setActiveTab("administration");
+              } else {
+                setActiveTab("anslagstavlan");
+              }
+            }}
+            onCancel={() => {
+              setActiveTab("hem");
+            }}
+          />
+        </div>
+      ) : role === "Besökare" ? (
         <div className="flex-1 overflow-y-auto bg-white flex flex-col min-h-0">
           <HomeView
             notices={notices}

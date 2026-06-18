@@ -73,6 +73,16 @@ function mapFileToFrontend(db: any): FileItem {
   };
 }
 
+function sanitizeFilename(filename: string): string {
+  return filename
+    .replace(/[åä]/g, "a")
+    .replace(/[ÅÄ]/g, "A")
+    .replace(/ö/g, "o")
+    .replace(/Ö/g, "O")
+    .replace(/\s+/g, "_")
+    .replace(/[^a-zA-Z0-9_\-\.]/g, "");
+}
+
 function mapSpaceToFrontend(db: any): VacantSpace {
   return {
     id: db.id,
@@ -184,9 +194,10 @@ export const dbService = {
     const { error: dbError } = await supabase.from("files").delete().eq("id", id);
     if (dbError) throw dbError;
 
-    // 2. Delete from Supabase Storage
-    const subfolder = category === "Styrelsefiler" ? "styrelse" : "members";
-    const { error: storageError } = await supabase.storage.from("documents").remove([`${subfolder}/${name}`]);
+    // 2. Delete from Supabase Storage using sanitized name
+    const sanitizedName = sanitizeFilename(name);
+    const subfolder = category === "Styrelsefiler" ? "styrelse" : "medlemmar";
+    const { error: storageError } = await supabase.storage.from("documents").remove([`${subfolder}/${sanitizedName}`]);
     if (storageError) {
       console.warn("Deleted database row, but failed to delete storage object:", storageError.message);
     }
@@ -200,8 +211,9 @@ export const dbService = {
     category: FileCategory,
     folder?: BoardFolder
   ): Promise<FileItem> {
-    const subfolder = category === "Styrelsefiler" ? "styrelse" : "members";
-    const filePath = `${subfolder}/${file.name}`;
+    const sanitizedName = sanitizeFilename(file.name);
+    const subfolder = category === "Styrelsefiler" ? "styrelse" : "medlemmar";
+    const filePath = `${subfolder}/${sanitizedName}`;
 
     // 1. Upload file binary to storage bucket
     const { data: uploadData, error: uploadError } = await supabase.storage
@@ -230,7 +242,7 @@ export const dbService = {
 
     // 4. Register record in public.files table
     const dbRecord = {
-      name: file.name,
+      name: file.name, // Keep the original Swedish name for frontend display!
       category: category,
       folder: folder || null,
       file_size: formatBytes(file.size),

@@ -71,18 +71,24 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
         {/* TOP NAVIGATION HEADER */}
         <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm px-4 md:px-8 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate("hem")}>
-            {/* Logo Icon */}
-            <div className="flex items-end h-8 gap-0.5">
-              <div className="w-2.5 h-8 bg-[#0B2C24] rounded-[1px]"></div>
-              <div className="w-2.5 h-6 bg-[#0B2C24] rounded-[1px]"></div>
-              <div className="w-2.5 h-7 bg-[#2E5A4A] rounded-[1px]"></div>
-              <div className="w-2.5 h-5 bg-[#A1B8AD] rounded-[1px]"></div>
-            </div>
-            {/* Logo Text */}
-            <div className="flex flex-col justify-center translate-y-0.5">
-              <span className="text-[20px] font-black tracking-tighter leading-none text-[#0B2C24]">STÄKET</span>
-              <span className="text-[8.5px] font-bold tracking-widest text-gray-500 uppercase leading-none mt-0.5">Företagscenter</span>
-            </div>
+            {/* 
+              SAVED PREVIOUS CSS-BASED LOGO CODE:
+              <div className="flex items-end h-8 gap-0.5">
+                <div className="w-2.5 h-8 bg-[#0B2C24] rounded-[1px]"></div>
+                <div className="w-2.5 h-6 bg-[#0B2C24] rounded-[1px]"></div>
+                <div className="w-2.5 h-7 bg-[#2E5A4A] rounded-[1px]"></div>
+                <div className="w-2.5 h-5 bg-[#A1B8AD] rounded-[1px]"></div>
+              </div>
+              <div className="flex flex-col justify-center translate-y-0.5">
+                <span className="text-[20px] font-black tracking-tighter leading-none text-[#0B2C24]">STÄKET</span>
+                <span className="text-[8.5px] font-bold tracking-widest text-gray-500 uppercase leading-none mt-0.5">Företagscenter</span>
+              </div>
+            */}
+            <img 
+              src="/staket-foretagscenter-logo.png" 
+              alt="Stäket Företagscenter Logo" 
+              className="h-12 md:h-16 w-auto object-contain" 
+            />
           </div>
 
           <nav className="hidden lg:flex items-center gap-7 text-[11px] font-bold tracking-wider text-[#0B2C24]">
@@ -128,8 +134,8 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
             </button>
           </nav>
 
-          <button className="hidden lg:flex items-center gap-2 bg-[#0B2C24] text-white px-5 py-3 rounded text-xs font-bold font-sans tracking-wide hover:bg-[#081e18] transition-colors" onClick={() => onNavigate("lediga_lokaler")}>
-            <Calendar className="w-4 h-4" /> REKO/INTRESSE
+          <button className="hidden lg:flex items-center gap-2 bg-[#0B2C24] text-white px-5 py-3 rounded text-xs font-bold font-sans tracking-wide hover:bg-[#081e18] transition-colors cursor-pointer" onClick={() => onNavigate("login")}>
+            <User className="w-4 h-4" /> LOGGA IN
           </button>
 
           <button className="lg:hidden p-2 text-[#0B2C24]" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
