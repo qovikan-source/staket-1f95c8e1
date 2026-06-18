@@ -274,5 +274,25 @@ export const dbService = {
     }
 
     return mapFileToFrontend(dbData);
+  },
+
+  async uploadCompanyLogo(file: File): Promise<string> {
+    const sanitizedName = sanitizeFilename(file.name);
+    const filePath = `logos/${Date.now()}-${sanitizedName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("documents")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from("documents")
+      .getPublicUrl(filePath);
+
+    return publicUrl;
   }
 };

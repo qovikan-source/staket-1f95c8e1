@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from "react";
+import { dbService } from "../lib/db";
 import { Users, FileText, Bell, Plus, ArrowUp, ArrowDown, Edit2, Trash2, CheckCircle2, AlertTriangle, ShieldCheck, Building2, Sparkles } from "lucide-react";
 import { UserProfile, UserRole, NoticePost, FileItem, VacantSpace, FileCategory } from "../types";
 
@@ -71,6 +72,8 @@ export default function AdminView({
   const [description, setDescription] = useState("");
   const [website, setWebsite] = useState("");
   const [logoFileName, setLogoFileName] = useState("");
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   const handleSort = (field: keyof UserProfile) => {
     if (sortField === field) {
@@ -81,13 +84,26 @@ export default function AdminView({
     }
   };
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email) return;
 
     if (password !== repeatPassword) {
       alert("Lösenorden matchar inte.");
       return;
+    }
+
+    let logoUrl = "";
+    if (logoFile) {
+      setIsUploadingLogo(true);
+      try {
+        logoUrl = await dbService.uploadCompanyLogo(logoFile);
+      } catch (err) {
+        console.error("Failed to upload company logo:", err);
+        alert("Kunde inte ladda upp logotypen. Skapar medlem utan logotyp.");
+      } finally {
+        setIsUploadingLogo(false);
+      }
     }
 
     onAddProfile({
@@ -101,7 +117,7 @@ export default function AdminView({
       address: address || "Regeringsgatan 48, Stockholm",
       description,
       website,
-      logo: logoFileName
+      logo: logoUrl || logoFileName
     });
 
     // Reset Form
@@ -118,6 +134,7 @@ export default function AdminView({
     setDescription("");
     setWebsite("");
     setLogoFileName("");
+    setLogoFile(null);
     setShowAddUserModal(false);
   };
 
@@ -639,7 +656,12 @@ export default function AdminView({
                     <label className="text-[10px] text-slate-500 font-semibold mb-1 block">Logotyp:</label>
                     <input
                       type="file"
-                      onChange={(e) => setLogoFileName(e.target.files?.[0]?.name || "")}
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setLogoFile(file);
+                        setLogoFileName(file ? file.name : "");
+                      }}
                       className="w-full text-[10px] text-slate-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border file:border-slate-300 file:bg-white file:text-xs file:font-semibold hover:file:bg-slate-50 cursor-pointer"
                     />
                     <p className="text-[9px] text-slate-400 mt-1">(önskad storlek: 400x240)</p>
@@ -650,9 +672,10 @@ export default function AdminView({
               <div className="pt-2 flex flex-col gap-3">
                 <button
                   type="submit"
-                  className="w-full px-5 py-3 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-950 cursor-pointer shadow-md rounded"
+                  disabled={isUploadingLogo}
+                  className="w-full px-5 py-3 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-950 cursor-pointer shadow-md rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  SKAPA ANVÄNDARE
+                  {isUploadingLogo ? "LADDAR UPP LOGOTYP..." : "SKAPA ANVÄNDARE"}
                 </button>
               </div>
             </form>

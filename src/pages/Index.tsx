@@ -122,8 +122,9 @@ export default function Index() {
     }
   }, []);
 
-  // Real-time synchronization for files database updates
+  // Real-time synchronization for database updates (files, profiles, notices, vacant_spaces)
   useEffect(() => {
+    // Files subscription
     const filesSubscription = supabase
       .channel("public-files-changes")
       .on(
@@ -136,7 +137,64 @@ export default function Index() {
             setFiles(dbFiles);
             saveFiles(dbFiles);
           } catch (err) {
-            console.error("Error updating files on Postgres change event:", err);
+            console.error("Error updating files on Postgres change:", err);
+          }
+        }
+      )
+      .subscribe();
+
+    // Profiles subscription
+    const profilesSubscription = supabase
+      .channel("public-profiles-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profiles" },
+        async (payload) => {
+          console.log("Change received on profiles table:", payload);
+          try {
+            const dbProfiles = await dbService.getProfiles();
+            setProfiles(dbProfiles);
+            saveProfiles(dbProfiles);
+          } catch (err) {
+            console.error("Error updating profiles on Postgres change:", err);
+          }
+        }
+      )
+      .subscribe();
+
+    // Notices subscription
+    const noticesSubscription = supabase
+      .channel("public-notices-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notices" },
+        async (payload) => {
+          console.log("Change received on notices table:", payload);
+          try {
+            const dbNotices = await dbService.getNotices();
+            setNotices(dbNotices);
+            saveNotices(dbNotices);
+          } catch (err) {
+            console.error("Error updating notices on Postgres change:", err);
+          }
+        }
+      )
+      .subscribe();
+
+    // Vacant spaces subscription
+    const spacesSubscription = supabase
+      .channel("public-spaces-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "vacant_spaces" },
+        async (payload) => {
+          console.log("Change received on vacant_spaces table:", payload);
+          try {
+            const dbSpaces = await dbService.getSpaces();
+            setSpaces(dbSpaces);
+            saveSpaces(dbSpaces);
+          } catch (err) {
+            console.error("Error updating vacant spaces on Postgres change:", err);
           }
         }
       )
@@ -144,6 +202,9 @@ export default function Index() {
 
     return () => {
       supabase.removeChannel(filesSubscription);
+      supabase.removeChannel(profilesSubscription);
+      supabase.removeChannel(noticesSubscription);
+      supabase.removeChannel(spacesSubscription);
     };
   }, []);
 
