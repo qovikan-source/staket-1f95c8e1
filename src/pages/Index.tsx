@@ -363,50 +363,76 @@ export default function Index() {
 
   // Sync state triggers
   // Sync state triggers
+  // Sync state triggers
   const handleAddNotice = async (notice: Omit<NoticePost, "id" | "date"> & { date?: string }) => {
+    const tempId = `temp-n-${Date.now()}`;
+    const tempNotice: NoticePost = {
+      ...notice,
+      id: tempId,
+      date: notice.date || new Date().toISOString().split("T")[0],
+    };
+    
+    // 1. Optimistic Update (Immediate visual response)
+    const optimisticList = [tempNotice, ...notices];
+    setNotices(optimisticList);
+    saveNotices(optimisticList);
+
     try {
       const dbNotice = await dbService.insertNotice(notice);
-      const updated = [dbNotice, ...notices];
-      setNotices(updated);
-      saveNotices(updated);
+      // 2. Real DB sync replacement
+      setNotices((prev) => {
+        const next = prev.map((n) => (n.id === tempId ? dbNotice : n));
+        saveNotices(next);
+        return next;
+      });
     } catch (e) {
-      console.error("Failed to add notice to Supabase, saving locally:", e);
-      const fresh: NoticePost = {
-        ...notice,
-        id: `n-${Date.now()}`,
-        date: notice.date || new Date().toISOString().split("T")[0],
-      };
-      const updated = [fresh, ...notices];
-      setNotices(updated);
-      saveNotices(updated);
+      console.error("Failed to add notice to Supabase, reverting:", e);
+      // Revert state
+      setNotices((prev) => {
+        const next = prev.filter((n) => n.id !== tempId);
+        saveNotices(next);
+        return next;
+      });
+      alert("Kunde inte spara inlägget på servern.");
     }
   };
 
   const handleDeleteNotice = async (id: string) => {
+    const originalNotices = [...notices];
+    // 1. Optimistic Update (Immediate visual response)
+    const optimisticList = notices.filter((n) => n.id !== id);
+    setNotices(optimisticList);
+    saveNotices(optimisticList);
+
     try {
       await dbService.deleteNotice(id);
-      const updated = notices.filter((n) => n.id !== id);
-      setNotices(updated);
-      saveNotices(updated);
     } catch (e) {
-      console.error("Failed to delete notice from Supabase, deleting locally:", e);
-      const updated = notices.filter((n) => n.id !== id);
-      setNotices(updated);
-      saveNotices(updated);
+      console.error("Failed to delete notice from Supabase, reverting:", e);
+      setNotices(originalNotices);
+      saveNotices(originalNotices);
+      alert("Kunde inte radera inlägget på servern.");
     }
   };
 
   const handleUpdateNotice = async (notice: NoticePost) => {
+    const originalNotices = [...notices];
+    // 1. Optimistic Update (Immediate visual response)
+    const optimisticList = notices.map((n) => (n.id === notice.id ? notice : n));
+    setNotices(optimisticList);
+    saveNotices(optimisticList);
+
     try {
       const dbNotice = await dbService.updateNotice(notice.id, notice);
-      const updated = notices.map((n) => (n.id === notice.id ? dbNotice : n));
-      setNotices(updated);
-      saveNotices(updated);
+      setNotices((prev) => {
+        const next = prev.map((n) => (n.id === notice.id ? dbNotice : n));
+        saveNotices(next);
+        return next;
+      });
     } catch (e) {
-      console.error("Failed to update notice in Supabase, updating locally:", e);
-      const updated = notices.map((n) => (n.id === notice.id ? notice : n));
-      setNotices(updated);
-      saveNotices(updated);
+      console.error("Failed to update notice in Supabase, reverting:", e);
+      setNotices(originalNotices);
+      saveNotices(originalNotices);
+      alert("Kunde inte uppdatera inlägget på servern.");
     }
   };
 
@@ -414,6 +440,19 @@ export default function Index() {
     file: Omit<FileItem, "id">,
     realFile?: File
   ) => {
+    const tempId = `temp-f-${Date.now()}`;
+    const tempFile: FileItem = {
+      ...file,
+      id: tempId,
+      url: realFile ? URL.createObjectURL(realFile) : "https://example.com/dummy.pdf",
+      isOptimistic: true,
+    };
+
+    // 1. Optimistic Update (Immediate visual response)
+    const optimisticList = [tempFile, ...files];
+    setFiles(optimisticList);
+    saveFiles(optimisticList);
+
     try {
       let dbFile: FileItem;
       if (realFile) {
@@ -440,119 +479,200 @@ export default function Index() {
           mimeType: data.mime_type,
         };
       }
-      const updated = [dbFile, ...files];
-      setFiles(updated);
-      saveFiles(updated);
+      // 2. Real DB sync replacement
+      setFiles((prev) => {
+        const next = prev.map((f) => (f.id === tempId ? dbFile : f));
+        saveFiles(next);
+        return next;
+      });
     } catch (e) {
-      console.error("Failed to upload/add file to Supabase:", e);
+      console.error("Failed to upload/add file to Supabase, reverting:", e);
+      // Revert state
+      setFiles((prev) => {
+        const next = prev.filter((f) => f.id !== tempId);
+        saveFiles(next);
+        return next;
+      });
+      alert("Kunde inte ladda upp filen till servern.");
       throw e;
     }
   };
 
   const handleDeleteFile = async (id: string, name: string, category: FileCategory, folder?: BoardFolder) => {
+    const originalFiles = [...files];
+    // 1. Optimistic Update (Immediate visual response)
+    const optimisticList = files.filter((f) => f.id !== id);
+    setFiles(optimisticList);
+    saveFiles(optimisticList);
+
     try {
       await dbService.deleteFile(id, name, category, folder);
-      const updated = files.filter((f) => f.id !== id);
-      setFiles(updated);
-      saveFiles(updated);
     } catch (e) {
-      console.error("Failed to delete file from Supabase, deleting locally:", e);
-      const updated = files.filter((f) => f.id !== id);
-      setFiles(updated);
-      saveFiles(updated);
+      console.error("Failed to delete file from Supabase, reverting:", e);
+      setFiles(originalFiles);
+      saveFiles(originalFiles);
+      alert("Kunde inte radera filen från servern.");
+    }
+  };
+
+  const handleDeleteMultipleFiles = async (filesToDelete: { id: string; name: string; category: FileCategory; folder?: BoardFolder }[]) => {
+    const originalFiles = [...files];
+    const idsToDelete = filesToDelete.map((f) => f.id);
+    
+    // 1. Optimistic Update (Immediate visual response)
+    const optimisticList = files.filter((f) => !idsToDelete.includes(f.id));
+    setFiles(optimisticList);
+    saveFiles(optimisticList);
+
+    try {
+      await Promise.all(
+        filesToDelete.map((f) => dbService.deleteFile(f.id, f.name, f.category, f.folder))
+      );
+    } catch (e) {
+      console.error("Failed to bulk delete files from Supabase, reverting:", e);
+      setFiles(originalFiles);
+      saveFiles(originalFiles);
+      alert("Kunde inte slutföra raderingen av alla markerade filer.");
     }
   };
 
   const handleAddProfile = async (profile: Omit<UserProfile, "id">) => {
+    const tempId = `temp-p-${Date.now()}`;
+    const tempProfile: UserProfile = {
+      ...profile,
+      id: tempId,
+    };
+
+    // 1. Optimistic Update (Immediate visual response)
+    const optimisticList = [...profiles, tempProfile];
+    setProfiles(optimisticList);
+    saveProfiles(optimisticList);
+
     try {
       const dbProfile = await dbService.insertProfile(profile);
-      const updated = [...profiles, dbProfile];
-      setProfiles(updated);
-      saveProfiles(updated);
+      // 2. Real DB sync replacement
+      setProfiles((prev) => {
+        const next = prev.map((p) => (p.id === tempId ? dbProfile : p));
+        saveProfiles(next);
+        return next;
+      });
     } catch (e) {
-      console.error("Failed to add profile to Supabase:", e);
-      const fresh: UserProfile = {
-        ...profile,
-        id: `p-${Date.now()}`,
-      };
-      const updated = [...profiles, fresh];
-      setProfiles(updated);
-      saveProfiles(updated);
+      console.error("Failed to add profile to Supabase, reverting:", e);
+      // Revert state
+      setProfiles((prev) => {
+        const next = prev.filter((p) => p.id !== tempId);
+        saveProfiles(next);
+        return next;
+      });
+      alert("Kunde inte registrera användaren på servern.");
     }
   };
 
   const handleUpdateRole = async (id: string, newRole: UserRole) => {
+    const originalProfiles = [...profiles];
+    
+    // 1. Optimistic Update (Immediate visual response)
+    const optimisticList = profiles.map((p) => (p.id === id ? { ...p, role: newRole } : p));
+    setProfiles(optimisticList);
+    saveProfiles(optimisticList);
+
     try {
       await dbService.updateProfile(id, { role: newRole });
-      const updated = profiles.map((p) => (p.id === id ? { ...p, role: newRole } : p));
-      setProfiles(updated);
-      saveProfiles(updated);
     } catch (e) {
-      console.error("Failed to update role in Supabase:", e);
-      const updated = profiles.map((p) => (p.id === id ? { ...p, role: newRole } : p));
-      setProfiles(updated);
-      saveProfiles(updated);
+      console.error("Failed to update role in Supabase, reverting:", e);
+      setProfiles(originalProfiles);
+      saveProfiles(originalProfiles);
+      alert("Kunde inte uppdatera behörighetsrollen på servern.");
     }
   };
 
   const handleUpdateProfile = async (id: string, updatedFields: Partial<UserProfile>) => {
+    const originalProfiles = [...profiles];
+    const originalUserProfile = currentUserProfile ? { ...currentUserProfile } : null;
+
+    // 1. Optimistic Update (Immediate visual response)
+    const optimisticList = profiles.map((p) => (p.id === id ? { ...p, ...updatedFields } : p));
+    setProfiles(optimisticList);
+    saveProfiles(optimisticList);
+    if (currentUserProfile && currentUserProfile.id === id) {
+      setCurrentUserProfile((prev) => (prev ? { ...prev, ...updatedFields } : null));
+    }
+
     try {
       await dbService.updateProfile(id, updatedFields);
-      const updated = profiles.map((p) => (p.id === id ? { ...p, ...updatedFields } : p));
-      setProfiles(updated);
-      saveProfiles(updated);
     } catch (e) {
-      console.error("Failed to update profile in Supabase:", e);
-      const updated = profiles.map((p) => (p.id === id ? { ...p, ...updatedFields } : p));
-      setProfiles(updated);
-      saveProfiles(updated);
+      console.error("Failed to update profile in Supabase, reverting:", e);
+      setProfiles(originalProfiles);
+      saveProfiles(originalProfiles);
+      setCurrentUserProfile(originalUserProfile);
+      alert("Kunde inte spara användarändringarna på servern.");
     }
   };
 
   const handleDeleteProfile = async (id: string) => {
+    const originalProfiles = [...profiles];
+    // 1. Optimistic Update (Immediate visual response)
+    const optimisticList = profiles.filter((p) => p.id !== id);
+    setProfiles(optimisticList);
+    saveProfiles(optimisticList);
+
     try {
       await dbService.deleteProfile(id);
-      const updated = profiles.filter((p) => p.id !== id);
-      setProfiles(updated);
-      saveProfiles(updated);
     } catch (e) {
-      console.error("Failed to delete profile from Supabase:", e);
-      const updated = profiles.filter((p) => p.id !== id);
-      setProfiles(updated);
-      saveProfiles(updated);
+      console.error("Failed to delete profile from Supabase, reverting:", e);
+      setProfiles(originalProfiles);
+      saveProfiles(originalProfiles);
+      alert("Kunde inte radera användaren från servern.");
     }
   };
 
   const handleAddSpace = async (space: Omit<VacantSpace, "id" | "createdAt">) => {
+    const tempId = `temp-s-${Date.now()}`;
+    const tempSpace: VacantSpace = {
+      ...space,
+      id: tempId,
+      createdAt: new Date().toISOString().split("T")[0],
+    };
+
+    // 1. Optimistic Update (Immediate visual response)
+    const optimisticList = [tempSpace, ...spaces];
+    setSpaces(optimisticList);
+    saveSpaces(optimisticList);
+
     try {
       const dbSpace = await dbService.insertSpace(space);
-      const updated = [dbSpace, ...spaces];
-      setSpaces(updated);
-      saveSpaces(updated);
+      // 2. Real DB sync replacement
+      setSpaces((prev) => {
+        const next = prev.map((s) => (s.id === tempId ? dbSpace : s));
+        saveSpaces(next);
+        return next;
+      });
     } catch (e) {
-      console.error("Failed to add vacant space to Supabase:", e);
-      const fresh: VacantSpace = {
-        ...space,
-        id: `s-${Date.now()}`,
-        createdAt: new Date().toISOString().split("T")[0],
-      };
-      const updated = [fresh, ...spaces];
-      setSpaces(updated);
-      saveSpaces(updated);
+      console.error("Failed to add vacant space to Supabase, reverting:", e);
+      // Revert state
+      setSpaces((prev) => {
+        const next = prev.filter((s) => s.id !== tempId);
+        saveSpaces(next);
+        return next;
+      });
+      alert("Kunde inte spara lokalannonsen på servern.");
     }
   };
 
   const handleDeleteSpace = async (id: string) => {
+    const originalSpaces = [...spaces];
+    // 1. Optimistic Update (Immediate visual response)
+    const optimisticList = spaces.filter((s) => s.id !== id);
+    setSpaces(optimisticList);
+    saveSpaces(optimisticList);
+
     try {
       await dbService.deleteSpace(id);
-      const updated = spaces.filter((s) => s.id !== id);
-      setSpaces(updated);
-      saveSpaces(updated);
     } catch (e) {
-      console.error("Failed to delete space from Supabase:", e);
-      const updated = spaces.filter((s) => s.id !== id);
-      setSpaces(updated);
-      saveSpaces(updated);
+      console.error("Failed to delete space from Supabase, reverting:", e);
+      setSpaces(originalSpaces);
+      saveSpaces(originalSpaces);
+      alert("Kunde inte radera lokalannonsen på servern.");
     }
   };
 
@@ -617,6 +737,11 @@ export default function Index() {
                     name: selectedRole === "Styrelse" ? "Alexander Krasar" : selectedRole === "Medlem" ? "Thomas Berglund" : "Admin Adminsson",
                     role: selectedRole,
                     email: "",
+                    phone: "",
+                    orgNr: "",
+                    company: "",
+                    unit: "",
+                    address: "",
                   });
                 }
               } catch (e) {
@@ -928,6 +1053,7 @@ export default function Index() {
                 role={role}
                 onAddFile={handleAddFile}
                 onDeleteFile={handleDeleteFile}
+                onDeleteMultipleFiles={handleDeleteMultipleFiles}
               />
             )}
 

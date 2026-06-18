@@ -72,6 +72,8 @@ export interface FileItem {
   uploadedAt: string;
   fileSize: string;
   mimeType: string;
+  url?: string;
+  isOptimistic?: boolean;
 }
 
 export interface NoticePost {

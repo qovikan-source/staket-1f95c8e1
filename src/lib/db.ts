@@ -74,6 +74,7 @@ function mapFileToFrontend(db: any): FileItem {
     uploadedAt: db.uploaded_at,
     fileSize: db.file_size,
     mimeType: db.mime_type || "application/pdf",
+    url: db.url,
   };
 }
 
@@ -221,9 +222,12 @@ export const dbService = {
       `styrelse/${sanitizedName}`,
     ];
     if (folder) {
-      pathsToDelete.push(`${folder}/${sanitizedName}`);
-      if (folder === "Pantbrev") {
+      const storageFolder = (folder === "Pantbrev" || folder === "Pantbrev Lgh Betekn.") ? "Pantbrev" : folder;
+      pathsToDelete.push(`${storageFolder}/${sanitizedName}`);
+      pathsToDelete.push(`styrelse/${storageFolder}/${sanitizedName}`);
+      if (storageFolder === "Pantbrev") {
         pathsToDelete.push(`Pantbrev Lgh Betekn./${sanitizedName}`);
+        pathsToDelete.push(`styrelse/Pantbrev Lgh Betekn./${sanitizedName}`);
       }
     }
     const { error: storageError } = await supabase.storage.from("documents").remove(pathsToDelete);
@@ -242,7 +246,8 @@ export const dbService = {
     customDate?: string
   ): Promise<FileItem> {
     const sanitizedName = sanitizeFilename(file.name);
-    const subfolder = (category === "Styrelsefiler" && folder) ? folder : "medlemmar";
+    const storageFolder = (folder === "Pantbrev" || folder === "Pantbrev Lgh Betekn.") ? "Pantbrev" : folder;
+    const subfolder = (category === "Styrelsefiler" && storageFolder) ? `styrelse/${storageFolder}` : "medlemmar";
     const filePath = `${subfolder}/${sanitizedName}`;
 
     // 1. Upload file binary to storage bucket

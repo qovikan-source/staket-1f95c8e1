@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Search, Folder, FileText, Download, Plus, Trash2, Eye, ShieldAlert, CheckCircle, Settings } from "lucide-react";
 import { FileItem, FileCategory, BoardFolder, BOARD_FOLDERS, UserRole } from "../types";
 
@@ -12,6 +12,7 @@ interface DocumentHubViewProps {
   role: UserRole;
   onAddFile: (file: Omit<FileItem, "id">, realFile?: File) => Promise<void>;
   onDeleteFile: (id: string, name: string, category: FileCategory, folder?: BoardFolder) => void;
+  onDeleteMultipleFiles?: (filesToDelete: { id: string; name: string; category: FileCategory; folder?: BoardFolder }[]) => Promise<void>;
 }
 
 interface UploadQueueItem {
@@ -29,6 +30,7 @@ export default function DocumentHubView({
   role,
   onAddFile,
   onDeleteFile,
+  onDeleteMultipleFiles,
 }: DocumentHubViewProps) {
   const [activeCategory, setActiveCategory] = useState<FileCategory>("Medlemsfiler");
   const [selectedFolder, setSelectedFolder] = useState<BoardFolder | "Alla">("Alla");
@@ -48,6 +50,55 @@ export default function DocumentHubView({
   const [bulkCategory, setBulkCategory] = useState<FileCategory | "">("");
   const [bulkFolder, setBulkFolder] = useState<BoardFolder | "">("");
   const [bulkDate, setBulkDate] = useState<string>("");
+
+  // Selection states
+  const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
+
+  // Reset selections when directory/search changes
+  useEffect(() => {
+    setSelectedFileIds([]);
+  }, [activeCategory, selectedFolder, searchQuery]);
+
+  const handleToggleSelectFile = (id: string) => {
+    setSelectedFileIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedFileIds(filteredFiles.map((f) => f.id));
+    } else {
+      setSelectedFileIds([]);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedFileIds.length === 0) return;
+    
+    const itemsToDelete = files.filter(f => selectedFileIds.includes(f.id));
+    const confirmMessage = `Är du säker på att du vill permanent radera följande ${itemsToDelete.length} filer?\n\n` + 
+      itemsToDelete.map(f => `• ${f.name} (${f.folder || 'Medlemsfil'})`).join("\n") + 
+      `\n\nDenna åtgärd kan inte ångras!`;
+
+    if (window.confirm(confirmMessage)) {
+      if (onDeleteMultipleFiles) {
+        await onDeleteMultipleFiles(
+          itemsToDelete.map(f => ({
+            id: f.id,
+            name: f.name,
+            category: f.category,
+            folder: f.folder
+          }))
+        );
+      } else {
+        for (const file of itemsToDelete) {
+          onDeleteFile(file.id, file.name, file.category, file.folder);
+        }
+      }
+      setSelectedFileIds([]);
+    }
+  };
 
   const applyBulkCategory = (cat: FileCategory) => {
     setBulkCategory(cat);
@@ -198,6 +249,9 @@ export default function DocumentHubView({
     return matchesSearch;
   });
 
+  const allFilteredSelected = filteredFiles.length > 0 && filteredFiles.every((f) => selectedFileIds.includes(f.id));
+  const someFilteredSelected = filteredFiles.length > 0 && filteredFiles.some((f) => selectedFileIds.includes(f.id)) && !allFilteredSelected;
+
   return (
     <div className="space-y-8 animate-fade-in" id="document-hub">
       {/* Page Header */}
@@ -338,6 +392,49 @@ export default function DocumentHubView({
             </div>
           )}
 
+          {/* Admin Bulk Action Bar */}
+          {role === "Administrator" && filteredFiles.length > 0 && (
+            <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs animate-scale-up">
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={allFilteredSelected}
+                  ref={(el) => {
+                    if (el) {
+                      el.indeterminate = someFilteredSelected;
+                    }
+                  }}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  className="w-4.5 h-4.5 text-emerald-500 border-slate-350 rounded-md focus:ring-emerald-400 cursor-pointer"
+                />
+                <span className="font-semibold text-slate-700">
+                  {selectedFileIds.length > 0 
+                    ? `${selectedFileIds.length} markerade` 
+                    : `Markera alla på den här sidan (${filteredFiles.length}st)`
+                  }
+                </span>
+              </div>
+
+              {selectedFileIds.length > 0 && (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleBulkDelete}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-750 hover:bg-rose-100 border border-rose-200/50 font-bold transition-colors cursor-pointer text-[10px] uppercase tracking-wider"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Radera markerade ({selectedFileIds.length})
+                  </button>
+                  <button
+                    onClick={() => setSelectedFileIds([])}
+                    className="px-3 py-1.5 rounded-lg bg-white text-slate-500 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer font-semibold text-[10px] uppercase tracking-wider"
+                  >
+                    Avbryt
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Document list */}
           {filteredFiles.length === 0 ? (
             <div className="border border-dashed border-slate-200 p-12 rounded-2xl text-center bg-slate-50/50 space-y-2">
@@ -350,61 +447,108 @@ export default function DocumentHubView({
               {filteredFiles.map((file) => (
                 <div
                   key={file.id}
-                  className="bg-white p-4 rounded-2xl border border-slate-100 shadow-2xs hover:shadow-xs transition-all flex items-center justify-between gap-4 group hover:border-slate-200"
+                  className={`bg-white p-4 rounded-2xl border transition-all flex items-center justify-between gap-4 group hover:border-slate-200 ${
+                    selectedFileIds.includes(file.id) 
+                      ? "border-emerald-500 bg-emerald-50/10 shadow-xs" 
+                      : "border-slate-100 shadow-2xs hover:shadow-xs"
+                  } ${file.isOptimistic ? "border-dashed border-emerald-300 bg-slate-50/50" : ""}`}
                 >
-                  <div className="flex items-center gap-3.5 truncate">
-                    <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center shrink-0 border border-slate-100 group-hover:bg-emerald-50 group-hover:text-emerald-500 group-hover:border-emerald-100 transition-all">
-                      <FileText className="w-5 h-5 font-bold" />
-                    </div>
-                    <div className="truncate space-y-0.5">
-                      <h4 className="font-bold text-slate-800 text-xs truncate group-hover:text-slate-900 transition-colors">
-                        {file.name}
-                      </h4>
-                      <div className="flex items-center gap-2 text-[10px] text-slate-400">
-                        <span>{file.fileSize}</span>
-                        <span>•</span>
-                        <span>Uppladdad: {file.uploadedAt}</span>
-                        {file.folder && (
-                          <>
-                            <span>•</span>
-                            <span className="font-semibold text-emerald-600 flex items-center gap-0.5">
-                              <Folder className="w-2.5 h-2.5" /> {file.folder}
-                            </span>
-                          </>
-                        )}
+                  <div className="flex items-center gap-3 truncate flex-1 min-w-0">
+                    {/* Checkbox for Admin */}
+                    {role === "Administrator" && (
+                      <input
+                        type="checkbox"
+                        disabled={file.isOptimistic}
+                        checked={selectedFileIds.includes(file.id)}
+                        onChange={() => handleToggleSelectFile(file.id)}
+                        className="w-4 h-4 text-emerald-500 border-slate-350 rounded-md focus:ring-emerald-400 cursor-pointer shrink-0 z-10 disabled:opacity-40 disabled:cursor-not-allowed"
+                      />
+                    )}
+                    
+                    <div 
+                      onClick={() => {
+                        if (file.isOptimistic) return;
+                        let fileUrl = file.url;
+                        if (!fileUrl) {
+                          const sanitizedName = file.name.replace(/[åä]/g, "a").replace(/[ÅÄ]/g, "A").replace(/ö/g, "o").replace(/Ö/g, "O").replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\-\.]/g, "");
+                          const storageFolder = (file.folder === "Pantbrev" || file.folder === "Pantbrev Lgh Betekn.") ? "Pantbrev" : file.folder;
+                          const subfolder = file.category === "Styrelsefiler" && storageFolder ? `styrelse/${storageFolder}` : "medlemmar";
+                          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
+                          fileUrl = `${supabaseUrl}/storage/v1/object/public/documents/${subfolder}/${sanitizedName}`;
+                        }
+                        window.open(fileUrl, "_blank");
+                      }}
+                      className={`flex items-center gap-3 truncate flex-1 min-w-0 ${file.isOptimistic ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+                      title={file.isOptimistic ? "Laddar upp..." : "Klicka för att öppna dokumentet i en ny flik"}
+                    >
+                      <div className={`w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center shrink-0 border border-slate-100 transition-all ${!file.isOptimistic ? "group-hover:bg-emerald-50 group-hover:text-emerald-500 group-hover:border-emerald-100" : ""}`}>
+                        <FileText className={`w-5 h-5 font-bold ${file.isOptimistic ? "animate-pulse text-emerald-500" : ""}`} />
+                      </div>
+                      <div className="truncate space-y-0.5 min-w-0 flex-1">
+                        <h4 className={`font-bold text-slate-800 text-xs truncate transition-colors ${!file.isOptimistic ? "group-hover:text-emerald-700 group-hover:underline" : ""}`}>
+                          {file.name}
+                        </h4>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-400">
+                          {file.isOptimistic ? (
+                            <span className="text-emerald-600 font-semibold animate-pulse">Laddar upp till Supabase...</span>
+                          ) : (
+                            <>
+                              <span>{file.fileSize}</span>
+                              <span>•</span>
+                              <span>Uppladdad: {file.uploadedAt}</span>
+                            </>
+                          )}
+                          {file.folder && (
+                            <>
+                              <span>•</span>
+                              <span className="font-semibold text-emerald-600 flex items-center gap-0.5">
+                                <Folder className="w-2.5 h-2.5" /> {file.folder}
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      onClick={() => handleDownload(file)}
-                      disabled={downloadingFileId === file.id}
-                      className="p-2 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
-                      title="Ladda ner PDF"
-                    >
-                      {downloadingFileId === file.id ? (
-                        <span className="flex h-4 w-4 relative">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500"></span>
-                        </span>
-                      ) : (
-                        <Download className="w-4 h-4" />
-                      )}
-                    </button>
+                    {file.isOptimistic ? (
+                      <span className="flex h-5 w-5 relative mr-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-450 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-5 w-5 bg-emerald-500"></span>
+                      </span>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => handleDownload(file)}
+                          disabled={downloadingFileId === file.id}
+                          className="p-2 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                          title="Ladda ner PDF"
+                        >
+                          {downloadingFileId === file.id ? (
+                            <span className="flex h-4 w-4 relative">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500"></span>
+                            </span>
+                          ) : (
+                            <Download className="w-4 h-4" />
+                          )}
+                        </button>
 
-                    {role === "Administrator" && (
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Är du säker på att du vill radera filen "${file.name}" permanent?`)) {
-                            onDeleteFile(file.id, file.name, file.category, file.folder);
-                          }
-                        }}
-                        className="p-2 rounded-xl text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                        title="Radera fil"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                        {role === "Administrator" && (
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Är du säker på att du vill radera filen "${file.name}" permanent?`)) {
+                                onDeleteFile(file.id, file.name, file.category, file.folder);
+                              }
+                            }}
+                            className="p-2 rounded-xl text-slate-350 hover:text-rose-600 hover:bg-rose-55/40 transition-colors cursor-pointer"
+                            title="Radera fil"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>

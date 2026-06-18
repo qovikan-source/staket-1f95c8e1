@@ -71,40 +71,35 @@ export default function OurCompaniesView({ profiles }: OurCompaniesViewProps) {
           return (
             <div
               key={profile.id}
-              className="bg-white rounded-2xl border border-slate-100 p-6 flex flex-col items-center justify-center text-center space-y-4 hover:border-slate-200 transition-all shadow-3xs hover:shadow-2xs h-48 group"
+              className="bg-white rounded-2xl border border-slate-100 overflow-hidden flex flex-col justify-between hover:border-slate-200 transition-all shadow-3xs hover:shadow-2xs h-48 group text-center"
             >
-              {/* Logo Wrapper */}
-              <div className="w-20 h-20 rounded-2xl bg-slate-50 border border-slate-100/80 flex items-center justify-center p-2.5 overflow-hidden transition-transform group-hover:scale-105 duration-300 relative">
+              {/* Upper Part - Logo Container */}
+              <div className="w-full h-32 bg-slate-50/60 border-b border-slate-100/80 flex items-center justify-center p-4 relative overflow-hidden transition-colors group-hover:bg-slate-50 duration-300">
                 {hasRealLogo ? (
                   <img
                     src={profile.logo}
                     alt={profile.company}
                     referrerPolicy="no-referrer"
-                    className="w-full h-full object-contain"
+                    className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105 duration-300"
                   />
                 ) : (
-                  <div className="w-full h-full rounded-xl bg-[#0B2C24]/5 border border-[#0B2C24]/10 flex flex-col items-center justify-center text-[#0B2C24] uppercase">
-                    <span className="text-xl font-bold font-sans tracking-wider">
+                  <div className="w-12 h-12 rounded-full bg-[#0B2C24]/5 border border-[#0B2C24]/10 flex flex-col items-center justify-center text-[#0B2C24] uppercase transition-transform group-hover:scale-105 duration-300">
+                    <span className="text-base font-bold font-sans tracking-wider">
                       {profile.company.substring(0, 2)}
                     </span>
-                    {profile.logo && (
-                      <span className="text-[8px] text-slate-405 font-mono mt-0.5 truncate max-w-[60px] block">
-                        {profile.logo}
-                      </span>
-                    )}
                   </div>
                 )}
                 {/* Visual Accent */}
-                <div className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#B68F52] opacity-70"></div>
+                <div className="absolute top-2.5 right-2.5 w-1.5 h-1.5 rounded-full bg-[#B68F52] opacity-70"></div>
               </div>
 
-              {/* Company Name */}
-              <div className="space-y-1 w-full px-1">
-                <h3 className="font-bold text-slate-800 text-xs sm:text-xs line-clamp-2 leading-snug group-hover:text-[#B68F52] transition-colors">
+              {/* Lower Part - Company Text info */}
+              <div className="p-3 flex-1 flex flex-col justify-center items-center w-full min-w-0">
+                <h3 className="font-bold text-slate-800 text-[11px] sm:text-xs line-clamp-2 leading-snug group-hover:text-[#B68F52] transition-colors w-full">
                   {profile.company}
                 </h3>
                 {profile.unit && profile.unit !== "Ej angivet" && (
-                  <span className="text-[9px] font-black tracking-wider text-slate-400 uppercase">
+                  <span className="text-[9px] font-black tracking-wider text-slate-400 uppercase mt-0.5 block">
                     {profile.unit}
                   </span>
                 )}
