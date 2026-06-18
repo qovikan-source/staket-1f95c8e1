@@ -125,6 +125,16 @@ export const dbService = {
     return (data || []).map(mapProfileToFrontend);
   },
 
+  async getProfileByEmail(email: string): Promise<UserProfile | null> {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("email", email)
+      .maybeSingle();
+    if (error) throw error;
+    return data ? mapProfileToFrontend(data) : null;
+  },
+
   async insertProfile(p: Omit<UserProfile, "id">): Promise<UserProfile> {
     const { data, error } = await supabase.from("profiles").insert(mapProfileToDb(p)).select().single();
     if (error) throw error;

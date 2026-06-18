@@ -1,11 +1,8 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from "react";
 import { Shield, Mail, Lock, AlertCircle, ArrowLeft, Key } from "lucide-react";
 import { UserRole } from "../types";
+import { supabase } from "../lib/supabase";
+import { dbService } from "../lib/db";
 
 interface LoginViewProps {
   onLoginSuccess: (role: UserRole) => void;
@@ -29,21 +26,41 @@ export default function LoginView({ onLoginSuccess, onCancel }: LoginViewProps) 
 
     setIsLoading(true);
 
-    // Simulated login delay
-    setTimeout(() => {
-      setIsLoading(false);
-      // Let's accept some standard logins for evaluation
-      const lowerEmail = email.toLowerCase();
-      if (lowerEmail === "admin@staket.se" && password === "admin123") {
-        onLoginSuccess("Administrator");
-      } else if (lowerEmail === "styrelse@staket.se" && password === "styrelse123") {
-        onLoginSuccess("Styrelse");
-      } else if (lowerEmail === "medlem@staket.se" && password === "medlem123") {
-        onLoginSuccess("Medlem");
-      } else {
-        setError("Felaktig e-postadress eller lösenord. Tips: Använd snabbvalen nedan eller skriv admin@staket.se / admin123");
+    supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password: password,
+    }).then(async ({ data, error }) => {
+      if (error) {
+        setIsLoading(false);
+        setError("Felaktig e-postadress eller lösenord. Kontrollera dina uppgifter.");
+        console.error("Login error:", error.message);
+        return;
       }
-    }, 1200);
+
+      if (data?.user) {
+        try {
+          const profile = await dbService.getProfileByEmail(data.user.email!);
+          setIsLoading(false);
+          if (profile) {
+            onLoginSuccess(profile.role);
+          } else {
+            // Fallback if profile doesn't exist
+            onLoginSuccess("Medlem");
+          }
+        } catch (e) {
+          setIsLoading(false);
+          console.error("Profile fetching error, fallback to Medlem:", e);
+          onLoginSuccess("Medlem");
+        }
+      } else {
+        setIsLoading(false);
+        setError("Inloggningen misslyckades.");
+      }
+    }).catch((e) => {
+      setIsLoading(false);
+      setError("Ett oväntat fel uppstod vid inloggningen.");
+      console.error(e);
+    });
   };
 
   const handleQuickLogin = (selectedRole: UserRole) => {

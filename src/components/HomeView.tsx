@@ -238,7 +238,7 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
               </h1>
               
               <p className="text-base lg:text-lg text-gray-200 leading-relaxed max-w-xl font-medium drop-shadow-sm pb-2">
-                Stäket Företagscenter huserar 30 stycken kommersiella lokaler i Järfälla — med allt från mindre kontorsrum på 15–30 kvm till rymliga verkstads- och lagerlokaler på 150–300 kvm med markportar.
+                Stäket Företagscenter huserar 30 stycken kommersiella lokaler i Järfälla — flexibla tvåplans kombilokaler på ca 215 kvm anpassade för verkstad, lager och kontor.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -279,11 +279,11 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
             
             <div className="flex-1 flex items-center gap-4 p-4 lg:p-8 w-full lg:w-auto hover:bg-gray-50 transition-colors rounded-l-[40px] cursor-pointer" onClick={() => onNavigate("lediga_lokaler")}>
               <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center shrink-0">
-                <User className="w-5 h-5 text-[#0B2C24]" />
+                <Building2 className="w-5 h-5 text-[#0B2C24]" />
               </div>
               <div>
-                <h3 className="font-bold text-[#0B2C24] text-[15px]">Kontorsrum</h3>
-                <p className="text-gray-500 text-[11.5px] leading-snug mt-0.5 max-w-[190px]">Mindre kontorsytor på ca 15–30 kvm</p>
+                <h3 className="font-bold text-[#0B2C24] text-[15px]">Kombilokaler</h3>
+                <p className="text-gray-500 text-[11.5px] leading-snug mt-0.5 max-w-[190px]">Lager, verkstad &amp; kontor i två plan</p>
               </div>
             </div>
 
@@ -321,7 +321,7 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
           <span className="font-cursive text-4xl text-[#B68F52]">Vi erbjuder</span>
           <h2 className="text-3xl md:text-[42px] font-bold text-[#0B2C24] tracking-tight mt-1 mb-4">Lokaltyper &amp; Verksamheter</h2>
           <p className="text-gray-600 text-sm max-w-md mx-auto leading-relaxed">
-            Hitta optimala ytor för ert företag.<br />Flexibla alternativ från mindre kontorsrum till ordentliga verkstadshallar.
+            Hitta optimala ytor för ert företag.<br />Flexibla tvåplans kombilokaler anpassade för lager, verkstad och kontorsverksamhet.
           </p>
 
           <div id="kontorsplatser" className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mt-14 px-4 scroll-mt-24">
@@ -330,19 +330,19 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
             {/* Card 1 */}
             <div className="group rounded-2xl overflow-hidden bg-white shadow-xl shadow-gray-200/50 flex flex-col items-center cursor-pointer" onClick={() => onNavigate("lediga_lokaler")}>
               <div className="w-full h-64 overflow-hidden mask-image-bottom relative">
-                <img src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=800" alt="Moderna kontorsrum och kontorshotell att hyra i Järfälla" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=800" alt="Flexibla kombilokaler i Järfälla" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
               </div>
               <div className="px-6 pb-8 pt-4 w-full relative z-10 flex items-start gap-4">
                 <div className="w-[60px] h-[60px] bg-[#0B2C24] rounded-2xl text-white flex items-center justify-center shrink-0 shadow-lg -mt-10 relative border-[3px] border-white z-20">
-                  <User className="w-7 h-7" />
+                  <Building2 className="w-7 h-7" />
                 </div>
                 <div className="flex-1 text-left">
                   <div className="flex items-center justify-between pb-1">
-                     <h3 className="text-[17px] font-bold text-[#0B2C24]">Kontorsrum</h3>
+                     <h3 className="text-[17px] font-bold text-[#0B2C24]">Kombilokaler</h3>
                     <ArrowRight className="w-5 h-5 text-[#0B2C24] group-hover:text-[#B68F52] transition-colors" />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">Ljust inredda och välventilerade kontorslokaler i Järfälla på ca 15–30 kvm för administration och konsultbolag.</p>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">Flexibla lokaler på 215 kvm fördelat på två plan med egen port. Idealisk lösning för verksamheter som kräver både lager, verkstad och kontor.</p>
                 </div>
               </div>
             </div>
@@ -455,33 +455,7 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
           </div>
         </section>
 
-        {/* SECTION: CTA BANNER */}
-        <section className="max-w-7xl mx-auto px-4 lg:px-6 py-6 pb-20">
-          <div className="bg-[#093325] rounded-[32px] p-8 lg:p-14 flex flex-col md:flex-row items-center justify-between gap-8 relative overflow-hidden shadow-xl">
-            {/* Background pattern mock lines on right */}
-            <div className="absolute right-0 top-0 w-[40%] h-full opacity-10 pointer-events-none">
-              <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">
-                 <path d="M50,0 Q100,50 50,100" fill="none" stroke="white" strokeWidth="1" />
-                 <path d="M40,0 Q90,50 40,100" fill="none" stroke="white" strokeWidth="1" />
-                 <path d="M30,0 Q80,50 30,100" fill="none" stroke="white" strokeWidth="1" />
-              </svg>
-            </div>
 
-            <div className="flex items-center gap-6 relative z-10 w-full md:w-auto">
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shrink-0 text-[#0B2C24] shadow-lg">
-                <Calendar className="w-8 h-8" />
-              </div>
-              <div className="text-white">
-                <h3 className="text-[28px] lg:text-[32px] font-bold tracking-tight mb-1">Boka en rundvisning</h3>
-                <p className="text-white/90 text-[15px] font-medium">Välkommen att boka en visning av våra lokaler.</p>
-              </div>
-            </div>
-
-            <button className="w-full md:w-auto relative z-10 flex items-center justify-center gap-2 bg-[#B68F52] hover:bg-[#A37E3A] text-white px-8 py-4 rounded text-[12px] font-bold tracking-wider transition-colors shadow-lg" onClick={() => onNavigate("lediga_lokaler")}>
-              <Calendar className="w-4 h-4" /> REKO/INTRESSE <ArrowRight className="w-4 h-4 ml-1" />
-            </button>
-          </div>
-        </section>
         </>
         ) : (
           <div className="bg-[#FAFBFB] min-h-[500px] border-b border-gray-100">

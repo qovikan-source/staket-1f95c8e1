@@ -117,8 +117,8 @@ export default function DocumentHubView({
           </p>
         </div>
 
-        {/* Styrelse controls */}
-        {role === "Styrelse" && (
+        {/* Styrelse/Admin controls */}
+        {(role === "Styrelse" || role === "Administrator") && (
           <button
             id="btn-upload-file"
             onClick={() => setShowUploadModal(true)}
@@ -301,7 +301,7 @@ export default function DocumentHubView({
                       )}
                     </button>
 
-                    {role === "Styrelse" && (
+                    {(role === "Styrelse" || role === "Administrator") && (
                       <button
                         onClick={() => onDeleteFile(file.id, file.name, file.category)}
                         className="p-2 rounded-xl text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"

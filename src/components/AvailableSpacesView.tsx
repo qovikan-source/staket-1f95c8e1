@@ -98,7 +98,7 @@ export default function AvailableSpacesView({
               : "text-slate-600 hover:bg-white/50 hover:text-slate-900"
           }`}
         >
-          Kontorshotell Järfälla
+          Kontor &amp; Showroom
         </button>
         <button
           onClick={() => setActiveSubTab("verkstad-lager")}
@@ -269,7 +269,7 @@ export default function AvailableSpacesView({
             <div className="space-y-6" id="seo-tab-kontorshotell">
               <div className="space-y-3">
                 <h2 className="text-xl font-bold text-slate-900 border-l-4 border-blue-600 pl-3">
-                  Kontor i Järfälla — Möjlighet till rumsindelning på Skarprättarvägen 7
+                  Kontor &amp; Showroom i Järfälla — Möjlighet till rumsindelning på Skarprättarvägen 7
                 </h2>
                 <p className="text-xs text-slate-600 leading-relaxed">
                   Stäket Företagscenter erbjuder attraktiva och fräscha <strong className="text-slate-800 font-semibold">kontorslokaler i Järfälla</strong> för uthyrning. Fastighetens övre plan har idag en öppen planlösning som utgör utmärkta ytor för kontor eller showroom, och kan givetvis rumsindelas om så önskas utifrån ert företags specifika önskemål och behov.

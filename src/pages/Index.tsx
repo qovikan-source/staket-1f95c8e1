@@ -122,6 +122,31 @@ export default function Index() {
     }
   }, []);
 
+  // Real-time synchronization for files database updates
+  useEffect(() => {
+    const filesSubscription = supabase
+      .channel("public-files-changes")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "files" },
+        async (payload) => {
+          console.log("Change received on files table:", payload);
+          try {
+            const dbFiles = await dbService.getFiles();
+            setFiles(dbFiles);
+            saveFiles(dbFiles);
+          } catch (err) {
+            console.error("Error updating files on Postgres change event:", err);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(filesSubscription);
+    };
+  }, []);
+
   // Dynamic SEO meta-tag management based on current active tab/route
   useEffect(() => {
     let title = "Stäket Företagscenter — Lokaler & företag i Järfälla, Stockholm";
