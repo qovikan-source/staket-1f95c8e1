@@ -352,20 +352,24 @@ export default function Index() {
     }
   };
 
-  const handleAddFile = async (file: Omit<FileItem, "id" | "uploadedAt">, realFile?: File) => {
+  const handleAddFile = async (
+    file: Omit<FileItem, "id">,
+    realFile?: File,
+    createNotice?: boolean
+  ) => {
     try {
       let dbFile: FileItem;
       if (realFile) {
-        dbFile = await dbService.uploadFile(realFile, file.category, file.folder);
+        dbFile = await dbService.uploadFile(realFile, file.category, file.folder, file.uploadedAt);
       } else {
         const dbRecord = {
           name: file.name,
           category: file.category,
           folder: file.folder || null,
           file_size: file.fileSize,
-          mime_type: "application/pdf",
+          mime_type: file.mimeType || "application/pdf",
           url: "https://example.com/dummy.pdf",
-          uploaded_at: new Date().toISOString().split("T")[0],
+          uploaded_at: file.uploadedAt || new Date().toISOString().split("T")[0],
         };
         const { data, error } = await supabase.from("files").insert(dbRecord).select().single();
         if (error) throw error;
@@ -382,9 +386,28 @@ export default function Index() {
       const updated = [dbFile, ...files];
       setFiles(updated);
       saveFiles(updated);
+
+      if (createNotice) {
+        let noticeCategory: NoticeboardCategory = "Information från Föreningsstyrelse";
+        if (file.category === "Styrelsefiler" && file.folder === "Ekonomi") {
+          noticeCategory = "Ekonomi";
+        } else if (file.category === "Styrelsefiler" && file.folder === "Administration") {
+          noticeCategory = "Årsmöten & Föreningens Styrelse";
+        }
+
+        await handleAddNotice({
+          title: `Nytt dokument: ${file.name.replace(/\.[^/.]+$/, "")}`,
+          category: noticeCategory,
+          content: `Ett nytt dokument har lagts till i arkivet under fliken "${file.category}"${
+            file.folder ? ` -> ${file.folder}` : ""
+          }.\n\nDokumentnamn: ${file.name}\nDokumentdatum: ${file.uploadedAt}`,
+          isPinned: false,
+          author: getCurrentUserName(),
+        });
+      }
     } catch (e) {
       console.error("Failed to upload/add file to Supabase:", e);
-      alert("Kunde inte ladda upp filen: " + (e as Error).message);
+      throw e;
     }
   };
 

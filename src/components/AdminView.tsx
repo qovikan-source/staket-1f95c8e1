@@ -477,7 +477,11 @@ export default function AdminView({
                             <span className="hidden lg:inline text-[10px] font-semibold">Ändra</span>
                           </button>
                           <button
-                            onClick={() => onDeleteProfile(p.id)}
+                            onClick={() => {
+                              if (window.confirm(`Är du säker på att du vill radera användaren "${p.name}"? Detta tar bort medlemmens profil permanent.`)) {
+                                onDeleteProfile(p.id);
+                              }
+                            }}
                             className="p-1.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1"
                             title="Radera användare"
                           >
@@ -516,7 +520,11 @@ export default function AdminView({
 
                 {activeUserRole === "Administrator" && (
                   <button
-                    onClick={() => onDeleteFile(file.id, file.name, file.category)}
+                    onClick={() => {
+                      if (window.confirm(`Är du säker på att du vill radera filen "${file.name}" permanent?`)) {
+                        onDeleteFile(file.id, file.name, file.category);
+                      }
+                    }}
                     className="p-2 rounded-xl text-slate-400 hover:text-rose-500 hover:bg-rose-50 shrink-0 transition-all cursor-pointer"
                     title="Radera fil permanent"
                   >
@@ -557,7 +565,11 @@ export default function AdminView({
 
                   {activeUserRole === "Administrator" && (
                     <button
-                      onClick={() => onDeleteNotice(post.id)}
+                      onClick={() => {
+                        if (window.confirm(`Är du säker på att du vill radera anslaget "${post.title}"?`)) {
+                          onDeleteNotice(post.id);
+                        }
+                      }}
                       className="p-2 ml-auto text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
                       title="Radera anslag"
                     >
@@ -613,7 +625,11 @@ export default function AdminView({
 
                     {activeUserRole === "Administrator" && (
                       <button
-                        onClick={() => onDeleteSpace(space.id)}
+                        onClick={() => {
+                          if (window.confirm(`Är du säker på att du vill radera annonsen "${space.title}"?`)) {
+                            onDeleteSpace(space.id);
+                          }
+                        }}
                         className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1 text-xs font-bold"
                         title="Radera annons"
                       >

@@ -194,7 +194,11 @@ export default function NoticeboardView({
                       </span>
                       {role === "Styrelse" && (
                         <button
-                          onClick={() => onDeleteNotice(post.id)}
+                          onClick={() => {
+                            if (window.confirm(`Är du säker på att du vill radera anslaget "${post.title}"?`)) {
+                              onDeleteNotice(post.id);
+                            }
+                          }}
                           title="Radera anslag"
                           className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
                         >
@@ -265,7 +269,11 @@ export default function NoticeboardView({
                       </span>
                       {role === "Styrelse" && (
                         <button
-                          onClick={() => onDeleteNotice(post.id)}
+                          onClick={() => {
+                            if (window.confirm(`Är du säker på att du vill radera anslaget "${post.title}"?`)) {
+                              onDeleteNotice(post.id);
+                            }
+                          }}
                           title="Radera anslag"
                           className="p-1.5 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
                         >

@@ -14,22 +14,23 @@ The application serves two core purposes:
 
 ---
 
-## 2. Target Technical Architecture
+## 2. Technical Architecture & Tech Stack
 
-The application is built around a robust, modern frontend stack designed for responsive, fast, and secure user interactions.
+The application is built around a modern, responsive frontend and a secure serverless backend:
 
 - **Framework**: React (v18+) with TypeScript (`.tsx`, `.ts`).
-- **Build & Development Tool**: Vite for fast bundling and Hot Module Replacement handling.
-- **Styling**: Tailwind CSS for a refined, responsive layout utilizing custom themes (emerald-inspired colors like `#0B2C24` and gold accents `#B68F52`).
+- **Build Tool**: Vite for rapid bundling and development.
+- **Styling**: Tailwind CSS utilizing premium, high-contrast colors (emerald-inspired `#0B2C24` and gold/brass `#B68F52`).
 - **Icons**: Lucide React (`lucide-react`).
-- **State & Data Persistence**:
-  - Offline-first approach relying on `localStorage` for high performance and low lag.
-  - Fail-safe JSON serialization/deserialization logic in `src/initialData.ts` to provide immediate fallback to preset starting datasets if local storage gets manipulated or cleared.
-  - Key stores maintained in browser state:
-    - `forening_profiles_db`: User accounts, companies, unit numbers, contact options, logos.
-    - `forening_notices_db`: Active, categorized, and pinned announcement posts.
-    - `forening_files_db`: Official PDF and documents with strict access category tags.
-    - `forening_spaces_db`: Vacant spaces, sizes, heights, specifications.
+- **Database & Backend (Supabase)**:
+  - **Auth**: Supabase GoTrue Auth handles secure user credentials and logins.
+  - **PostgreSQL Database**: Real tables maintain relational data:
+    - `profiles`: Synced metadata for members (Lokal, company name, org number, phone, role).
+    - `files`: Document registry holding metadata and URLs of stored board files.
+    - `vacant_spaces`: Commercial unit listings.
+    - `noticeboard_posts`: News and announcements.
+  - **Storage**: A public storage bucket named `documents` stores uploaded PDF/image media categorized under `medlemmar/` or `styrelse/`.
+  - **Real-Time Subscriptions**: Active websocket listeners keep notice boards and document lists instantly updated across all active member sessions.
 
 ---
 
@@ -37,36 +38,34 @@ The application is built around a robust, modern frontend stack designed for res
 
 The codebase is highly modularized, separating each principal view tab into self-contained components under `src/components/`:
 
-### A. Core Navigation (`src/App.tsx`)
-- Coordinates the top-level routing, responsive mobile side-drawers, and current local state engines.
-- Manages authorization states for three user tiers: **Besökare** (Visitor), **Medlem** (Member), and **Administrator** (Admin).
+### A. Core Navigation & App Entrance (`src/pages/Index.tsx` & `src/App.tsx`)
+- Orchestrates global routes, authorization state checks, mobile side-drawers, and hooks active Supabase auth sessions.
+- Grants modular views based on role tiers: **Besökare** (Visitor), **Medlem** (Member), **Styrelse** (Board Member), and **Administrator** (Admin).
 
 ### B. Landing Page (`src/components/HomeView.tsx`)
-- Includes responsive high-contrast headers, beautiful hero banners featuring on-site exterior photography, highlights of latest administrative board notices, trust/value-proposition bento blocks, and footer navigation links.
+- Features the updated hero title *"Välkommen till Stäket Företagscenter"*, modern font styling, the latest administrative announcements, trust/value bento cards, and a streamlined horizontal footer.
 
 ### C. Available Commercial Spaces (`src/components/AvailableSpacesView.tsx`)
-- Displays currently unleased warehouse, storage, and office divisions with complete structural properties (e.g. 5m ceiling height, manual 4x4,5m vikportar, floor heating, oil-separation drains).
-- Integrates a dynamic **Intresseanmälan (Interest Form)** that hooks directly into the collection of actively listed available spaces so visitors can apply for specific real-world units, switching gracefully to a general queue/standby selector if zero vacancies are registered.
+- Lists vacant warehouse, storage, and showroom divisions with confirmed on-site specifications (~215 m² kombilokaler, 5m heights, manual port doors).
+- Integrates a dynamic interest application form (*Intresseanmälan*) matching current listing vacancy entries.
 
-### D. Our Member Companies (`src/components/OurCompaniesView.tsx`)
-- Exhibits a stylized logo-card wall presenting active tenants.
-- **Rules Integrated**: Removed overly detailed bio pages/nested tabs. It focuses exclusively on the core brand attributes: **Company Name**, **Unit/Suite Position**, and **Company Logo Image** uploaded by administrators, with a clean alphabetical text logo fallback if no custom graphic asset is uploaded.
+### D. Tenant Logo Wall (`src/components/OurCompaniesView.tsx`)
+- Renders an alphabetized layout showing active park businesses with their corresponding unit positions and uploaded logo graphics (falling back to initials if custom logos aren't set).
 
 ### E. Interactive Board / Noticeboard (`src/components/NoticeboardView.tsx`)
-- Bulletins divided into Categories (Allmänt, Ekonomi, Säkerhet, etc.) allowing customized attachments, pinning important updates to the top, and self-publishing controls.
+- Displays categorized bulletins (Allmänt, Ekonomi, Säkerhet, etc.) allowing priority pinning.
 
-### F. Document Hub / Archiving (`src/components/DocumentHubView.tsx`)
-- Secure repository divided into folders (e.g. Årsmöten, Stadgar, Ritningar) allowing members to view size-tracked records and download authenticated documents.
+### F. Document Hub (`src/components/DocumentHubView.tsx`)
+- Private folder registry categorized into Medlemsfiler or Styrelsefiler (with subfolders for Administration, Ekonomi, Arkiv, and Pantbrev).
 
 ### G. Member Address Book (`src/components/ContactBookView.tsx`)
-- A searchable roster of park co-owners, enabling rapid corporate pairing, direct call actions, and instant copy buttons for email/phone communications.
+- Searchable directory of active tenants, defaulted to List View with a grid/card toggle options. Automatically hides administrators and members without a registered unit or company.
 
-### H. Backend Panel (`src/components/AdminView.tsx`)
-- Dashboard specifically for Administrators to perform real-time CRUD operations.
-- Direct forms to create and remove vacancies, append fresh membership profiles with custom logos, and dispatch global board notices.
+### H. Administrator Workspace (`src/components/AdminView.tsx`)
+- Private registry management. Allows full member creation, role filter sorting (Alla, Medlemmar, Styrelse, Administrator), profile edits, vacancy posting, and document management.
 
 ---
 
 ## 4. Key Security & Compliance Rules
-- Custom server-side API keys (e.g., Google or generic backends) are securely insulated inside backend architecture and cannot leak to client browsers.
-- Strictly aligned to the physical realities of **Stäket Företagscenter**. No unconfirmed placeholders or inflated data ("30 unika enheter" and fabricated "types and sizes" lists are removed).
+- Environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) are kept isolated and are never hardcoded inside source repositories.
+- Document organization requires file uploads to flow through the Admin portal rather than direct console drags, securing Postgres registry mapping integrity.

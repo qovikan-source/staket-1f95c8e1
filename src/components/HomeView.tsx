@@ -239,7 +239,7 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
               </h1>
               
               <p className="text-base lg:text-lg text-gray-200 leading-relaxed max-w-xl font-medium drop-shadow-sm pb-2">
-                Stäket Företagscenter huserar 30 stycken kommersiella lokaler i Järfälla — flexibla tvåplans kombilokaler på ca 215 kvm anpassade för verkstad, lager och kontor.
+                Stäket Företagscenter omfattar 30 kommersiella tvåplans kombilokaler i Järfälla. Lokalerna, om cirka 215 kvm, är utformade för verksamheter såsom verkstad, showroom, åkeri, hantverk, lager och kontor.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -317,15 +317,48 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
           </div>
         </div>
 
-        {/* SECTION: VI ERBJUDER */}
-        <section className="py-12 bg-transparent text-center px-4">
-          <span className="font-cursive text-4xl text-[#B68F52]">Vi erbjuder</span>
-          <h2 className="text-3xl md:text-[42px] font-bold text-[#0B2C24] tracking-tight mt-1 mb-4">Lokaltyper &amp; Verksamheter</h2>
-          <p className="text-gray-600 text-sm max-w-md mx-auto leading-relaxed">
-            Hitta optimala ytor för ert företag.<br />Flexibla tvåplans kombilokaler anpassade för lager, verkstad och kontorsverksamhet.
-          </p>
+        {/* SECTION: OM STÄKET */}
+        <section id="omoss" className="py-20 bg-transparent text-center px-4 scroll-mt-24">
+          <div className="max-w-3xl mx-auto space-y-6 mb-12">
+            <span className="font-cursive text-3xl text-[#B68F52]">Om Stäket Företagscenter</span>
+            <h2 className="text-3xl md:text-[42px] font-bold text-[#0B2C24] leading-[1.2] tracking-tight">
+              En plats där företag trivs <br />
+              och <span className="font-cursive text-[#0B2C24] font-normal px-1 tracking-normal inline-block">utvecklas</span>
+            </h2>
+            
+            <p className="text-[#0B2C24]/80 text-[15px] leading-relaxed max-w-lg mx-auto pb-4 font-medium italic border-l-4 border-[#B68F52] pl-4 text-left">
+              "Behöver du tjänster, konsultationer eller bara byta däck eller serva bilen är du alltid välkommen över på en kopp kaffe till vårt trevliga företagscenter, vi tar gärna hand om dig."
+            </p>
 
-          <div id="kontorsplatser" className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mt-14 px-4 scroll-mt-24">
+            <div className="max-w-[480px] mx-auto grid grid-cols-2 gap-4 pb-6">
+              <div className="flex items-center gap-2.5 justify-start">
+                <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+                <span className="text-[13px] font-bold text-[#0B2C24] text-left">Kombilokaler (ca 215 m²)</span>
+              </div>
+              <div className="flex items-center gap-2.5 justify-start">
+                <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+                <span className="text-[13px] font-bold text-[#0B2C24] text-left">Strategiskt intill E18</span>
+              </div>
+              <div className="flex items-center gap-2.5 justify-start">
+                <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+                <span className="text-[13px] font-bold text-[#0B2C24] text-left">Mångsidig branschbredd</span>
+              </div>
+              <div className="flex items-center gap-2.5 justify-start">
+                <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
+                  <Check className="w-3.5 h-3.5 stroke-[3]" />
+                </div>
+                <span className="text-[13px] font-bold text-[#0B2C24] text-left">Fria parkeringsplatser</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="kontorsplatser" className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mt-6 px-4 scroll-mt-24">
             
             {/* CARDS */}
             {/* Card 1 */}
@@ -380,7 +413,7 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
                 </div>
                 <div className="flex-1 text-left">
                   <div className="flex items-center justify-between pb-1">
-                     <h3 className="text-[17px] font-bold text-[#0B2C24]">Skarpsinta Verksamheter</h3>
+                     <h3 className="text-[17px] font-bold text-[#0B2C24]">Våra Verksamheter</h3>
                     <ArrowRight className="w-5 h-5 text-[#0B2C24] group-hover:text-[#B68F52] transition-colors" />
                   </div>
                   <p className="text-xs text-gray-500 mt-1 leading-relaxed">Möt våra 30 hyresgäster verksamma inom bilförsäljning, däckbyten, liftuthyrning, transport, systemelektronik och konsulttjänster.</p>
@@ -391,53 +424,7 @@ export default function HomeView({ notices = [], role, onNavigate, onSetRole, ac
           </div>
 
           <div className="mt-14 inline-block">
-            <button className="flex items-center gap-3 border border-[#0B2C24]/20 bg-transparent hover:bg-gray-100 text-[#0B2C24] font-bold text-[11px] tracking-wider px-8 py-3.5 rounded-full transition-colors" onClick={() => onNavigate("lediga_lokaler")}>
-              SE LEDIGA LOKALER <ArrowRight className="w-4 h-4 text-gray-500" />
-            </button>
-          </div>
-        </section>
-
-        {/* SECTION: OM STÄKET */}
-        <section id="omoss" className="py-24 overflow-hidden bg-transparent scroll-mt-10">
-          <div className="max-w-3xl mx-auto px-6 text-center space-y-6">
-            <span className="font-cursive text-3xl text-[#B68F52]">Om Stäket Företagscenter</span>
-            <h2 className="text-[38px] lg:text-[46px] font-bold text-[#0B2C24] leading-[1.2] tracking-tight">
-              En plats där företag trivs <br />
-              och <span className="font-cursive text-[#0B2C24] font-normal px-1 tracking-normal inline-block">utvecklas</span>
-            </h2>
-            
-            <p className="text-[#0B2C24]/80 text-[15px] leading-relaxed max-w-lg mx-auto pb-4 font-medium italic border-l-4 border-[#B68F52] pl-4 text-left">
-              "Behöver du tjänster, konsultationer eller bara byta däck eller serva bilen är du alltid välkommen över på en kopp kaffe till vårt trevliga företagscenter, vi tar gärna hand om dig."
-            </p>
-
-            <div className="max-w-[480px] mx-auto grid grid-cols-2 gap-4 pb-6">
-              <div className="flex items-center gap-2.5 justify-start">
-                <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                </div>
-                <span className="text-[13px] font-bold text-[#0B2C24] text-left">Kombilokaler (ca 215 m²)</span>
-              </div>
-              <div className="flex items-center gap-2.5 justify-start">
-                <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                </div>
-                <span className="text-[13px] font-bold text-[#0B2C24] text-left">Strategiskt intill E18</span>
-              </div>
-              <div className="flex items-center gap-2.5 justify-start">
-                <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                </div>
-                <span className="text-[13px] font-bold text-[#0B2C24] text-left">Mångsidig branschbredd</span>
-              </div>
-              <div className="flex items-center gap-2.5 justify-start">
-                <div className="w-[20px] h-[20px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
-                  <Check className="w-3.5 h-3.5 stroke-[3]" />
-                </div>
-                <span className="text-[13px] font-bold text-[#0B2C24] text-left">Fria parkeringsplatser</span>
-              </div>
-            </div>
-
-            <button className="flex items-center justify-center gap-2 bg-[#0B2C24] text-white px-7 py-3.5 rounded text-[11px] font-bold tracking-wider hover:bg-[#081e18] transition-colors mx-auto" onClick={() => onNavigate("om_oss")}>
+            <button className="flex items-center justify-center gap-2 bg-[#0B2C24] text-white px-8 py-3.5 rounded-full text-[11px] font-bold tracking-wider hover:bg-[#081e18] transition-colors mx-auto" onClick={() => onNavigate("om_oss")}>
               LÄS MER OM OSS <ArrowRight className="w-4 h-4 ml-1" />
             </button>
           </div>

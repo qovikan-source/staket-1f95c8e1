@@ -1,50 +1,72 @@
 # Project Progress — Stäket Företagscenter Portal
 
-This file maintains the development logs, completed tasks, and upcoming milestones for the Stäket Företagscenter portal.
+This file maintains the development logs, completed milestones, integration details, and upcoming steps for the Stäket Företagscenter portal.
 
 ---
 
 ## 1. Executive Summary
 
-We have created and polished a fully functional, highly responsive, full-stack reactive prototype portal for **Stäket Företagscenter**. All public-facing modules and private-member portals are fully operational. Data persistence works flawlessly using robust, defensive local storage handlers.
+We have transitioned the **Stäket Företagscenter Portal** from a local-storage mock application into a fully operational, full-stack website powered by **Supabase (PostgreSQL, Storage, and GoTrue Auth)**. Real-time subscriptions are active for notices and files, user credentials from the legacy system have been migrated successfully, and the administrator workspace has been equipped with robust editing and filtering tools.
 
 ---
 
 ## 2. Completed Milestones & Accomplishments
 
-### Robust State Recovery & Fail-safes [Recent]
-- Refactored `src/initialData.ts` to implement comprehensive try-catch wrappers around local storage access.
-- Implemented robust validation to handle parsing errors or corrupted browser caches, cleanly falling back to preset mockup listings if any storage integrity checks fail.
+### A. Database Migration & Supabase Backend
+- **Real Database Integration**: Replaced `localStorage` state with real-time Supabase endpoints (`profiles`, `files`, `noticeboard_posts`, and `vacant_spaces` tables).
+- **GoTrue Auth Integration**: Fully connected `LoginView.tsx` with `supabase.auth` for secure login using active member email/passwords.
+- **Legacy Password Compatibility**: Solved the Bcrypt/Blowfish password prefix issue ($2y$ to $2a$) by writing a migration Skript (`generate_migration.js`) and database repair sequence (`migrate_users.sql`).
 
-### Component Error Defenses [Recent]
-- Integrated default array initializations (e.g., `notices = []`, `files = []`, `spaces = []`, `profiles = []`) at the component definition level for `DocumentHubView`, `AvailableSpacesView`, `ContactBookView`, `NoticeboardView`, and `HomeView`. This eliminates "undefined property" crashes if parent states are empty.
+### B. Member Directory & "Kontaktboken" Refinement
+- **Automatic Roster Syncing**: "Kontaktboken" now reads directly from the `profiles` table.
+- **Roster Filtering Rules**: Excluded Administrators entirely from Kontaktboken. Also, users are only listed if they have a non-default, valid entry in either **Lokal (Unit)** or **Företag (Company)**.
+- **Org.nr Support**: Added Organisation number (`org_nr` / `Org.nr`) column headers and cells to both the admin Medlemsregister and Kontaktboken.
+- **List & Card Views**: Designed two view modes for Kontaktboken (List View and Card View) and set **List View** as the default.
 
-### "Våra Företag" Grid Facelift [Recent]
-- Completely overhauled `src/components/OurCompaniesView.tsx`. Removed all redundant nested views, bios, and descriptions.
-- The view now features a visual logo wall showing only the **Company Name**, **Unit/Suite Position**, and **Uploaded Logo Image** (with a clean, beautiful fallback text-avatar if no custom graphic exists).
+### C. Administrator Portal & Register Control
+- **Add / Edit / Delete Member Forms**: Enabled full administrator controls in the Medlemsregister ("Alla Användare"). Administrators can edit any user's profile details via a polished form modal and delete accounts safely, guarded by verification warning boxes.
+- **Confirmation warning boxes**: Integrated safety confirmation popups before removing members, documents, notices, or vacant space ads.
+- **Role Filters**: Integrated role toggle filters (**Alla**, **Medlemmar**, **Styrelse**, **Administrator**) to simplify list inspection.
+- **Improved Modal Height & UX**: Fixed form clipping by limiting modal heights to `max-h-[90vh]` with scrollable forms (`overflow-y-auto`), ensuring close buttons and headers stay sticky at the top.
 
-### Cleansing Speculative Content & Aligning with Facts [Recent]
-- Removed unverified dummy statements (e.g. references to "30 unika enheter" and arbitrary sizing numbers) across headers, sidecards, the available spaces view, and the about us Q&A cards to keep the portal strictly accurate to the real-world premises.
-- Standardized text to outline the physical specs confirmed in `old-content.md`: ~215 sqm kombilokaler, 5m ceiling height, manual 4x4,5m door gates, floor heating, and active 24h surveillance.
+### D. UI/UX Polishing & Image Swaps
+- **Hero & Copy Updates**: Replaced the landing page hero copy and sub-headline text with accurate descriptive copy regarding Brf Stäket.
+- **Section Merger**: Combined the redundant "Vi erbjuder" and "Om Stäket" sections into a unified homepage section with updated headers, quote text, checkmark list, and a "Läs mer om oss" button.
+- **Footer Real Estate**: Relocated the Bulletin Board (*Anslagstavla*) to sit right above the footer, grouped contact info into a sleek single-row layout, and cleaned phone suffixes.
+- **Local Asset Integration**: Imported and placed `@bild.jpg` in the top hero of the "Lediga Lokaler" page, and `@bild2.jpg` in the "Områdesguide" section.
 
-### Dynamic Interest Form [Recent]
-- Fixed the static dummy text select dropdowns in the **Intresseanmälan** component.
-- The dropdown now reads directly from the array of actively listed available spaces. If there are no vacancies available, the contact/interest form dynamically switches to a clean "Generell intresseanmälan" standby state so users can still apply to be added to the queue.
+### E. Document Hub & Bulk Upload Controls
+- **Bulk Uploading**: Redesigned the upload modal to support selecting multiple files at once.
+- **Custom Document Dates**: Allowed administrators to specify the actual date of each document in the upload queue (stored in `uploaded_at`), decoupling file timestamps from the system upload date.
+- **Opt-in Noticeboard Announcements**: Added checkbox toggles to let admins selectively create linked Noticeboard announcements for specific uploads, preventing noticeboard spam during historical imports.
 
 ---
 
-## 3. Current Directory Structure & Source Integrity
+## 3. Core Database & Storage Configuration
 
-- `src/components/` — All modules are cleanly split into modular UI files (`HomeView`, `OurCompaniesView`, `AvailableSpacesView`, `NoticeboardView`, etc.) prevent any file size compilation bottlenecks.
-- `types.ts` — Core interfaces (`VacantSpace`, `UserProfile`, `NoticePost`, `FileItem`) are unified in one place.
-- Runs with no TypeScript errors or linter warnings.
-- Compiles successfully.
+### A. Supabase Database Schema
+- **`profiles`**: Links to `auth.users` on `id` UUID. Houses roles (`Medlem`, `Styrelse`, `Administrator`), unit numbers, company name, phone, name, and organisation number (`org_nr`).
+- **`files`**: Stores metadata of uploaded documents (URL, size, type, category, folder category).
+- **`vacant_spaces`**: Keeps available offices/warehouses details.
+- **`noticeboard_posts`**: Holds news and bulletins.
+
+### B. Supabase Storage Setup (The `documents` Bucket)
+- A public bucket named **`documents`** is configured.
+- Inside it, the root subfolders are:
+  - `medlemmar/` (Files categorized under *Medlemsfiler*)
+  - `styrelse/` (Files categorized under *Styrelsefiler*)
+    - Inside `styrelse/`, directories exist for `Administration`, `Arkiv`, `Ekonomi`, and `Pantbrev`.
+- **Note**: Files must be uploaded *through the website portal UI* rather than directly dragged into the Supabase Console. Uploading through the website inserts corresponding metadata in the `public.files` DB table; direct bucket uploads will not show up in the document hub.
 
 ---
 
-## 4. What is Left / Next Steps
+## 4. Next Steps & Roadmap
 
-- **No immediate functional requests remaining.** Every request highlighted by the user has been fully completed and verified using both build compilation and TS type/lint validations.
-- Future tasks could include:
-  - Adding server-side database syncing (e.g. Firebase Firestore) if the association moves beyond local storage.
-  - Integration with email trigger microservices (e.g., SendGrid) for the interest form.
+1. **Invite Members & Boarding**:
+   - Verify the migration of legacy users inside `auth.users` and trigger reset password links/emails if any members need to set new credentials.
+2. **Setup SMTP Services**:
+   - Connect Supabase Auth and the portal with an SMTP provider (e.g. Resend, SendGrid) to deliver system emails and reset requests.
+3. **Configure Vacancy Interest Notifications**:
+   - Link the interest application form (*Intresseanmälan*) to mailers, notifying park admins when potential tenants apply for space.
+4. **Deploying Production Bundle**:
+   - Host the frontend bundle on Netlify, Vercel, or similar static hosts and bind the production Supabase Environment variables safely.

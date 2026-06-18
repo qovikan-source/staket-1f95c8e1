@@ -10,8 +10,19 @@ import { FileItem, FileCategory, BoardFolder, BOARD_FOLDERS, UserRole } from "..
 interface DocumentHubViewProps {
   files: FileItem[];
   role: UserRole;
-  onAddFile: (file: Omit<FileItem, "id" | "uploadedAt">, realFile?: File) => void;
+  onAddFile: (file: Omit<FileItem, "id">, realFile?: File, createNotice?: boolean) => Promise<void>;
   onDeleteFile: (id: string, name: string, category: FileCategory) => void;
+}
+
+interface UploadQueueItem {
+  id: string;
+  file: File;
+  name: string;
+  category: FileCategory;
+  folder?: BoardFolder;
+  customDate: string;
+  createNotice: boolean;
+  fileSize: string;
 }
 
 export default function DocumentHubView({
@@ -29,12 +40,10 @@ export default function DocumentHubView({
   const [downloadingFileId, setDownloadingFileId] = useState<string | null>(null);
   const [downloadSuccessText, setDownloadSuccessText] = useState<string | null>(null);
 
-  // Form states for new file
-  const [newFileName, setNewFileName] = useState("");
-  const [newFileCategory, setNewFileCategory] = useState<FileCategory>("Medlemsfiler");
-  const [newFileFolder, setNewFileFolder] = useState<BoardFolder>("Administration");
-  const [newFileSize, setNewFileSize] = useState("1.2 MB");
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // Bulk upload queue states
+  const [uploadQueue, setUploadQueue] = useState<UploadQueueItem[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
 
   const handleDownload = (file: FileItem) => {
     setDownloadingFileId(file.id);
@@ -45,47 +54,91 @@ export default function DocumentHubView({
     }, 1200);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      setSelectedFile(file);
-      setNewFileName(file.name);
-      
-      // Format file size
-      const bytes = file.size;
-      const k = 1024;
-      const sizes = ["Bytes", "KB", "MB"];
-      const i = Math.floor(Math.log(bytes) / Math.log(k));
-      const sizeStr = parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
-      setNewFileSize(sizeStr);
+  const handleMultipleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const filesArray = Array.from(e.target.files);
+      const newQueueItems: UploadQueueItem[] = filesArray.map((file, i) => {
+        // Format file size
+        const bytes = file.size;
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB"];
+        const idx = Math.floor(Math.log(bytes) / Math.log(k));
+        const sizeStr = parseFloat((bytes / Math.pow(k, idx)).toFixed(1)) + " " + sizes[idx];
+
+        return {
+          id: `queue-${Date.now()}-${i}-${Math.random().toString(36).substr(2, 5)}`,
+          file,
+          name: file.name,
+          category: activeCategory,
+          folder: activeCategory === "Styrelsefiler" ? "Administration" : undefined,
+          customDate: new Date().toISOString().split("T")[0],
+          createNotice: false,
+          fileSize: sizeStr,
+        };
+      });
+      setUploadQueue((prev) => [...prev, ...newQueueItems]);
+      e.target.value = "";
     }
   };
 
-  const handleUpload = (e: React.FormEvent) => {
+  const handleRemoveFromQueue = (id: string) => {
+    setUploadQueue((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleUpdateQueueItem = (id: string, updates: Partial<UploadQueueItem>) => {
+    setUploadQueue((prev) =>
+      prev.map((item) => {
+        if (item.id !== id) return item;
+        const merged = { ...item, ...updates };
+        if (merged.category === "Medlemsfiler") {
+          merged.folder = undefined;
+        } else if (merged.category === "Styrelsefiler" && !merged.folder) {
+          merged.folder = "Administration";
+        }
+        return merged;
+      })
+    );
+  };
+
+  const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newFileName) return;
+    if (uploadQueue.length === 0) return;
 
-    // Normalize name to end with .pdf if not specified
-    let name = newFileName.trim();
-    if (!name.toLowerCase().endsWith(".pdf") && !name.toLowerCase().endsWith(".docx")) {
-      name += ".pdf";
+    setIsUploading(true);
+    try {
+      for (let i = 0; i < uploadQueue.length; i++) {
+        const item = uploadQueue[i];
+        setUploadProgress(`Laddar upp ${i + 1} av ${uploadQueue.length}: ${item.name}...`);
+
+        let finalName = item.name.trim();
+        if (!finalName.toLowerCase().endsWith(".pdf") && !finalName.toLowerCase().endsWith(".docx")) {
+          finalName += ".pdf";
+        }
+
+        await onAddFile(
+          {
+            name: finalName,
+            category: item.category,
+            folder: item.folder,
+            fileSize: item.fileSize,
+            uploadedAt: item.customDate,
+            mimeType: item.file.type || "application/pdf",
+          },
+          item.file,
+          item.createNotice
+        );
+      }
+      setDownloadSuccessText(`Laddade upp ${uploadQueue.length} dokument.`);
+      setUploadQueue([]);
+      setShowUploadModal(false);
+      setTimeout(() => setDownloadSuccessText(null), 4000);
+    } catch (err) {
+      console.error("Bulk upload failed:", err);
+      alert("Ett fel uppstod under uppladdningen: " + (err as Error).message);
+    } finally {
+      setIsUploading(false);
+      setUploadProgress("");
     }
-
-    onAddFile({
-      name,
-      category: newFileCategory,
-      folder: newFileCategory === "Styrelsefiler" ? newFileFolder : undefined,
-      fileSize: newFileSize,
-      mimeType: selectedFile?.type || "application/pdf",
-    }, selectedFile || undefined);
-
-    // Reset Form
-    setNewFileName("");
-    setNewFileCategory("Medlemsfiler");
-    setNewFileFolder("Administration");
-    setNewFileSize("1.2 MB");
-    setSelectedFile(null);
-    setShowUploadModal(false);
   };
 
   // Filter logic
@@ -303,7 +356,11 @@ export default function DocumentHubView({
 
                     {(role === "Styrelse" || role === "Administrator") && (
                       <button
-                        onClick={() => onDeleteFile(file.id, file.name, file.category)}
+                        onClick={() => {
+                          if (window.confirm(`Är du säker på att du vill radera filen "${file.name}" permanent?`)) {
+                            onDeleteFile(file.id, file.name, file.category);
+                          }
+                        }}
                         className="p-2 rounded-xl text-slate-300 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                         title="Radera fil"
                       >
@@ -321,123 +378,190 @@ export default function DocumentHubView({
       {/* Upload File Unified Modal */}
       {showUploadModal && (
         <div className="fixed inset-0 bg-slate-950/45 flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-lg overflow-hidden animate-scale-up">
-            <div className="flex items-center justify-between p-5 bg-slate-900 text-white">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-2xl overflow-hidden animate-scale-up flex flex-col max-h-[90vh]">
+            <div className="flex items-center justify-between p-5 bg-slate-900 text-white shrink-0">
               <div className="space-y-0.5">
-                <h3 className="font-bold text-base">Ladda upp nytt dokument</h3>
-                <p className="text-[10px] text-slate-300">Medlemsfiler visas för alla medlemmar. Styrelsefiler säkras med RLS.</p>
+                <h3 className="font-bold text-base">Ladda upp dokument (Bulk)</h3>
+                <p className="text-[10px] text-slate-300">Medlemsfiler visas för alla medlemmar. Styrelsefiler säkras i undermappar.</p>
               </div>
               <button
-                onClick={() => setShowUploadModal(false)}
-                className="text-slate-400 hover:text-white text-xs font-semibold px-2 py-1 bg-slate-800 rounded-lg cursor-pointer"
+                type="button"
+                onClick={() => {
+                  if (!isUploading) {
+                    setUploadQueue([]);
+                    setShowUploadModal(false);
+                  }
+                }}
+                disabled={isUploading}
+                className="text-slate-400 hover:text-white text-xs font-semibold px-2.5 py-1 bg-slate-800 rounded-lg cursor-pointer transition-colors disabled:opacity-40"
               >
                 Stäng
               </button>
             </div>
 
-            <form onSubmit={handleUpload} className="p-6 space-y-4">
-              <div className="space-y-1">
-                <label htmlFor="upload-name" className="text-xs font-bold text-slate-600">Filnamn *</label>
-                <input
-                  id="upload-name"
-                  type="text"
-                  required
-                  placeholder="Ex: Årsredovisning_2026.pdf"
-                  value={newFileName}
-                  onChange={(e) => setNewFileName(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50 focus:bg-white focus:outline-emerald-500"
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label htmlFor="upload-category" className="text-xs font-bold text-slate-600">Behörighet / Kategori *</label>
-                  <select
-                    id="upload-category"
-                    value={newFileCategory}
-                    onChange={(e) => setNewFileCategory(e.target.value as FileCategory)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50"
-                  >
-                    <option value="Medlemsfiler">🔓 Medlemsfiler (Alla inloggade)</option>
-                    <option value="Styrelsefiler">🔒 Styrelsefiler (Endast Styrelse)</option>
-                  </select>
+            <form onSubmit={handleUploadSubmit} className="flex-1 overflow-y-auto p-6 space-y-5">
+              {uploadQueue.length === 0 ? (
+                /* Empty Queue: Drag and Drop / Choose Files Area */
+                <div className="border-2 border-dashed border-slate-200 hover:border-emerald-400 transition-colors rounded-xl p-8 text-center bg-slate-50 relative cursor-pointer min-h-[200px] flex flex-col items-center justify-center">
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleMultipleFilesChange}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg"
+                  />
+                  <Plus className="w-8 h-8 text-slate-400 mb-2" />
+                  <span className="text-xs font-semibold text-slate-700 block">Välj filer eller släpp dem här</span>
+                  <span className="text-[10px] text-slate-400 block mt-1">Du kan välja flera filer samtidigt för bulk-uppladdning</span>
+                  <span className="text-[9px] text-slate-350 block mt-2">PDF, DOCX, XLSX, Bilder upp till 20MB</span>
                 </div>
+              ) : (
+                /* Active Queue List */
+                <div className="space-y-4">
+                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Uppladdningskö ({uploadQueue.length}st dokument)</div>
+                  
+                  <div className="space-y-4 max-h-[50vh] overflow-y-auto pr-1">
+                    {uploadQueue.map((item) => (
+                      <div key={item.id} className="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-3 relative">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex items-center gap-2 text-xs font-bold text-slate-750 truncate">
+                            <FileText className="w-4 h-4 text-emerald-600 shrink-0 font-bold" />
+                            <span className="truncate max-w-[250px] sm:max-w-[320px]">{item.file.name}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">({item.fileSize})</span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFromQueue(item.id)}
+                            className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                            title="Ta bort från kön"
+                            disabled={isUploading}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
 
-                <div className="space-y-1">
-                  <label htmlFor="upload-size" className="text-xs font-bold text-slate-600">Simulerad storlek</label>
-                  <select
-                    id="upload-size"
-                    value={newFileSize}
-                    onChange={(e) => setNewFileSize(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50"
-                  >
-                    <option value="350 KB">350 KB</option>
-                    <option value="1.2 MB">1.2 MB</option>
-                    <option value="2.8 MB">2.8 MB</option>
-                    <option value="14.5 MB">14.5 MB</option>
-                  </select>
-                </div>
-              </div>
+                        {/* Title and date row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">Filnamn i portalen *</label>
+                            <input
+                              type="text"
+                              required
+                              value={item.name}
+                              onChange={(e) => handleUpdateQueueItem(item.id, { name: e.target.value })}
+                              className="w-full px-2.5 py-1.5 border border-slate-250 rounded-lg bg-white text-slate-750 focus:outline-emerald-500"
+                              disabled={isUploading}
+                            />
+                          </div>
 
-              {/* Styrelse subfolders if Board Folder is active */}
-              {newFileCategory === "Styrelsefiler" && (
-                <div className="space-y-1 animate-scale-up">
-                  <label htmlFor="upload-folder" className="text-xs font-bold text-slate-600">Välj mapp i Styrelsefiler *</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {BOARD_FOLDERS.map((f, index) => (
-                      <label
-                        key={index}
-                        className={`p-2.5 rounded-lg border text-xs flex items-center gap-2 cursor-pointer transition-colors ${
-                          newFileFolder === f
-                            ? "bg-emerald-50 border-emerald-300 text-emerald-800 font-semibold"
-                            : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="form-board-folder"
-                          checked={newFileFolder === f}
-                          onChange={() => setNewFileFolder(f)}
-                          className="sr-only"
-                        />
-                        <Folder className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                        <span>{f}</span>
-                      </label>
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">Dokumentdatum *</label>
+                            <input
+                              type="date"
+                              required
+                              value={item.customDate}
+                              onChange={(e) => handleUpdateQueueItem(item.id, { customDate: e.target.value })}
+                              className="w-full px-2.5 py-1.5 border border-slate-250 rounded-lg bg-white text-slate-750 focus:outline-emerald-500"
+                              disabled={isUploading}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Category and Board Folder row */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          <div className="space-y-1">
+                            <label className="text-[10px] font-bold text-slate-500 uppercase">Kategori *</label>
+                            <select
+                              value={item.category}
+                              onChange={(e) => handleUpdateQueueItem(item.id, { category: e.target.value as FileCategory })}
+                              className="w-full px-2.5 py-1.5 border border-slate-250 rounded-lg bg-white text-slate-750 focus:outline-emerald-500"
+                              disabled={isUploading}
+                            >
+                              <option value="Medlemsfiler">🔓 Medlemsfiler</option>
+                              <option value="Styrelsefiler">🔒 Styrelsefiler</option>
+                            </select>
+                          </div>
+
+                          {item.category === "Styrelsefiler" && (
+                            <div className="space-y-1 animate-scale-up">
+                              <label className="text-[10px] font-bold text-slate-500 uppercase">Mapp i Styrelsearkiv *</label>
+                              <select
+                                value={item.folder}
+                                onChange={(e) => handleUpdateQueueItem(item.id, { folder: e.target.value as BoardFolder })}
+                                className="w-full px-2.5 py-1.5 border border-slate-250 rounded-lg bg-white text-slate-750 focus:outline-emerald-500"
+                                disabled={isUploading}
+                              >
+                                {BOARD_FOLDERS.map((f, i) => (
+                                  <option key={i} value={f}>{f}</option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2 pt-1 border-t border-slate-100">
+                          <input
+                            type="checkbox"
+                            id={`notice-${item.id}`}
+                            checked={item.createNotice}
+                            onChange={(e) => handleUpdateQueueItem(item.id, { createNotice: e.target.checked })}
+                            className="w-3.5 h-3.5 text-emerald-500 accent-emerald-500 rounded cursor-pointer border-slate-300"
+                            disabled={isUploading}
+                          />
+                          <label htmlFor={`notice-${item.id}`} className="text-xs font-semibold text-slate-650 cursor-pointer">
+                            📢 Skapa ett anslag på anslagstavlan för denna fil
+                          </label>
+                        </div>
+                      </div>
                     ))}
+                  </div>
+
+                  <div className="flex justify-between items-center pt-2 border-t border-slate-100">
+                    <button
+                      type="button"
+                      className="relative inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-700 cursor-pointer transition-colors"
+                      disabled={isUploading}
+                    >
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleMultipleFilesChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                        accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg"
+                      />
+                      <Plus className="w-4 h-4" /> Välj fler filer...
+                    </button>
+                    <span className="text-xs text-slate-400 font-semibold font-mono">Totalt: {uploadQueue.length}st</span>
                   </div>
                 </div>
               )}
 
-              {/* Real File Input Area */}
-              <div className="border-2 border-dashed border-slate-200 hover:border-emerald-400 transition-colors rounded-xl p-5 text-center bg-slate-50 relative cursor-pointer">
-                <input
-                  type="file"
-                  onChange={handleFileChange}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  accept=".pdf,.docx,.doc,.xlsx,.xls,.png,.jpg,.jpeg"
-                />
-                <FileText className="w-7 h-7 text-slate-400 mx-auto mb-2" />
-                <span className="text-xs font-semibold text-slate-700 block truncate px-2">
-                  {selectedFile ? `Vald fil: ${selectedFile.name}` : "Välj fil eller släpp dokument här"}
-                </span>
-                <span className="text-[10px] text-slate-400">
-                  {selectedFile ? `${newFileSize}` : "PDF, DOCX, XLSX, Bilder upp till 20MB"}
-                </span>
-              </div>
+              {/* Progress Panel for active upload operations */}
+              {isUploading && (
+                <div className="bg-slate-900 text-white p-4 rounded-xl flex items-center gap-3 animate-pulse border border-slate-950 shadow-sm shrink-0">
+                  <div className="w-4 h-4 rounded-full border-2 border-t-emerald-400 border-white/20 animate-spin"></div>
+                  <span className="text-xs font-bold uppercase tracking-wider">{uploadProgress || "Sparar dokument..."}</span>
+                </div>
+              )}
 
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3 shrink-0">
                 <button
                   type="button"
-                  onClick={() => setShowUploadModal(false)}
-                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 rounded-lg bg-white border border-slate-200 cursor-pointer"
+                  onClick={() => {
+                    setUploadQueue([]);
+                    setShowUploadModal(false);
+                  }}
+                  disabled={isUploading}
+                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50 rounded-lg bg-white border border-slate-200 cursor-pointer disabled:opacity-40"
                 >
                   Avbryt
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg border border-emerald-500 cursor-pointer shadow-2xs"
+                  disabled={uploadQueue.length === 0 || isUploading}
+                  className="px-5 py-2 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg border border-emerald-500 cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"
                 >
-                  Spara dokument
+                  {isUploading ? "Sparar..." : `Spara alla ${uploadQueue.length} filer`}
                 </button>
               </div>
             </form>

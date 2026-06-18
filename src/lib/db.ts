@@ -219,7 +219,8 @@ export const dbService = {
   async uploadFile(
     file: File,
     category: FileCategory,
-    folder?: BoardFolder
+    folder?: BoardFolder,
+    customDate?: string
   ): Promise<FileItem> {
     const sanitizedName = sanitizeFilename(file.name);
     const subfolder = category === "Styrelsefiler" ? "styrelse" : "medlemmar";
@@ -258,7 +259,7 @@ export const dbService = {
       file_size: formatBytes(file.size),
       mime_type: file.type || "application/octet-stream",
       url: publicUrl,
-      uploaded_at: new Date().toISOString().split("T")[0],
+      uploaded_at: customDate || new Date().toISOString().split("T")[0],
     };
 
     const { data: dbData, error: dbError } = await supabase
