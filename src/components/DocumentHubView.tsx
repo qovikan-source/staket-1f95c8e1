@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { Search, Folder, FileText, Download, Plus, Trash2, Eye, ShieldAlert, CheckCircle, Settings } from "lucide-react";
+import { Search, Folder, FileText, Download, Plus, Trash2, Eye, ShieldAlert, CheckCircle, Settings, Edit, X } from "lucide-react";
 import { FileItem, FileCategory, BoardFolder, BOARD_FOLDERS, UserRole } from "../types";
 
 interface DocumentHubViewProps {
@@ -13,6 +13,7 @@ interface DocumentHubViewProps {
   onAddFile: (file: Omit<FileItem, "id">, realFile?: File) => Promise<void>;
   onDeleteFile: (id: string, name: string, category: FileCategory, folder?: BoardFolder) => void;
   onDeleteMultipleFiles?: (filesToDelete: { id: string; name: string; category: FileCategory; folder?: BoardFolder }[]) => Promise<void>;
+  onUpdateFile?: (file: FileItem) => Promise<void>;
 }
 
 interface UploadQueueItem {
@@ -25,14 +26,28 @@ interface UploadQueueItem {
   fileSize: string;
 }
 
+const EDIT_YEARS = Array.from({ length: 21 }, (_, i) => new Date().getFullYear() - i);
+
 export default function DocumentHubView({
   files = [],
   role,
   onAddFile,
   onDeleteFile,
   onDeleteMultipleFiles,
+  onUpdateFile,
 }: DocumentHubViewProps) {
-  const [activeCategory, setActiveCategory] = useState<FileCategory>("Medlemsfiler");
+  const [activeCategory, setActiveCategory] = useState<FileCategory>(() => {
+    return (role === "Styrelse" || role === "Administrator") ? "Styrelsefiler" : "Medlemsfiler";
+  });
+
+  useEffect(() => {
+    if (role === "Styrelse" || role === "Administrator") {
+      setActiveCategory("Styrelsefiler");
+    } else {
+      setActiveCategory("Medlemsfiler");
+    }
+  }, [role]);
+
   const [selectedFolder, setSelectedFolder] = useState<BoardFolder | "Alla">("Alla");
   const [searchQuery, setSearchQuery] = useState("");
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -54,9 +69,28 @@ export default function DocumentHubView({
   // Selection states
   const [selectedFileIds, setSelectedFileIds] = useState<string[]>([]);
 
+  // Arkiv subfolder state
+  const [selectedArkivYear, setSelectedArkivYear] = useState<number | "Alla">("Alla");
+
+  // File editing states
+  const [editingFile, setEditingFile] = useState<FileItem | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editCategory, setEditCategory] = useState<FileCategory>("Medlemsfiler");
+  const [editFolder, setEditFolder] = useState<BoardFolder | "">("");
+  const [editYear, setEditYear] = useState<number>(new Date().getFullYear());
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+
+  // Bulk editing states
+  const [showBulkEditModal, setShowBulkEditModal] = useState(false);
+  const [bulkEditCategory, setBulkEditCategory] = useState<FileCategory | "no-change">("no-change");
+  const [bulkEditFolder, setBulkEditFolder] = useState<BoardFolder | "no-change" | "none">("no-change");
+  const [bulkEditYear, setBulkEditYear] = useState<number | "no-change">("no-change");
+  const [isSavingBulkEdit, setIsSavingBulkEdit] = useState(false);
+
   // Reset selections when directory/search changes
   useEffect(() => {
     setSelectedFileIds([]);
+    setSelectedArkivYear("Alla");
   }, [activeCategory, selectedFolder, searchQuery]);
 
   const handleToggleSelectFile = (id: string) => {
@@ -97,6 +131,110 @@ export default function DocumentHubView({
         }
       }
       setSelectedFileIds([]);
+    }
+  };
+
+  const getArkivYears = () => {
+    const yearsSet = new Set<number>();
+    yearsSet.add(new Date().getFullYear()); // Ensure current year is always created/present
+    const targetFolder = selectedFolder === "Alla" ? "Arkiv" : selectedFolder;
+    files.forEach((f) => {
+      if (f.category === "Styrelsefiler" && f.folder === targetFolder && f.uploadedAt) {
+        const year = new Date(f.uploadedAt).getFullYear();
+        if (!isNaN(year)) {
+          yearsSet.add(year);
+        }
+      }
+    });
+    return Array.from(yearsSet).sort((a, b) => b - a);
+  };
+
+  const handleOpenEditModal = (file: FileItem) => {
+    setEditingFile(file);
+    setEditName(file.name);
+    setEditCategory(file.category);
+    setEditFolder(file.folder || "");
+    const initialYear = file.uploadedAt ? new Date(file.uploadedAt).getFullYear() : new Date().getFullYear();
+    setEditYear(isNaN(initialYear) ? new Date().getFullYear() : initialYear);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingFile || !onUpdateFile) return;
+    setIsSavingEdit(true);
+    try {
+      let newUploadedAt = editingFile.uploadedAt || new Date().toISOString().split("T")[0];
+      const dateParts = newUploadedAt.split("-");
+      if (dateParts.length >= 1) {
+        dateParts[0] = String(editYear);
+        newUploadedAt = dateParts.join("-");
+      } else {
+        newUploadedAt = `${editYear}-01-01`;
+      }
+
+      const updatedItem: FileItem = {
+        ...editingFile,
+        name: editName,
+        category: editCategory,
+        folder: editCategory === "Styrelsefiler" ? (editFolder || undefined) : undefined,
+        uploadedAt: newUploadedAt,
+      };
+
+      await onUpdateFile(updatedItem);
+      setEditingFile(null);
+    } catch (err) {
+      console.error("Failed to save file edit:", err);
+      alert("Fel vid uppdatering av fil.");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const handleBulkSaveEdit = async () => {
+    if (selectedFileIds.length === 0 || !onUpdateFile) return;
+    setIsSavingBulkEdit(true);
+    try {
+      const itemsToUpdate = files.filter(f => selectedFileIds.includes(f.id));
+      for (const file of itemsToUpdate) {
+        const updated: FileItem = { ...file };
+        
+        // Category update
+        if (bulkEditCategory !== "no-change") {
+          updated.category = bulkEditCategory;
+          if (bulkEditCategory === "Medlemsfiler") {
+            updated.folder = undefined;
+          }
+        }
+
+        // Folder update
+        if (bulkEditFolder !== "no-change") {
+          updated.folder = bulkEditFolder === "none" ? undefined : bulkEditFolder;
+        }
+
+        // Year update
+        if (bulkEditYear !== "no-change") {
+          let newUploadedAt = file.uploadedAt || new Date().toISOString().split("T")[0];
+          const dateParts = newUploadedAt.split("-");
+          if (dateParts.length >= 1) {
+            dateParts[0] = String(bulkEditYear);
+            newUploadedAt = dateParts.join("-");
+          } else {
+            newUploadedAt = `${bulkEditYear}-01-01`;
+          }
+          updated.uploadedAt = newUploadedAt;
+        }
+
+        await onUpdateFile(updated);
+      }
+
+      setDownloadSuccessText(`Uppdaterade ${selectedFileIds.length} filer.`);
+      setSelectedFileIds([]);
+      setShowBulkEditModal(false);
+      setTimeout(() => setDownloadSuccessText(null), 4000);
+    } catch (err) {
+      console.error("Bulk update failed:", err);
+      alert("Fel vid gruppredigering av filer: " + (err as Error).message);
+    } finally {
+      setIsSavingBulkEdit(false);
     }
   };
 
@@ -244,6 +382,13 @@ export default function DocumentHubView({
        if (selectedFolder !== "Alla" && f.folder !== selectedFolder) {
          return false;
        }
+       // If a specific folder is selected, filter files by the selected year
+       if (selectedFolder !== "Alla" && selectedArkivYear !== "Alla") {
+         const fileYear = f.uploadedAt ? new Date(f.uploadedAt).getFullYear() : NaN;
+         if (fileYear !== selectedArkivYear) {
+           return false;
+         }
+       }
     }
 
     return matchesSearch;
@@ -277,40 +422,49 @@ export default function DocumentHubView({
       </div>
 
       {/* Main Category Tabs */}
-      <div className="flex border-b border-slate-200">
-        <button
-          onClick={() => {
-            setActiveCategory("Medlemsfiler");
-            setSelectedFolder("Alla");
-          }}
-          className={`px-6 py-3.5 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
-            activeCategory === "Medlemsfiler"
-              ? "border-emerald-500 text-slate-900"
-              : "border-transparent text-slate-400 hover:text-slate-700 hover:border-slate-300"
-          }`}
-        >
-          📁 Medlemsfiler (Allmänt tillgängliga)
-        </button>
-
-        <button
-          onClick={() => {
-            setActiveCategory("Styrelsefiler");
-            setSelectedFolder("Alla");
-          }}
-          className={`relative px-6 py-3.5 text-xs font-semibold border-b-2 transition-all cursor-pointer ${
-            activeCategory === "Styrelsefiler"
-              ? "border-emerald-500 text-slate-900"
-              : "border-transparent text-slate-400 hover:text-slate-700 hover:border-slate-300"
-          }`}
-        >
-          🔒 Styrelsefiler (Endast Styrelse & Admin)
-          {role !== "Styrelse" && role !== "Administrator" && (
-            <span className="absolute top-1 right-1 flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
-            </span>
-          )}
-        </button>
+      <div className="flex border border-slate-200/80 rounded-xl p-1 bg-slate-100/50 w-fit gap-1 shadow-xs">
+        {/* If Styrelse or Administrator, render Styrelsefiler first */}
+        {(role === "Styrelse" || role === "Administrator") ? (
+          <>
+            <button
+              onClick={() => {
+                setActiveCategory("Styrelsefiler");
+                setSelectedFolder("Alla");
+              }}
+              className={`px-5 py-2 text-xs font-bold transition-all rounded-lg cursor-pointer flex items-center gap-1.5 ${
+                activeCategory === "Styrelsefiler"
+                  ? "bg-white text-[#0B2C24] shadow-xs border border-slate-200/40"
+                  : "text-slate-500 hover:text-[#0B2C24] hover:bg-white/40"
+              }`}
+            >
+              🔒 Styrelsefiler
+            </button>
+            <button
+              onClick={() => {
+                setActiveCategory("Medlemsfiler");
+                setSelectedFolder("Alla");
+              }}
+              className={`px-5 py-2 text-xs font-bold transition-all rounded-lg cursor-pointer flex items-center gap-1.5 ${
+                activeCategory === "Medlemsfiler"
+                  ? "bg-white text-[#0B2C24] shadow-xs border border-slate-200/40"
+                  : "text-slate-500 hover:text-[#0B2C24] hover:bg-white/40"
+              }`}
+            >
+              📁 Medlemsfiler
+            </button>
+          </>
+        ) : (
+          /* For other users (Medlem/Hyresgäst), only show Medlemsfiler */
+          <button
+            onClick={() => {
+              setActiveCategory("Medlemsfiler");
+              setSelectedFolder("Alla");
+            }}
+            className={`px-5 py-2 text-xs font-bold transition-all rounded-lg cursor-pointer flex items-center gap-1.5 bg-white text-[#0B2C24] shadow-xs border border-slate-200/40`}
+          >
+            📁 Medlemsfiler
+          </button>
+        )}
       </div>
 
       {/* RLS Guard notification for Board Files */}
@@ -418,6 +572,18 @@ export default function DocumentHubView({
               {selectedFileIds.length > 0 && (
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={() => {
+                      setBulkEditCategory("no-change");
+                      setBulkEditFolder("no-change");
+                      setBulkEditYear("no-change");
+                      setShowBulkEditModal(true);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/50 font-bold transition-colors cursor-pointer text-[10px] uppercase tracking-wider"
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                    Ändra markerade ({selectedFileIds.length})
+                  </button>
+                  <button
                     onClick={handleBulkDelete}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-750 hover:bg-rose-100 border border-rose-200/50 font-bold transition-colors cursor-pointer text-[10px] uppercase tracking-wider"
                   >
@@ -435,8 +601,59 @@ export default function DocumentHubView({
             </div>
           )}
 
-          {/* Document list */}
-          {filteredFiles.length === 0 ? (
+          {/* Breadcrumb if inside a specific year folder */}
+          {selectedFolder !== "Alla" && selectedArkivYear !== "Alla" && (
+            <div className="flex items-center gap-2 text-xs font-semibold text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-3xs">
+              <span>Mappar</span>
+              <span>/</span>
+              <span>{selectedFolder}</span>
+              <span>/</span>
+              <span className="text-[#0B2C24] font-bold">År {selectedArkivYear}</span>
+              <button 
+                onClick={() => setSelectedArkivYear("Alla")} 
+                className="ml-auto text-xs font-bold text-emerald-600 hover:text-emerald-800 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                ← Gå tillbaka till årsmappar
+              </button>
+            </div>
+          )}
+
+          {/* Document list or Year folders */}
+          {selectedFolder !== "Alla" && selectedArkivYear === "Alla" ? (
+            <div className="space-y-4">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Årsmappar i {selectedFolder}</span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                {getArkivYears().map((year) => {
+                  const count = files.filter(
+                    (f) =>
+                      f.category === "Styrelsefiler" &&
+                      f.folder === selectedFolder &&
+                      f.uploadedAt &&
+                      new Date(f.uploadedAt).getFullYear() === year
+                  ).length;
+                  return (
+                    <button
+                      key={year}
+                      onClick={() => setSelectedArkivYear(year)}
+                      className="bg-white hover:bg-slate-50 border border-slate-100 hover:border-slate-200 transition-all p-5 rounded-2xl flex flex-col items-start text-left gap-3 shadow-3xs cursor-pointer group w-full"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 group-hover:scale-105 transition-transform">
+                        <Folder className="w-5 h-5 fill-emerald-100" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-sm group-hover:text-emerald-700 transition-colors">
+                          År {year}
+                        </h4>
+                        <p className="text-[11px] text-slate-400 font-medium">
+                          {count} {count === 1 ? "fil" : "filer"}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : filteredFiles.length === 0 ? (
             <div className="border border-dashed border-slate-200 p-12 rounded-2xl text-center bg-slate-50/50 space-y-2">
               <Folder className="w-8 h-8 text-slate-400 mx-auto" />
               <p className="font-bold text-slate-700 text-sm">Inga filer matchar</p>
@@ -471,7 +688,7 @@ export default function DocumentHubView({
                         let fileUrl = file.url;
                         if (!fileUrl) {
                           const sanitizedName = file.name.replace(/[åä]/g, "a").replace(/[ÅÄ]/g, "A").replace(/ö/g, "o").replace(/Ö/g, "O").replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\-\.]/g, "");
-                          const storageFolder = (file.folder === "Pantbrev" || file.folder === "Pantbrev Lgh Betekn.") ? "Pantbrev" : file.folder;
+                          const storageFolder = (file.folder === "Pantbrev" || (file.folder as string) === "Pantbrev Lgh Betekn.") ? "Pantbrev" : file.folder;
                           const subfolder = file.category === "Styrelsefiler" && storageFolder ? `styrelse/${storageFolder}` : "medlemmar";
                           const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
                           fileUrl = `${supabaseUrl}/storage/v1/object/public/documents/${subfolder}/${sanitizedName}`;
@@ -536,17 +753,27 @@ export default function DocumentHubView({
                         </button>
 
                         {role === "Administrator" && (
-                          <button
-                            onClick={() => {
-                              if (window.confirm(`Är du säker på att du vill radera filen "${file.name}" permanent?`)) {
-                                onDeleteFile(file.id, file.name, file.category, file.folder);
-                              }
-                            }}
-                            className="p-2 rounded-xl text-slate-350 hover:text-rose-600 hover:bg-rose-55/40 transition-colors cursor-pointer"
-                            title="Radera fil"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleOpenEditModal(file)}
+                              className="p-2 rounded-xl text-slate-450 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                              title="Redigera dokument"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                if (window.confirm(`Är du säker på att du vill radera filen "${file.name}" permanent?`)) {
+                                  onDeleteFile(file.id, file.name, file.category, file.folder);
+                                }
+                              }}
+                              className="p-2 rounded-xl text-slate-350 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                              title="Radera fil"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
                         )}
                       </>
                     )}
@@ -793,6 +1020,205 @@ export default function DocumentHubView({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* File Edit Modal (Administrator Only) */}
+      {editingFile && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in" id="edit-file-modal">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 flex flex-col gap-5 animate-scale-up">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                📝 Redigera dokumentinfo
+              </h3>
+              <button
+                onClick={() => setEditingFile(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-50 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              {/* Name */}
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-700">Filnamn</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-emerald-500 bg-slate-50"
+                  placeholder="Skriv filens namn..."
+                />
+              </div>
+
+              {/* Category */}
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-700">Kategori</label>
+                <select
+                  value={editCategory}
+                  onChange={(e) => {
+                    const cat = e.target.value as FileCategory;
+                    setEditCategory(cat);
+                    if (cat === "Medlemsfiler") {
+                      setEditFolder("");
+                    } else {
+                      setEditFolder("Administration");
+                    }
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-emerald-500 bg-slate-50 cursor-pointer"
+                >
+                  <option value="Medlemsfiler">📁 Medlemsfiler (Alla medlemmar)</option>
+                  <option value="Styrelsefiler">🔒 Styrelsefiler (Endast styrelsen)</option>
+                </select>
+              </div>
+
+              {/* Folder (if Styrelsefiler) */}
+              {editCategory === "Styrelsefiler" && (
+                <div className="space-y-1.5 animate-fade-in">
+                  <label className="font-semibold text-slate-700">Mapp i Styrelsearkiv</label>
+                  <select
+                    value={editFolder}
+                    onChange={(e) => setEditFolder(e.target.value as BoardFolder)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-emerald-500 bg-slate-50 cursor-pointer"
+                  >
+                    {BOARD_FOLDERS.map((f) => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {/* Upload Year Dropdown (Changeable only on edit) */}
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-700">Utgivningsår / Uppladdningsår</label>
+                <select
+                  value={editYear}
+                  onChange={(e) => setEditYear(parseInt(e.target.value, 10))}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-emerald-500 bg-slate-50 cursor-pointer"
+                >
+                  {EDIT_YEARS.map((yr) => (
+                    <option key={yr} value={yr}>{yr}</option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-slate-400">
+                  Genom att ändra årtal flyttas filen till motsvarande årsmapp i Arkivet.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+              <button
+                onClick={() => setEditingFile(null)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors font-semibold cursor-pointer text-xs"
+              >
+                Avbryt
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={isSavingEdit || !editName.trim()}
+                className="px-4 py-2 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 transition-colors cursor-pointer text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+              >
+                {isSavingEdit ? "Sparar..." : "Spara ändringar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* File Bulk Edit Modal (Administrator Only) */}
+      {showBulkEditModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in" id="bulk-edit-file-modal">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 flex flex-col gap-5 animate-scale-up">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base font-bold text-slate-800 flex items-center gap-2">
+                📝 Bulkändra info för {selectedFileIds.length} filer
+              </h3>
+              <button
+                onClick={() => setShowBulkEditModal(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-4 text-xs">
+              {/* Category */}
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-700">Ändra kategori</label>
+                <select
+                  value={bulkEditCategory}
+                  onChange={(e) => {
+                    const val = e.target.value as FileCategory | "no-change";
+                    setBulkEditCategory(val);
+                    if (val === "Medlemsfiler") {
+                      setBulkEditFolder("none");
+                    }
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-emerald-500 bg-slate-50 cursor-pointer"
+                >
+                  <option value="no-change">Behåll nuvarande kategori</option>
+                  <option value="Medlemsfiler">📁 Medlemsfiler (Alla medlemmar)</option>
+                  <option value="Styrelsefiler">🔒 Styrelsefiler (Endast styrelsen)</option>
+                </select>
+              </div>
+
+              {/* Folder */}
+              {(bulkEditCategory === "Styrelsefiler" || bulkEditCategory === "no-change") && (
+                <div className="space-y-1.5 animate-fade-in">
+                  <label className="font-semibold text-slate-700">Ändra mapp (Endast för Styrelsefiler)</label>
+                  <select
+                    value={bulkEditFolder}
+                    onChange={(e) => setBulkEditFolder(e.target.value as BoardFolder | "no-change" | "none")}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-emerald-500 bg-slate-50 cursor-pointer"
+                  >
+                    <option value="no-change">Behåll nuvarande mapp</option>
+                    {BOARD_FOLDERS.map((f) => (
+                      <option key={f} value={f}>{f}</option>
+                    ))}
+                    <option value="none">Ingen mapp (omvandlas till Medlemsfil)</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Upload Year */}
+              <div className="space-y-1.5">
+                <label className="font-semibold text-slate-700">Ändra utgivningsår / uppladdningsår</label>
+                <select
+                  value={bulkEditYear}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setBulkEditYear(val === "no-change" ? "no-change" : parseInt(val, 10));
+                  }}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 focus:outline-emerald-500 bg-slate-50 cursor-pointer"
+                >
+                  <option value="no-change">Behåll nuvarande år</option>
+                  {EDIT_YEARS.map((yr) => (
+                    <option key={yr} value={yr}>{yr}</option>
+                  ))}
+                </select>
+                <p className="text-[10px] text-slate-400">
+                  Genom att ändra årtal flyttas filerna till motsvarande årsmapp i Arkivet/Ekonomi etc.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-3">
+              <button
+                onClick={() => setShowBulkEditModal(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-slate-500 hover:bg-slate-50 transition-colors font-semibold cursor-pointer text-xs"
+              >
+                Avbryt
+              </button>
+              <button
+                onClick={handleBulkSaveEdit}
+                disabled={isSavingBulkEdit}
+                className="px-4 py-2 rounded-xl bg-emerald-500 text-white font-bold hover:bg-emerald-600 transition-colors cursor-pointer text-xs disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+              >
+                {isSavingBulkEdit ? "Sparar..." : "Spara ändringar"}
+              </button>
+            </div>
           </div>
         </div>
       )}

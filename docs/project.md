@@ -40,7 +40,7 @@ The codebase is highly modularized, separating each principal view tab into self
 
 ### A. Core Navigation & App Entrance (`src/pages/Index.tsx` & `src/App.tsx`)
 - Orchestrates global routes, authorization state checks, mobile side-drawers, and hooks active Supabase auth sessions.
-- Grants modular views based on role tiers: **Besökare** (Visitor), **Medlem** (Member), **Styrelse** (Board Member), and **Administrator** (Admin).
+- Grants modular views based on role tiers: **Besökare** (Visitor), **Medlem** (Member), **Hyresgäst** (Tenant), **Styrelse** (Board Member), and **Administrator** (Admin).
 
 ### B. Landing Page (`src/components/HomeView.tsx`)
 - Features the updated hero title *"Välkommen till Stäket Företagscenter"*, modern font styling, the latest administrative announcements, trust/value bento cards, and a streamlined horizontal footer.
@@ -62,7 +62,7 @@ The codebase is highly modularized, separating each principal view tab into self
 - Searchable directory of active tenants, defaulted to List View with a grid/card toggle options. Automatically hides administrators and members without a registered unit or company.
 
 ### H. Administrator Workspace (`src/components/AdminView.tsx`)
-- Private registry management. Allows full member creation, role filter sorting (Alla, Medlemmar, Styrelse, Administrator), profile edits, vacancy posting, and document management.
+- Private registry management. Allows full member creation, role filter sorting (Alla, Medlemmar, Hyresgäst, Styrelse, Administrator), profile edits, vacancy posting, and document management.
 
 ---
 

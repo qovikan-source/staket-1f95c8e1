@@ -4,7 +4,7 @@
  */
 
 import { useState } from "react";
-import { Search, Mail, Phone, MapPin, Building, Copy, FileText, Check, List, Grid } from "lucide-react";
+import { Search, Mail, Phone, MapPin, Building, Copy, FileText, Check, List, Grid, ArrowUp, ArrowDown } from "lucide-react";
 import { UserProfile } from "../types";
 
 interface ContactBookViewProps {
@@ -16,10 +16,23 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "card">("list");
 
+  // Sorting state: default sorting on unit (Lokal) asc
+  const [sortField, setSortField] = useState<keyof UserProfile>("unit");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+
   const handleCopyEmail = (email: string, id: string) => {
     navigator.clipboard.writeText(email);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleSort = (field: keyof UserProfile) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
   };
 
   // Filter out:
@@ -42,6 +55,25 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
       (p.unit && p.unit.toLowerCase().includes(q)) ||
       p.email.toLowerCase().includes(q)
     );
+  });
+
+  // Sort logic matching AdminView sorting exactly
+  const sortedProfiles = [...filteredProfiles].sort((a, b) => {
+    let aVal = a[sortField];
+    let bVal = b[sortField];
+
+    if (sortField === "unit") {
+      const aNum = parseInt((a.unit || "").replace(/\D/g, ""), 10) || 0;
+      const bNum = parseInt((b.unit || "").replace(/\D/g, ""), 10) || 0;
+      return sortDirection === "asc" ? aNum - bNum : bNum - aNum;
+    }
+
+    const aStr = String(aVal || "").toLowerCase();
+    const bStr = String(bVal || "").toLowerCase();
+
+    if (aStr < bStr) return sortDirection === "asc" ? -1 : 1;
+    if (aStr > bStr) return sortDirection === "asc" ? 1 : -1;
+    return 0;
   });
 
   return (
@@ -108,17 +140,45 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold text-[10px] uppercase tracking-wider">
-                  <th className="px-5 py-3.5">Lokal</th>
-                  <th className="px-5 py-3.5">Företag</th>
-                  <th className="px-5 py-3.5">Org.nr</th>
-                  <th className="px-5 py-3.5">Kontaktperson</th>
-                  <th className="px-5 py-3.5">E-post</th>
-                  <th className="px-5 py-3.5">Telefon</th>
-                  <th className="px-5 py-3.5">Adress</th>
+                  <th className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 hover:text-slate-800 transition-colors" onClick={() => handleSort("unit")}>
+                    <div className="flex items-center gap-1">
+                      Lokal {sortField === "unit" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                    </div>
+                  </th>
+                  <th className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 hover:text-slate-800 transition-colors" onClick={() => handleSort("company")}>
+                    <div className="flex items-center gap-1">
+                      Företag {sortField === "company" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                    </div>
+                  </th>
+                  <th className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 hover:text-slate-800 transition-colors" onClick={() => handleSort("orgNr")}>
+                    <div className="flex items-center gap-1">
+                      Org.nr {sortField === "orgNr" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                    </div>
+                  </th>
+                  <th className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 hover:text-slate-800 transition-colors" onClick={() => handleSort("name")}>
+                    <div className="flex items-center gap-1">
+                      Kontaktperson {sortField === "name" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                    </div>
+                  </th>
+                  <th className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 hover:text-slate-800 transition-colors" onClick={() => handleSort("email")}>
+                    <div className="flex items-center gap-1">
+                      E-post {sortField === "email" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                    </div>
+                  </th>
+                  <th className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 hover:text-slate-800 transition-colors" onClick={() => handleSort("phone")}>
+                    <div className="flex items-center gap-1">
+                      Telefon {sortField === "phone" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                    </div>
+                  </th>
+                  <th className="px-5 py-3.5 cursor-pointer hover:bg-slate-100 hover:text-slate-800 transition-colors" onClick={() => handleSort("address")}>
+                    <div className="flex items-center gap-1">
+                      Adress {sortField === "address" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
+                    </div>
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs">
-                {filteredProfiles.map((p) => (
+                {sortedProfiles.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50/55 transition-colors">
                     <td className="px-5 py-4 font-bold text-slate-800">
                       <span className="inline-block px-2 py-0.5 text-[10.5px] font-bold tracking-wider text-slate-700 bg-slate-100 rounded-md">
@@ -135,6 +195,11 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
                         {p.role === "Styrelse" && (
                           <span className="inline-block px-1.5 py-0.2 text-[8px] font-bold text-emerald-700 bg-emerald-50 rounded uppercase border border-emerald-100">
                             Styrelse
+                          </span>
+                        )}
+                        {p.role === "Hyresgäst" && (
+                          <span className="inline-block px-1.5 py-0.2 text-[8px] font-bold text-sky-700 bg-sky-50 rounded uppercase border border-sky-100">
+                            Hyresgäst
                           </span>
                         )}
                       </div>
@@ -165,13 +230,13 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
       ) : (
         /* Card View */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProfiles.map((p) => (
+          {sortedProfiles.map((p) => (
             <div
               key={p.id}
               className="bg-white rounded-2xl border border-slate-100 shadow-2xs hover:shadow-sm transition-all p-5 flex flex-col justify-between hover:border-slate-200 relative overflow-hidden"
             >
               {/* Card visual accent based on role */}
-              <div className={`absolute top-0 left-0 w-1.5 h-full ${p.role === "Styrelse" ? "bg-emerald-500" : "bg-slate-300"}`} />
+              <div className={`absolute top-0 left-0 w-1.5 h-full ${p.role === "Styrelse" ? "bg-emerald-500" : p.role === "Hyresgäst" ? "bg-sky-500" : "bg-slate-300"}`} />
 
               <div className="space-y-4 pl-2">
                 <div>
@@ -182,6 +247,11 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
                     {p.role === "Styrelse" && (
                       <span className="inline-block px-2 py-0.5 text-[9px] font-bold text-emerald-700 bg-emerald-50 rounded-md uppercase border border-emerald-100">
                         Styrelse / Ledamot
+                      </span>
+                    )}
+                    {p.role === "Hyresgäst" && (
+                      <span className="inline-block px-2 py-0.5 text-[9px] font-bold text-sky-700 bg-sky-50 rounded-md uppercase border border-sky-100">
+                        Hyresgäst
                       </span>
                     )}
                   </div>

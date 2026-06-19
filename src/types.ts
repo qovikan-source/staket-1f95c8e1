@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type UserRole = "Styrelse" | "Medlem" | "Administrator" | "Besökare";
+export type UserRole = "Styrelse" | "Medlem" | "Hyresgäst" | "Administrator" | "Besökare";
 
 export interface UserProfile {
   id: string;

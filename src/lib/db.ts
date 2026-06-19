@@ -146,6 +146,51 @@ export const dbService = {
     return mapProfileToFrontend(data);
   },
 
+  async registerUserAndProfile(p: Omit<UserProfile, "id"> & { password?: string }): Promise<UserProfile> {
+    if (p.password) {
+      try {
+        const { data, error } = await supabase.rpc("create_new_user", {
+          new_email: p.email,
+          new_password: p.password,
+          new_role: p.role,
+          new_name: p.name,
+          new_phone: p.phone || "",
+          new_company: p.company || "",
+          new_org_nr: p.orgNr || "",
+          new_unit: p.unit || "",
+          new_address: p.address || "",
+          new_description: p.description || "",
+          new_website: p.website || "",
+          new_logo: p.logo || "",
+        });
+        
+        if (error) {
+          console.warn("RPC registration failed, falling back to profile-only insertion:", error.message);
+        } else if (data) {
+          return {
+            id: data.id,
+            name: p.name,
+            role: p.role as UserRole,
+            email: p.email,
+            phone: p.phone || "",
+            orgNr: p.orgNr || "",
+            company: p.company || "",
+            unit: p.unit || "",
+            address: p.address || "",
+            description: p.description || "",
+            website: p.website || "",
+            logo: p.logo || "",
+          };
+        }
+      } catch (err) {
+        console.warn("RPC call threw, falling back to profile-only insertion:", err);
+      }
+    }
+    
+    // Fallback: original profile-only insertion
+    return this.insertProfile(p);
+  },
+
   async updateProfile(id: string, p: Partial<UserProfile>): Promise<UserProfile> {
     const { data, error } = await supabase.from("profiles").update(mapProfileToDb(p)).eq("id", id).select().single();
     if (error) throw error;
@@ -222,7 +267,7 @@ export const dbService = {
       `styrelse/${sanitizedName}`,
     ];
     if (folder) {
-      const storageFolder = (folder === "Pantbrev" || folder === "Pantbrev Lgh Betekn.") ? "Pantbrev" : folder;
+      const storageFolder = (folder as string === "Pantbrev" || folder as string === "Pantbrev Lgh Betekn.") ? "Pantbrev" : folder;
       pathsToDelete.push(`${storageFolder}/${sanitizedName}`);
       pathsToDelete.push(`styrelse/${storageFolder}/${sanitizedName}`);
       if (storageFolder === "Pantbrev") {
@@ -246,7 +291,7 @@ export const dbService = {
     customDate?: string
   ): Promise<FileItem> {
     const sanitizedName = sanitizeFilename(file.name);
-    const storageFolder = (folder === "Pantbrev" || folder === "Pantbrev Lgh Betekn.") ? "Pantbrev" : folder;
+    const storageFolder = (folder as string === "Pantbrev" || folder as string === "Pantbrev Lgh Betekn.") ? "Pantbrev" : folder;
     const subfolder = (category === "Styrelsefiler" && storageFolder) ? `styrelse/${storageFolder}` : "medlemmar";
     const filePath = `${subfolder}/${sanitizedName}`;
 

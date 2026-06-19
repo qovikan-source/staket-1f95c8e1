@@ -19,6 +19,7 @@ We have transitioned the **Stäket Företagscenter Portal** from a local-storage
 
 ### B. Member Directory & "Kontaktboken" Refinement
 - **Automatic Roster Syncing**: "Kontaktboken" now reads directly from the `profiles` table.
+- **Hyresgäst Role Addition**: Created a new role called `'Hyresgäst'` (tenant) with identical permissions as `'Medlem'`, enabling access to members-only content (bulletin board/anslagstavlan, file registry, and internal contact directory) while strictly preventing access to Styrelse and Administrator-level pages/actions. Equipped the administrator dashboard, user creation/editing modals, and filters to fully support it.
 - **Roster Filtering Rules**: Excluded Administrators entirely from Kontaktboken. Also, users are only listed if they have a non-default, valid entry in either **Lokal (Unit)** or **Företag (Company)**.
 - **Org.nr Support**: Added Organisation number (`org_nr` / `Org.nr`) column headers and cells to both the admin Medlemsregister and Kontaktboken.
 - **List & Card Views**: Designed two view modes for Kontaktboken (List View and Card View) and set **List View** as the default.
@@ -52,12 +53,27 @@ We have transitioned the **Stäket Företagscenter Portal** from a local-storage
 - **Removed Demo Bar Entirely**: Fully removed the prototype role selector warning bar from the application, leaving a clean production-ready layout where roles can only be acquired via actual database profiles.
 - **Fixed-Height Dashboard Layout**: Constrained the main portal viewport height to `h-screen overflow-hidden` and enabled independent scrolling for the workspace canvas. This keeps the side panel/menu at a fixed 100% height, ensuring the profile box containing the logged-in user name is always visible at the bottom of the sidebar without scrolling.
 
+### G. Portal Restructuring & Member View Improvements
+- **Multi-Column Sorting in Kontaktboken**: Added full interactive column sorting for the member contact book (Kontaktboken). Configured it to sort by "Lokal" (unit number) by default.
+- **Board Folder Year Subfolders & File Sorting**: Structured any selected folder (e.g., *Ekonomi*, *Arkiv*, *Administration*, *Pantbrev*) under Styrelsefiler to display files grouped into dynamic year-based subfolders. Added dynamic breadcrumb navigation (e.g., `Ekonomi / År 2026`) for seamless subfolder browsing.
+- **Admin File Editing & Bulk Updates**: Created a metadata edit modal for the `Administrator` role, enabling updates to the document's name, category, folder, and publication/upload year. Additionally, implemented a **Bulk Edit** modal allowing admins to select multiple documents at once and batch-update their Category, Board Folder, and Publication Year simultaneously, automatically reorganizing all updated files into their new target year folders. Changing a document's year dynamically relocates the file into its corresponding year subfolder under that specific category folder (e.g. moving files from *Ekonomi 2026* to *Ekonomi 2024*).
+- **Styrelsen Roster Update**: Replaced Leif Mansor with Murat Kizil (Fastighetsförvaltare) and added Zinar Soran as Webbansvarig in the "Om Oss" page.
+- **Clickable Company Cards**: Linked company logo cards on the "Våra Företag" page to their respective website URLs in new browser tabs, staying in-place if no website is provided in their profile.
+
+### H. Recent Bug Fixes: JSX Structure Issue in DocumentHubView
+- **The Issue**: During the addition of the new year folders and breadcrumb navigation within the *Arkiv* folder, the closing `</div>` and `)}` tags for the `Admin Bulk Action Bar` block (lines 493-531) were accidentally deleted. This caused Vite's `esbuild` tool to fail with an `Expected "}" but found ";"` syntax error at the end of the file, which was difficult to pinpoint via standard syntax parsing because of template-literal JSX attribute complexities.
+- **The Resolution**:
+  1. Ran `npx tsc src/components/DocumentHubView.tsx --noEmit` which identified that the main root wrapper `div` (line 344) had no corresponding closing tag.
+  2. Executed a custom bisection Node script (`find_jsx_error.mjs`) using `tsc` validation on sliced code chunks to isolate the missing tag to the 400-440 range (in relation to the original block placement).
+  3. Located the exact missing tags at the end of the bulk action bar container.
+  4. Restored `</div>` and `)}` to close the container and conditional rendering wrapper, resolving the compilation error and successfully completing production bundle builds.
+
 ---
 
 ## 3. Core Database & Storage Configuration
 
 ### A. Supabase Database Schema
-- **`profiles`**: Links to `auth.users` on `id` UUID. Houses roles (`Medlem`, `Styrelse`, `Administrator`), unit numbers, company name, phone, name, and organisation number (`org_nr`).
+- **`profiles`**: Links to `auth.users` on `id` UUID. Houses roles (`Medlem`, `Hyresgäst`, `Styrelse`, `Administrator`), unit numbers, company name, phone, name, and organisation number (`org_nr`).
 - **`files`**: Stores metadata of uploaded documents (URL, size, type, category, folder category).
 - **`vacant_spaces`**: Keeps available offices/warehouses details.
 - **`noticeboard_posts`**: Holds news and bulletins.

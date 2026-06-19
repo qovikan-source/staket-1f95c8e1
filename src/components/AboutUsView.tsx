@@ -146,7 +146,7 @@ export default function AboutUsView() {
           <p className="text-xs text-slate-500">Valda representanter och operativ personal för fastighetstjänster och underhåll.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pt-2">
           <div className="p-4 rounded-xl border border-slate-50 bg-slate-50/50 space-y-2">
             <h3 className="font-bold text-slate-800 text-sm">Alexander Krasar</h3>
             <span className="inline-block px-2 py-0.5 text-[10px] bg-slate-200 text-slate-700 rounded-md font-semibold">Ordförande</span>
@@ -154,7 +154,7 @@ export default function AboutUsView() {
           </div>
 
           <div className="p-4 rounded-xl border border-slate-50 bg-slate-50/50 space-y-2">
-            <h3 className="font-bold text-slate-800 text-sm">Leif Mansor</h3>
+            <h3 className="font-bold text-slate-800 text-sm">Murat Kizil</h3>
             <span className="inline-block px-2 py-0.5 text-[10px] bg-slate-200 text-slate-700 rounded-md font-semibold">Fastighetsförvaltare</span>
             <p className="text-xs text-slate-500 mt-1">Ansvarar för den löpande tillsynen, infartsgrindar, soprum samt dagligt fastighetsunderhåll.</p>
           </div>
@@ -163,6 +163,12 @@ export default function AboutUsView() {
             <h3 className="font-bold text-slate-800 text-sm">Maria Andersson</h3>
             <span className="inline-block px-2 py-0.5 text-[10px] bg-slate-200 text-slate-700 rounded-md font-semibold">Styrelsekassör</span>
             <p className="text-xs text-slate-500 mt-1">Ansvarar för den ekonomiska redovisningen, medlemsavgifter, budget och årsredovisningar.</p>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-50 bg-slate-50/50 space-y-2">
+            <h3 className="font-bold text-slate-800 text-sm">Zinar Soran</h3>
+            <span className="inline-block px-2 py-0.5 text-[10px] bg-slate-200 text-slate-700 rounded-md font-semibold">Webbansvarig</span>
+            <p className="text-xs text-slate-500 mt-1">Ansvarar för föreningens digitala plattformar, hemsida, medlemsportal samt IT-infrastruktur.</p>
           </div>
         </div>
       </div>

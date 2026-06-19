@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Shield, Mail, Lock, AlertCircle, ArrowLeft, Key } from "lucide-react";
+import { Shield, Mail, Lock, AlertCircle, ArrowLeft } from "lucide-react";
 import { UserRole } from "../types";
 import { supabase } from "../lib/supabase";
 import { dbService } from "../lib/db";
@@ -63,13 +63,7 @@ export default function LoginView({ onLoginSuccess, onCancel }: LoginViewProps) 
     });
   };
 
-  const handleQuickLogin = (selectedRole: UserRole) => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      onLoginSuccess(selectedRole);
-    }, 800);
-  };
+
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-slate-50/50 py-12">
@@ -168,51 +162,6 @@ export default function LoginView({ onLoginSuccess, onCancel }: LoginViewProps) 
             </button>
           </div>
         </form>
-
-        {/* Divider */}
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center" aria-hidden="true">
-            <div className="w-full border-t border-slate-200"></div>
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-3 text-[10px] font-bold text-slate-400 tracking-wider">
-              Testa Portalen (Snabbval)
-            </span>
-          </div>
-        </div>
-
-        {/* Quick Testing Options */}
-        <div className="space-y-2.5">
-          <button
-            onClick={() => handleQuickLogin("Styrelse")}
-            disabled={isLoading}
-            className="w-full flex items-center justify-between p-3.5 rounded-xl border border-violet-100 bg-violet-50/50 hover:bg-violet-50 hover:border-violet-200 transition-all text-left cursor-pointer group text-xs font-semibold text-violet-900"
-          >
-            <div className="flex items-center gap-2">
-              <Key className="w-4 h-4 text-violet-500 group-hover:scale-110 transition-transform" />
-              <div>
-                <span className="block font-bold">Styrelseinloggning (Full Access)</span>
-                <span className="block text-[10px] text-violet-500/80 font-normal">Testa styrelsefiler &amp; administration</span>
-              </div>
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-violet-500 bg-white border border-violet-100 rounded-md px-2 py-0.5">Styrelse</span>
-          </button>
-
-          <button
-            onClick={() => handleQuickLogin("Medlem")}
-            disabled={isLoading}
-            className="w-full flex items-center justify-between p-3.5 rounded-xl border border-blue-100 bg-blue-50/50 hover:bg-blue-50 hover:border-blue-200 transition-all text-left cursor-pointer group text-xs font-semibold text-blue-900"
-          >
-            <div className="flex items-center gap-2">
-              <Key className="w-4 h-4 text-blue-500 group-hover:scale-110 transition-transform" />
-              <div>
-                <span className="block font-bold">Medlemsinloggning</span>
-                <span className="block text-[10px] text-blue-500/80 font-normal">Testa anslagstavla &amp; medlemsfiler</span>
-              </div>
-            </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-blue-500 bg-white border border-blue-100 rounded-md px-2 py-0.5">Medlem</span>
-          </button>
-        </div>
       </div>
     </div>
   );

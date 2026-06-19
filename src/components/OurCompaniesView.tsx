@@ -68,10 +68,24 @@ export default function OurCompaniesView({ profiles }: OurCompaniesViewProps) {
               profile.logo.startsWith("https://") ||
               profile.logo.startsWith("data:"));
 
+          const hasWebsite = profile.website && profile.website.trim() !== "";
+          const handleClick = () => {
+            if (hasWebsite) {
+              let url = profile.website.trim();
+              if (!/^https?:\/\//i.test(url)) {
+                url = `https://${url}`;
+              }
+              window.open(url, "_blank", "noopener,noreferrer");
+            }
+          };
+
           return (
             <div
               key={profile.id}
-              className="bg-white rounded-2xl border border-slate-100 overflow-hidden flex flex-col justify-between hover:border-slate-200 transition-all shadow-3xs hover:shadow-2xs h-48 group text-center"
+              onClick={handleClick}
+              className={`bg-white rounded-2xl border border-slate-100 overflow-hidden flex flex-col justify-between hover:border-slate-200 transition-all shadow-3xs hover:shadow-2xs h-48 group text-center ${
+                hasWebsite ? "cursor-pointer hover:scale-[1.02]" : "cursor-default"
+              }`}
             >
               {/* Upper Part - Logo Container */}
               <div className="w-full h-32 bg-slate-50/60 border-b border-slate-100/80 flex items-center justify-center p-4 relative overflow-hidden transition-colors group-hover:bg-slate-50 duration-300">
@@ -86,6 +100,14 @@ export default function OurCompaniesView({ profiles }: OurCompaniesViewProps) {
                   <div className="w-12 h-12 rounded-full bg-[#0B2C24]/5 border border-[#0B2C24]/10 flex flex-col items-center justify-center text-[#0B2C24] uppercase transition-transform group-hover:scale-105 duration-300">
                     <span className="text-base font-bold font-sans tracking-wider">
                       {profile.company.substring(0, 2)}
+                    </span>
+                  </div>
+                )}
+                {/* Glassmorphic Website Hover Overlay */}
+                {hasWebsite && (
+                  <div className="absolute inset-0 bg-[#0B2C24]/60 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                    <span className="text-white text-[10px] font-bold uppercase tracking-wider bg-slate-950/40 px-3 py-1.5 rounded-full border border-white/20">
+                      Besök hemsida ↗
                     </span>
                   </div>
                 )}

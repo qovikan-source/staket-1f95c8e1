@@ -14,7 +14,7 @@ interface AdminViewProps {
   notices: NoticePost[];
   files: FileItem[];
   spaces: VacantSpace[];
-  onAddProfile: (profile: Omit<UserProfile, "id">) => void;
+  onAddProfile: (profile: Omit<UserProfile, "id"> & { password?: string }) => void;
   onUpdateRole: (id: string, role: UserRole) => void;
   onUpdateProfile: (id: string, profile: Partial<UserProfile>) => void;
   onDeleteProfile: (id: string) => void;
@@ -50,7 +50,7 @@ export default function AdminView({
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   // Filtering state for profiles
-  const [roleFilter, setRoleFilter] = useState<"Alla" | "Medlemmar" | "Styrelse" | "Administrator">("Alla");
+  const [roleFilter, setRoleFilter] = useState<"Alla" | "Medlemmar" | "Hyresgäst" | "Styrelse" | "Administrator">("Alla");
 
   // Editing profile states
   const [editingProfile, setEditingProfile] = useState<UserProfile | null>(null);
@@ -131,6 +131,7 @@ export default function AdminView({
       name,
       role,
       email,
+      password,
       phone: phone || "Ej angivet",
       orgNr: orgNr || "Xxxxxx-xxxx",
       company: company || "Enskild Firma / Privat",
@@ -382,6 +383,7 @@ export default function AdminView({
             {([
               { key: "Alla", label: "Alla" },
               { key: "Medlemmar", label: "Medlemmar" },
+              { key: "Hyresgäst", label: "Hyresgäster" },
               { key: "Styrelse", label: "Styrelse" },
               { key: "Administrator", label: "Administrator" }
             ] as const).map((opt) => (
@@ -464,6 +466,7 @@ export default function AdminView({
                           <option value="Administrator">Administrator</option>
                           <option value="Styrelse">Styrelse</option>
                           <option value="Medlem">Medlem</option>
+                          <option value="Hyresgäst">Hyresgäst</option>
                         </select>
                       </td>
                       {activeUserRole === "Administrator" && (
@@ -701,6 +704,7 @@ export default function AdminView({
                   <option value="Administrator">Administrator</option>
                   <option value="Styrelse">Styrelse</option>
                   <option value="Medlem">Medlem</option>
+                  <option value="Hyresgäst">Hyresgäst</option>
                 </select>
               </div>
 
@@ -728,15 +732,15 @@ export default function AdminView({
                 />
               </div>
 
-              {role === "Medlem" && (
+              {(role === "Medlem" || role === "Hyresgäst") && (
                 <div className="pt-4 pb-2 border-t border-slate-100 flex items-center justify-center">
                   <span className="text-[10px] text-slate-500 font-semibold tracking-wide uppercase">
-                    Fylles I Endast För Rollen "Medlem".
+                    Fylles I Endast För Rollen "Medlem" eller "Hyresgäst".
                   </span>
                 </div>
               )}
 
-              {role === "Medlem" && (
+              {(role === "Medlem" || role === "Hyresgäst") && (
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-500 uppercase">Företag</label>
@@ -906,18 +910,19 @@ export default function AdminView({
                   <option value="Administrator">Administrator</option>
                   <option value="Styrelse">Styrelse</option>
                   <option value="Medlem">Medlem</option>
+                  <option value="Hyresgäst">Hyresgäst</option>
                 </select>
               </div>
 
-              {editRole === "Medlem" && (
+              {(editRole === "Medlem" || editRole === "Hyresgäst") && (
                 <div className="pt-4 pb-2 border-t border-slate-100 flex items-center justify-center">
                   <span className="text-[10px] text-slate-500 font-semibold tracking-wide uppercase">
-                    Medlemsinformation
+                    Medlems- / Hyresgästinformation
                   </span>
                 </div>
               )}
 
-              {editRole === "Medlem" && (
+              {(editRole === "Medlem" || editRole === "Hyresgäst") && (
                 <div className="space-y-4">
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold text-slate-500 uppercase">Företag</label>

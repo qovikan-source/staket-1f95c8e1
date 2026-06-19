@@ -18,10 +18,13 @@ import {
   ChevronDown,
   Lock,
   Menu,
-  X
+  X,
+  User,
+  MapPin,
+  Phone
 } from "lucide-react";
 
-import { UserRole, UserProfile, NoticePost, FileItem, VacantSpace, FileCategory, BoardFolder } from "../types";
+import { UserRole, UserProfile, NoticePost, FileItem, VacantSpace, FileCategory, BoardFolder, NoticeboardCategory, NOTICEBOARD_CATEGORIES } from "../types";
 import { dbService } from "../lib/db";
 import { supabase } from "../lib/supabase";
 import {
@@ -46,6 +49,8 @@ import DocumentHubView from "../components/DocumentHubView";
 import ContactBookView from "../components/ContactBookView";
 import AdminView from "../components/AdminView";
 import LoginView from "../components/LoginView";
+
+const sortedCategories = [...NOTICEBOARD_CATEGORIES].sort((a, b) => a.localeCompare(b, "sv"));
 
 export default function Index() {
   // State definitions matching localStorage loaders
@@ -75,6 +80,7 @@ export default function Index() {
   // Notice highlighting and redirect state
   const [pendingNoticeId, setPendingNoticeId] = useState<string | null>(null);
   const [highlightedNoticeId, setHighlightedNoticeId] = useState<string | null>(null);
+  const [selectedNoticeboardCategory, setSelectedNoticeboardCategory] = useState<NoticeboardCategory | "Alla">("Alla");
 
   // Save role and activeTab to localStorage and sanitize page paths on role changes
   useEffect(() => {
@@ -536,10 +542,40 @@ export default function Index() {
     }
   };
 
-  const handleAddProfile = async (profile: Omit<UserProfile, "id">) => {
+  const handleUpdateFile = async (updatedFile: FileItem) => {
+    const originalFiles = [...files];
+    setFiles((prev) => {
+      const next = prev.map((f) => (f.id === updatedFile.id ? updatedFile : f));
+      saveFiles(next);
+      return next;
+    });
+
+    try {
+      const dbRecord = {
+        name: updatedFile.name,
+        category: updatedFile.category,
+        folder: updatedFile.folder === "Pantbrev" ? "Pantbrev Lgh Betekn." : (updatedFile.folder || null),
+        uploaded_at: updatedFile.uploadedAt,
+      };
+      const { error } = await supabase
+        .from("files")
+        .update(dbRecord)
+        .eq("id", updatedFile.id);
+      if (error) throw error;
+    } catch (e) {
+      console.error("Failed to update file in Supabase, reverting:", e);
+      setFiles(originalFiles);
+      saveFiles(originalFiles);
+      alert("Kunde inte uppdatera filen på servern.");
+    }
+  };
+
+
+  const handleAddProfile = async (profile: Omit<UserProfile, "id"> & { password?: string }) => {
     const tempId = `temp-p-${Date.now()}`;
+    const { password, ...profileFields } = profile;
     const tempProfile: UserProfile = {
-      ...profile,
+      ...profileFields,
       id: tempId,
     };
 
@@ -549,7 +585,7 @@ export default function Index() {
     saveProfiles(optimisticList);
 
     try {
-      const dbProfile = await dbService.insertProfile(profile);
+      const dbProfile = await dbService.registerUserAndProfile(profile);
       // 2. Real DB sync replacement
       setProfiles((prev) => {
         const next = prev.map((p) => (p.id === tempId ? dbProfile : p));
@@ -712,6 +748,7 @@ export default function Index() {
     if (role === "Besökare") return "Anonym Besökare";
     if (currentUserProfile) return currentUserProfile.name;
     if (role === "Medlem") return "Thomas Berglund";
+    if (role === "Hyresgäst") return "Henrik Hyresgäst";
     if (role === "Styrelse") return "Alexander Krasar";
     return "Admin Adminsson";
   };
@@ -734,7 +771,7 @@ export default function Index() {
                 } else {
                   setCurrentUserProfile({
                     id: "quick-user",
-                    name: selectedRole === "Styrelse" ? "Alexander Krasar" : selectedRole === "Medlem" ? "Thomas Berglund" : "Admin Adminsson",
+                    name: selectedRole === "Styrelse" ? "Alexander Krasar" : selectedRole === "Medlem" ? "Thomas Berglund" : selectedRole === "Hyresgäst" ? "Henrik Hyresgäst" : "Admin Adminsson",
                     role: selectedRole,
                     email: "",
                     phone: "",
@@ -756,10 +793,10 @@ export default function Index() {
                   setHighlightedNoticeId(null);
                 }, 5000);
               } else {
-                if (selectedRole === "Styrelse" || selectedRole === "Administrator") {
+                if (selectedRole === "Administrator") {
                   setActiveTab("administration");
                 } else {
-                  setActiveTab("anslagstavlan");
+                  setActiveTab("hem");
                 }
               }
             }}
@@ -769,157 +806,133 @@ export default function Index() {
             }}
           />
         </div>
-      ) : role === "Besökare" ? (
-        <div className="flex-1 overflow-y-auto bg-white flex flex-col min-h-0">
-          <HomeView
-            notices={notices}
-            role={role}
-            onSetRole={setRole}
-            onNavigate={handleTabClick}
-            activeTab={activeTab}
-            onSelectNotice={handleSelectNotice}
-          />
-        </div>
-      ) : (
-      <div className="flex-1 flex flex-col lg:flex-row min-h-0 relative">
-        {/* Main Layout Area: Sidebar + Main Frame */}
-        
-        {/* Sidebar Navigation Drawer */}
-        <aside className={`lg:w-64 bg-[#1e293b] flex flex-col shrink-0 border-r border-slate-800 transition-all ${mobileMenuOpen ? "flex h-auto w-full absolute inset-x-0 top-0 z-30 shadow-xl border-b" : "hidden lg:flex"}`}>
-          <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
-            <div className="text-white font-bold text-lg flex items-center gap-2.5">
-              <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center text-xs font-bold shadow-xs">BRF</div>
-              <div className="leading-none">
-                <div className="text-white text-sm font-bold tracking-tight">BRF PORTALEN</div>
-                <div className="text-[9px] text-slate-400 font-mono tracking-wider mt-0.5">SMEDEN 14</div>
+      ) : role === "Administrator" ? (
+        <div className="flex-1 flex flex-col lg:flex-row min-h-0 relative">
+          {/* Sidebar Navigation Drawer */}
+          <aside className={`lg:w-64 bg-[#1e293b] flex flex-col shrink-0 border-r border-slate-800 transition-all ${mobileMenuOpen ? "flex h-auto w-full absolute inset-x-0 top-0 z-30 shadow-xl border-b" : "hidden lg:flex"}`}>
+            <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
+              <div className="text-white font-bold text-lg flex items-center gap-2.5">
+                <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center text-xs font-bold shadow-xs">BRF</div>
+                <div className="leading-none">
+                  <div className="text-white text-sm font-bold tracking-tight">BRF PORTALEN</div>
+                  <div className="text-[9px] text-slate-400 font-mono tracking-wider mt-0.5">SMEDEN 14</div>
+                </div>
               </div>
-            </div>
-            {/* Mobile close button */}
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="lg:hidden text-slate-400 hover:text-white p-1"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-
-          <nav className="flex-1 p-3.5 space-y-4 overflow-y-auto">
-            {/* Public Section */}
-            <div>
-              <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2">Offentlig info</div>
-              <div className="space-y-0.5">
-                <button
-                  onClick={() => handleTabClick("hem")}
-                  className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
-                    activeTab === "hem"
-                      ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
-                      : "text-slate-400 hover:bg-slate-800"
-                  }`}
-                >
-                  <Home className="w-3.5 h-3.5 shrink-0" />
-                  Hem & Fastighet
-                </button>
-                <button
-                  onClick={() => handleTabClick("vara_foretag")}
-                  className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
-                    activeTab === "vara_foretag"
-                      ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
-                      : "text-slate-400 hover:bg-slate-800"
-                  }`}
-                >
-                  <Briefcase className="w-3.5 h-3.5 shrink-0" />
-                  Våra Företag
-                </button>
-                <button
-                  onClick={() => handleTabClick("lediga_lokaler")}
-                  className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
-                    activeTab === "lediga_lokaler"
-                      ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
-                      : "text-slate-400 hover:bg-slate-800"
-                  }`}
-                >
-                  <Building2 className="w-3.5 h-3.5 shrink-0" />
-                  Lediga Lokaler Järfälla
-                </button>
-                <button
-                  onClick={() => handleTabClick("om_oss")}
-                  className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
-                    activeTab === "om_oss"
-                      ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
-                      : "text-slate-400 hover:bg-slate-800"
-                  }`}
-                >
-                  <Info className="w-3.5 h-3.5 shrink-0" />
-                  Om Föreningen
-                </button>
-                <button
-                  onClick={() => handleTabClick("kontakt")}
-                  className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
-                    activeTab === "kontakt"
-                      ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
-                      : "text-slate-400 hover:bg-slate-800"
-                  }`}
-                >
-                  <Mail className="w-3.5 h-3.5 shrink-0" />
-                  Kontakt & Jour
-                </button>
-              </div>
+              {/* Mobile close button */}
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="lg:hidden text-slate-400 hover:text-white p-1"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {/* Members Section */}
-            <div>
-              <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2 flex items-center justify-between">
-                <span>Medlemsportal</span>
-                {(role as string) === "Besökare" && <Lock className="w-2.5 h-2.5 text-slate-600" />}
+            <nav className="flex-1 p-3.5 space-y-4 overflow-y-auto">
+              {/* Public Section */}
+              <div>
+                <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2">Offentlig info</div>
+                <div className="space-y-0.5">
+                  <button
+                    onClick={() => handleTabClick("hem")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                      activeTab === "hem"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        : "text-slate-400 hover:bg-slate-800"
+                    }`}
+                  >
+                    <Home className="w-3.5 h-3.5 shrink-0" />
+                    Hem
+                  </button>
+                  <button
+                    onClick={() => handleTabClick("vara_foretag")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                      activeTab === "vara_foretag"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        : "text-slate-400 hover:bg-slate-800"
+                    }`}
+                  >
+                    <Briefcase className="w-3.5 h-3.5 shrink-0" />
+                    Företag
+                  </button>
+                  <button
+                    onClick={() => handleTabClick("lediga_lokaler")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                      activeTab === "lediga_lokaler"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        : "text-slate-400 hover:bg-slate-800"
+                    }`}
+                  >
+                    <Building2 className="w-3.5 h-3.5 shrink-0" />
+                    Lediga Lokaler
+                  </button>
+                  <button
+                    onClick={() => handleTabClick("om_oss")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                      activeTab === "om_oss"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        : "text-slate-400 hover:bg-slate-800"
+                    }`}
+                  >
+                    <Info className="w-3.5 h-3.5 shrink-0" />
+                    Om Oss
+                  </button>
+                  <button
+                    onClick={() => handleTabClick("kontakt")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                      activeTab === "kontakt"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        : "text-slate-400 hover:bg-slate-800"
+                    }`}
+                  >
+                    <Mail className="w-3.5 h-3.5 shrink-0" />
+                    Kontakt
+                  </button>
+                </div>
               </div>
-              <div className="space-y-0.5">
-                {(role as string) === "Besökare" ? (
-                  <div className="px-3 py-2 bg-slate-800/20 text-slate-500 text-[10px] rounded border border-slate-700/50 mb-1 space-y-1">
-                    <p className="leading-tight text-slate-400">Låst för besökare.</p>
-                    <p className="text-[9px] text-slate-500">Välj "Medlem" ovan för att ta del av dolda sidor.</p>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      onClick={() => handleTabClick("anslagstavlan")}
-                      className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
-                        activeTab === "anslagstavlan"
-                          ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
-                          : "text-slate-400 hover:bg-slate-800"
-                      }`}
-                    >
-                      <Bell className="w-3.5 h-3.5 shrink-0" />
-                      Anslagstavlan
-                    </button>
-                    <button
-                      onClick={() => handleTabClick("filer")}
-                      className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
-                        activeTab === "filer"
-                          ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
-                          : "text-slate-400 hover:bg-slate-800"
-                      }`}
-                    >
-                      <FileText className="w-3.5 h-3.5 shrink-0" />
-                      Blanketter & Filer
-                    </button>
-                    <button
-                      onClick={() => handleTabClick("kontaktboken")}
-                      className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
-                        activeTab === "kontaktboken"
-                          ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
-                          : "text-slate-400 hover:bg-slate-800"
-                      }`}
-                    >
-                      <Users className="w-3.5 h-3.5 shrink-0" />
-                      Kontaktboken
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
 
-            {/* Administration Section */}
-            {(role === "Styrelse" || role === "Administrator") && (
+              {/* Members Section */}
+              <div>
+                <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2 flex items-center justify-between">
+                  <span>Medlemsportal</span>
+                </div>
+                <div className="space-y-0.5">
+                  <button
+                    onClick={() => handleTabClick("anslagstavlan")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                      activeTab === "anslagstavlan"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        : "text-slate-400 hover:bg-slate-800"
+                    }`}
+                  >
+                    <Bell className="w-3.5 h-3.5 shrink-0" />
+                    Anslagstavlan
+                  </button>
+                  <button
+                    onClick={() => handleTabClick("filer")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                      activeTab === "filer"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        : "text-slate-400 hover:bg-slate-800"
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5 shrink-0" />
+                    Filer
+                  </button>
+                  <button
+                    onClick={() => handleTabClick("kontaktboken")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                      activeTab === "kontaktboken"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        : "text-slate-400 hover:bg-slate-800"
+                    }`}
+                  >
+                    <Users className="w-3.5 h-3.5 shrink-0" />
+                    Kontaktboken
+                  </button>
+                </div>
+              </div>
+
+              {/* Administration Section */}
               <div>
                 <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2">Administration</div>
                 <button
@@ -934,64 +947,53 @@ export default function Index() {
                   Alla användare
                 </button>
               </div>
-            )}
-          </nav>
+            </nav>
 
-          {/* Profile Status Box at the bottom */}
-          <div className="p-4 border-t border-slate-700/50 mt-auto bg-slate-900/60">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-white font-bold text-xs shrink-0 uppercase">
-                {getCurrentUserName().charAt(0)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-xs text-white font-semibold truncate">{getCurrentUserName()}</div>
-                <div className="text-[10px] text-slate-400 truncate mt-0.5 leading-none bg-slate-800 px-1.5 py-0.5 rounded w-fit">Rättighet: {role}</div>
+            {/* Profile Status Box at the bottom */}
+            <div className="p-4 border-t border-slate-700/50 mt-auto bg-slate-900/60">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-white font-bold text-xs shrink-0 uppercase">
+                  {getCurrentUserName().charAt(0)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-xs text-white font-semibold truncate">{getCurrentUserName()}</div>
+                  <div className="text-[10px] text-slate-400 truncate mt-0.5 leading-none bg-slate-800 px-1.5 py-0.5 rounded w-fit">Rättighet: {role}</div>
+                </div>
               </div>
             </div>
-          </div>
-        </aside>
+          </aside>
 
-        {/* Workspace Canvas (Full width on right) */}
-        <div className="flex-grow flex flex-col min-w-0 overflow-x-hidden">
-          {/* Top Header Panel */}
-          <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 shrink-0 sticky top-0 z-10 shadow-3xs">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="lg:hidden p-1 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-              <h1 className="text-sm font-bold text-slate-900 transition-all uppercase tracking-tight">
-                {activeTab === "hem" && "Föreningsöversikt & Välkommen"}
-                {activeTab === "vara_foretag" && "Våra Lokala Företag / Entreprenörer"}
-                {activeTab === "lediga_lokaler" && "Lediga Lokaler & Fastighetssök i Järfälla"}
-                {activeTab === "om_oss" && "Föreningsinformation"}
-                {activeTab === "kontakt" && "Kontakt & Felanmälan"}
-                {activeTab === "anslagstavlan" && "Medlemsanslagstavla"}
-                {activeTab === "filer" && "Dokument & Blankettarkiv"}
-                {activeTab === "kontaktboken" && "Medlemskontaktboken"}
-                {activeTab === "administration" && "System- & Styrelseadministration"}
-              </h1>
-            </div>
-
-            {/* Quick CTAs / Search Mock */}
-            <div className="flex items-center gap-3">
-              <span className="hidden md:inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold px-2.5 py-1 rounded">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                PORTAL ONLINE
-              </span>
-              
-              {(role as string) === "Besökare" ? (
+          {/* Workspace Canvas (Full width on right) */}
+          <div className="flex-grow flex flex-col min-w-0 overflow-x-hidden">
+            {/* Top Header Panel */}
+            <header className="h-14 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-6 shrink-0 sticky top-0 z-10 shadow-3xs">
+              <div className="flex items-center gap-3">
                 <button
-                  onClick={() => {
-                    setActiveTab("login");
-                  }}
-                  className="bg-blue-600 text-white text-[11px] font-black tracking-tight px-3 py-1.5 rounded-md hover:bg-blue-700 transition"
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="lg:hidden p-1 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800"
                 >
-                  LOGGA IN
+                  <Menu className="w-5 h-5" />
                 </button>
-              ) : (
+                <h1 className="text-sm font-bold text-slate-900 transition-all uppercase tracking-tight">
+                  {activeTab === "hem" && "Föreningsöversikt & Välkommen"}
+                  {activeTab === "vara_foretag" && "Våra Lokala Företag / Entreprenörer"}
+                  {activeTab === "lediga_lokaler" && "Lediga Lokaler & Fastighetssök i Järfälla"}
+                  {activeTab === "om_oss" && "Föreningsinformation"}
+                  {activeTab === "kontakt" && "Kontakt & Felanmälan"}
+                  {activeTab === "anslagstavlan" && "Medlemsanslagstavla"}
+                  {activeTab === "filer" && "Dokument & Blankettarkiv"}
+                  {activeTab === "kontaktboken" && "Medlemskontaktboken"}
+                  {activeTab === "administration" && "System- & Styrelseadministration"}
+                </h1>
+              </div>
+
+              {/* Quick CTAs / Search Mock */}
+              <div className="flex items-center gap-3">
+                <span className="hidden md:inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold px-2.5 py-1 rounded">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                  PORTAL ONLINE
+                </span>
+                
                 <button
                   onClick={async () => {
                     await supabase.auth.signOut();
@@ -999,17 +1001,432 @@ export default function Index() {
                     setCurrentUserProfile(null);
                     setActiveTab("hem");
                   }}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold px-3 py-1.5 rounded-md transition"
+                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold px-3 py-1.5 rounded-md transition cursor-pointer"
                 >
                   LOGGA UT
                 </button>
+              </div>
+            </header>
+
+            {/* Core Applet Content Stage */}
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+              {activeTab === "hem" && (
+                <HomeView
+                  notices={notices}
+                  role={role}
+                  onSetRole={setRole}
+                  onNavigate={handleTabClick}
+                  activeTab={activeTab}
+                  profiles={profiles}
+                  onSelectNotice={handleSelectNotice}
+                />
               )}
+
+              {activeTab === "vara_foretag" && <OurCompaniesView profiles={profiles} />}
+
+              {activeTab === "lediga_lokaler" && (
+                <AvailableSpacesView
+                  spaces={spaces}
+                  role={role}
+                  onDeleteSpace={handleDeleteSpace}
+                />
+              )}
+
+              {activeTab === "om_oss" && <AboutUsView />}
+
+              {activeTab === "kontakt" && <ContactPublicView />}
+
+              {activeTab === "anslagstavlan" && (
+                <NoticeboardView
+                  notices={notices}
+                  role={role}
+                  currentUserName={getCurrentUserName()}
+                  onAddNotice={handleAddNotice}
+                  onDeleteNotice={handleDeleteNotice}
+                  onUpdateNotice={handleUpdateNotice}
+                  highlightedNoticeId={highlightedNoticeId || undefined}
+                  initialCategory={selectedNoticeboardCategory}
+                />
+              )}
+
+              {activeTab === "filer" && (
+                <DocumentHubView
+                  files={files}
+                  role={role}
+                  onAddFile={handleAddFile}
+                  onDeleteFile={handleDeleteFile}
+                  onDeleteMultipleFiles={handleDeleteMultipleFiles}
+                  onUpdateFile={handleUpdateFile}
+                />
+              )}
+
+              {activeTab === "kontaktboken" && (
+                <ContactBookView profiles={profiles} />
+              )}
+
+              {activeTab === "administration" && (
+                <AdminView
+                  role={role}
+                  profiles={profiles}
+                  notices={notices}
+                  files={files}
+                  spaces={spaces}
+                  onAddProfile={handleAddProfile}
+                  onUpdateRole={handleUpdateRole}
+                  onUpdateProfile={handleUpdateProfile}
+                  onDeleteProfile={handleDeleteProfile}
+                  onDeleteNotice={handleDeleteNotice}
+                  onDeleteFile={handleDeleteFile}
+                  onAddSpace={handleAddSpace}
+                  onDeleteSpace={handleDeleteSpace}
+                />
+              )}
+            </main>
+
+            {/* High Density Dark Footer */}
+            <footer className="h-8 bg-slate-900 border-t border-slate-800 flex items-center justify-between px-6 text-[10px] text-slate-400 flex-shrink-0">
+              <div>Föreningsportal v2.0.2 • Fastighetsbeteckning: Smeden 14, Stockholm</div>
+              <div className="flex gap-4">
+                <span className="flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> 
+                  Databas Online
+                </span>
+                <span>Inloggad som Admin</span>
+              </div>
+            </footer>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto bg-[#F9FAF9] flex flex-col min-h-0 relative" id="ordinary-page-root">
+          {/* TOP NAVIGATION HEADER */}
+          <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm h-20 flex items-center flex-shrink-0">
+            <div className="max-w-7xl w-full mx-auto px-4 md:px-8 flex items-center justify-between">
+              <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleTabClick("hem")}>
+                <img 
+                  src="/staket-foretagscenter-logo.png" 
+                  alt="Stäket Företagscenter Logo" 
+                  className="h-12 md:h-16 w-auto object-contain" 
+                />
+              </div>
+
+              <nav className="hidden lg:flex items-center gap-7 text-[11px] font-bold tracking-wider text-[#0B2C24]">
+                <button
+                  onClick={() => handleTabClick("hem")}
+                  className={`hover:text-[#B68F52] transition-colors cursor-pointer pb-1 ${
+                    activeTab === "hem" ? "text-[#B68F52]" : ""
+                  }`}
+                >
+                  HEM
+                </button>
+                <button
+                  onClick={() => handleTabClick("om_oss")}
+                  className={`hover:text-[#B68F52] transition-colors cursor-pointer pb-1 ${
+                    activeTab === "om_oss" ? "text-[#B68F52]" : ""
+                  }`}
+                >
+                  OM OSS
+                </button>
+                <button
+                  onClick={() => handleTabClick("vara_foretag")}
+                  className={`hover:text-[#B68F52] transition-colors cursor-pointer pb-1 ${
+                    activeTab === "vara_foretag" ? "text-[#B68F52]" : ""
+                  }`}
+                >
+                  VÅRA FÖRETAG
+                </button>
+                <button
+                  onClick={() => handleTabClick("lediga_lokaler")}
+                  className={`hover:text-[#B68F52] transition-colors cursor-pointer pb-1 ${
+                    activeTab === "lediga_lokaler" ? "text-[#B68F52]" : ""
+                  }`}
+                >
+                  LEDIGA LOKALER
+                </button>
+                <button
+                  onClick={() => handleTabClick("kontakt")}
+                  className={`hover:text-[#B68F52] transition-colors cursor-pointer pb-1 ${
+                    activeTab === "kontakt" ? "text-[#B68F52]" : ""
+                  }`}
+                >
+                  KONTAKT &amp; JOURNAL
+                </button>
+              </nav>
+
+              {role === "Besökare" ? (
+                <button 
+                  className="hidden lg:flex items-center gap-2 bg-[#0B2C24] text-white px-5 py-3 rounded text-xs font-bold font-sans tracking-wide hover:bg-[#081e18] transition-colors cursor-pointer" 
+                  onClick={() => handleTabClick("login")}
+                >
+                  <User className="w-4 h-4" /> LOGGA IN
+                </button>
+              ) : (
+                <div className="hidden lg:flex items-center gap-4">
+                  <span className="text-[11px] text-[#0B2C24] font-medium">
+                    Inloggad som <strong className="font-bold">{getCurrentUserName()}</strong> ({role === "Hyresgäst" ? "Hyresgäst" : role === "Medlem" ? "Medlem" : role === "Styrelse" ? "Styrelse" : "Admin"})
+                  </span>
+                  <button 
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                      setRole("Besökare");
+                      setCurrentUserProfile(null);
+                      handleTabClick("hem");
+                    }}
+                    className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded text-xs font-bold font-sans tracking-wide hover:bg-slate-900 transition-colors cursor-pointer"
+                  >
+                    LOGGA UT
+                  </button>
+                </div>
+              )}
+
+              <button className="lg:hidden p-2 text-[#0B2C24]" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+                {mobileMenuOpen ? (
+                  <X className="w-6 h-6 text-[#0B2C24]" />
+                ) : (
+                  <Menu className="w-6 h-6 text-[#0B2C24]" />
+                )}
+              </button>
             </div>
           </header>
 
-          {/* Core Applet Content Stage */}
-          <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
-            {activeTab === "hem" && (
+          {/* SECONDARY SUB-HEADER FOR LOGGED IN USERS */}
+          {role !== "Besökare" && (
+            <div className="sticky top-20 z-40 bg-[#FAFBFB] border-b border-gray-150 h-12 flex items-center flex-shrink-0">
+              <div className="max-w-7xl w-full mx-auto px-4 md:px-8 flex items-center justify-between">
+                {/* Left spacer matching main header logo width */}
+                <div className="flex items-center gap-3 opacity-0 pointer-events-none select-none lg:block hidden">
+                  <img 
+                    src="/staket-foretagscenter-logo.png" 
+                    alt="Spacer" 
+                    className="h-12 md:h-16 w-auto object-contain" 
+                  />
+                </div>
+
+                {/* Sub-header Navigation Links */}
+                <nav className="flex items-center gap-7 text-[11px] font-bold tracking-wider text-[#0B2C24] w-full lg:w-auto lg:justify-start">
+                  {/* Anslagstavlan Category Dropdown */}
+                  <div className="relative group flex items-center h-full py-2">
+                    <button
+                      onClick={() => {
+                        setSelectedNoticeboardCategory("Alla");
+                        handleTabClick("anslagstavlan");
+                      }}
+                      className={`hover:text-[#B68F52] text-[11px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer flex items-center gap-1.5 ${
+                        activeTab === "anslagstavlan" ? "text-[#B68F52]" : ""
+                      }`}
+                    >
+                      ANSLAGSTAVLAN
+                      <ChevronDown className="w-3.5 h-3.5 text-[#0B2C24]/60 group-hover:text-[#B68F52]" />
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    <div className="absolute left-0 top-[calc(100%-4px)] mt-2 w-64 bg-white border border-gray-150 rounded-lg shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <button
+                        onClick={() => {
+                          setSelectedNoticeboardCategory("Alla");
+                          handleTabClick("anslagstavlan");
+                        }}
+                        className="w-full text-left px-4 py-2 text-[10px] text-gray-700 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-bold border-b border-gray-50"
+                      >
+                        ALLA KATEGORIER
+                      </button>
+                      {sortedCategories.map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => {
+                            setSelectedNoticeboardCategory(cat);
+                            handleTabClick("anslagstavlan");
+                          }}
+                          className="w-full text-left px-4 py-2 text-[10px] text-gray-600 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-semibold border-b border-gray-50 last:border-0"
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleTabClick("filer")}
+                    className={`hover:text-[#B68F52] text-[11px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
+                      activeTab === "filer" ? "text-[#B68F52]" : ""
+                    }`}
+                  >
+                    BLANKETTER &amp; FILER
+                  </button>
+
+                  <button
+                    onClick={() => handleTabClick("kontaktboken")}
+                    className={`hover:text-[#B68F52] text-[11px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
+                      activeTab === "kontaktboken" ? "text-[#B68F52]" : ""
+                    }`}
+                  >
+                    KONTAKTBOKEN
+                  </button>
+                </nav>
+
+                {/* Right spacer matching main header logged in state width */}
+                <div className="hidden lg:flex items-center gap-4 opacity-0 pointer-events-none select-none">
+                  <span className="text-[11px] text-[#0B2C24] font-medium">
+                    Inloggad som <strong className="font-bold">{getCurrentUserName()}</strong> ({role === "Hyresgäst" ? "Hyresgäst" : role === "Medlem" ? "Medlem" : role === "Styrelse" ? "Styrelse" : "Admin"})
+                  </span>
+                  <button 
+                    className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2.5 rounded text-xs font-bold font-sans tracking-wide hover:bg-slate-900 transition-colors cursor-pointer"
+                  >
+                    LOGGA UT
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* MOBILE MENU DROPDOWN DRAWER */}
+          {mobileMenuOpen && (
+            <div className="lg:hidden bg-white border-b border-gray-100 shadow-lg px-6 py-4 space-y-3 flex flex-col font-bold tracking-wider text-[11px] text-[#0B2C24] animate-fade-in absolute top-20 left-0 w-full z-50 max-h-[80vh] overflow-y-auto">
+              <button
+                onClick={() => {
+                  handleTabClick("hem");
+                  setMobileMenuOpen(false);
+                }}
+                className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                  activeTab === "hem" ? "text-[#B68F52]" : ""
+                }`}
+              >
+                HEM
+              </button>
+              <button
+                onClick={() => {
+                  handleTabClick("om_oss");
+                  setMobileMenuOpen(false);
+                }}
+                className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                  activeTab === "om_oss" ? "text-[#B68F52]" : ""
+                }`}
+              >
+                OM OSS
+              </button>
+              <button
+                onClick={() => {
+                  handleTabClick("vara_foretag");
+                  setMobileMenuOpen(false);
+                }}
+                className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                  activeTab === "vara_foretag" ? "text-[#B68F52]" : ""
+                }`}
+              >
+                VÅRA FÖRETAG
+              </button>
+              <button
+                onClick={() => {
+                  handleTabClick("lediga_lokaler");
+                  setMobileMenuOpen(false);
+                }}
+                className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                  activeTab === "lediga_lokaler" ? "text-[#B68F52]" : ""
+                }`}
+              >
+                LEDIGA LOKALER
+              </button>
+              <button
+                onClick={() => {
+                  handleTabClick("kontakt");
+                  setMobileMenuOpen(false);
+                }}
+                className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                  activeTab === "kontakt" ? "text-[#B68F52]" : ""
+                }`}
+              >
+                KONTAKT &amp; JOURNAL
+              </button>
+
+              {role !== "Besökare" && (
+                <>
+                  <div className="border-b border-slate-100 py-1">
+                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest pb-1">ANSLAGSTAVLAN</div>
+                    <div className="pl-3 py-1 flex flex-col gap-2">
+                      <button
+                        onClick={() => {
+                          setSelectedNoticeboardCategory("Alla");
+                          handleTabClick("anslagstavlan");
+                          setMobileMenuOpen(false);
+                        }}
+                        className="text-left text-[10.5px] font-semibold text-gray-700 hover:text-[#B68F52]"
+                      >
+                        Alla Kategorier
+                      </button>
+                      {sortedCategories.map((cat) => (
+                        <button
+                          key={cat}
+                          onClick={() => {
+                            setSelectedNoticeboardCategory(cat);
+                            handleTabClick("anslagstavlan");
+                            setMobileMenuOpen(false);
+                          }}
+                          className="text-left text-[10px] font-medium text-gray-500 hover:text-[#B68F52]"
+                        >
+                          {cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      handleTabClick("filer");
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                      activeTab === "filer" ? "text-[#B68F52]" : ""
+                    }`}
+                  >
+                    BLANKETTER &amp; FILER
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleTabClick("kontaktboken");
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                      activeTab === "kontaktboken" ? "text-[#B68F52]" : ""
+                    }`}
+                  >
+                    KONTAKTBOKEN
+                  </button>
+                </>
+              )}
+
+              {role === "Besökare" ? (
+                <button 
+                  onClick={() => {
+                    handleTabClick("login");
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 bg-[#0B2C24] text-white py-3 rounded text-xs font-bold font-sans tracking-wide"
+                >
+                  <User className="w-4 h-4" /> LOGGA IN
+                </button>
+              ) : (
+                <div className="pt-2 flex flex-col gap-2">
+                  <span className="text-[10px] text-gray-500 font-medium">
+                    Inloggad som {getCurrentUserName()} ({role})
+                  </span>
+                  <button 
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                      setRole("Besökare");
+                      setCurrentUserProfile(null);
+                      handleTabClick("hem");
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 bg-slate-800 text-white py-2.5 rounded text-xs font-bold font-sans tracking-wide"
+                  >
+                    LOGGA UT
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* DYNAMIC WORKSPACE BODY CONTAINER */}
+          <div className="flex-grow">
+            {activeTab === "hem" ? (
               <HomeView
                 notices={notices}
                 role={role}
@@ -1019,81 +1436,90 @@ export default function Index() {
                 profiles={profiles}
                 onSelectNotice={handleSelectNotice}
               />
+            ) : (
+              <div className="bg-[#F9FAF9] min-h-[600px] py-12">
+                <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 font-sans text-[#0B2C24]">
+                  {activeTab === "om_oss" && <AboutUsView />}
+                  {activeTab === "vara_foretag" && <OurCompaniesView profiles={profiles} />}
+                  {activeTab === "lediga_lokaler" && (
+                    <AvailableSpacesView
+                      spaces={spaces}
+                      role={role}
+                      onDeleteSpace={handleDeleteSpace}
+                    />
+                  )}
+                  {activeTab === "kontakt" && <ContactPublicView />}
+                  {activeTab === "anslagstavlan" && (
+                    <NoticeboardView
+                      notices={notices}
+                      role={role}
+                      currentUserName={getCurrentUserName()}
+                      onAddNotice={handleAddNotice}
+                      onDeleteNotice={handleDeleteNotice}
+                      onUpdateNotice={handleUpdateNotice}
+                      highlightedNoticeId={highlightedNoticeId || undefined}
+                      initialCategory={selectedNoticeboardCategory}
+                    />
+                  )}
+                  {activeTab === "filer" && (
+                    <DocumentHubView
+                      files={files}
+                      role={role}
+                      onAddFile={handleAddFile}
+                      onDeleteFile={handleDeleteFile}
+                      onDeleteMultipleFiles={handleDeleteMultipleFiles}
+                      onUpdateFile={handleUpdateFile}
+                    />
+                  )}
+                  {activeTab === "kontaktboken" && (
+                    <ContactBookView profiles={profiles} />
+                  )}
+                </div>
+              </div>
             )}
+          </div>
 
-            {activeTab === "vara_foretag" && <OurCompaniesView profiles={profiles} />}
+          {/* FOOTER */}
+          <footer className="bg-[#F9FAF9] text-[#0B2C24] py-12 px-4 md:px-8 border-t border-gray-200/60 flex-shrink-0 font-sans">
+            <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-8 pb-8">
+              <div className="space-y-3 max-w-md">
+                <h3 className="font-bold text-[#0B2C24] text-base">Stäket Företagscenter</h3>
+                <p className="text-gray-600 text-xs leading-relaxed">
+                  Företagstjänster - Konsultationer - Service. Ett komplett företagscenter i Järfälla med 30 aktiva bolag.
+                </p>
+              </div>
 
-            {activeTab === "lediga_lokaler" && (
-              <AvailableSpacesView
-                spaces={spaces}
-                role={role}
-                onDeleteSpace={handleDeleteSpace}
-              />
-            )}
+              <div className="flex flex-wrap md:flex-nowrap gap-x-12 gap-y-6 text-xs text-gray-600">
+                <div className="space-y-1">
+                  <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">ADRESS:</div>
+                  <p className="font-semibold text-slate-800">Skarprättarvägen 7</p>
+                  <p className="font-semibold text-slate-800">176 77 Järfälla</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">TELEFON:</div>
+                  <p className="font-semibold text-slate-800">070 777 2111</p>
+                </div>
+                
+                <div className="space-y-1">
+                  <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">EMAIL:</div>
+                  <a href="mailto:brfsfc@gmail.com" className="font-semibold text-slate-800 hover:underline">
+                    brfsfc@gmail.com
+                  </a>
+                </div>
+              </div>
+            </div>
 
-            {activeTab === "om_oss" && <AboutUsView />}
-
-            {activeTab === "kontakt" && <ContactPublicView />}
-
-            {activeTab === "anslagstavlan" && (
-              <NoticeboardView
-                notices={notices}
-                role={role}
-                currentUserName={getCurrentUserName()}
-                onAddNotice={handleAddNotice}
-                onDeleteNotice={handleDeleteNotice}
-                onUpdateNotice={handleUpdateNotice}
-                highlightedNoticeId={highlightedNoticeId || undefined}
-              />
-            )}
-
-            {activeTab === "filer" && (
-              <DocumentHubView
-                files={files}
-                role={role}
-                onAddFile={handleAddFile}
-                onDeleteFile={handleDeleteFile}
-                onDeleteMultipleFiles={handleDeleteMultipleFiles}
-              />
-            )}
-
-            {activeTab === "kontaktboken" && (
-              <ContactBookView profiles={profiles} />
-            )}
-
-            {activeTab === "administration" && (
-              <AdminView
-                role={role}
-                profiles={profiles}
-                notices={notices}
-                files={files}
-                spaces={spaces}
-                onAddProfile={handleAddProfile}
-                onUpdateRole={handleUpdateRole}
-                onUpdateProfile={handleUpdateProfile}
-                onDeleteProfile={handleDeleteProfile}
-                onDeleteNotice={handleDeleteNotice}
-                onDeleteFile={handleDeleteFile}
-                onAddSpace={handleAddSpace}
-                onDeleteSpace={handleDeleteSpace}
-              />
-            )}
-          </main>
-
-          {/* High Density Dark Footer */}
-          <footer className="h-8 bg-slate-900 border-t border-slate-800 flex items-center justify-between px-6 text-[10px] text-slate-400 flex-shrink-0">
-            <div>Föreningsportal v2.0.2 • Fastighetsbeteckning: Smeden 14, Stockholm</div>
-            <div className="flex gap-4">
-              <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> 
-                Databas Online
-              </span>
-              <span>Inloggad som {(role as string) === "Besökare" ? "Gäst" : role === "Medlem" ? "Medlem" : "Styrelse"}</span>
+            <div className="max-w-7xl mx-auto pt-6 border-t border-gray-200/50 flex flex-col sm:flex-row items-center justify-between text-[11px] text-gray-500 gap-4">
+              <div>© 2026 Brf. Stäkets Företagscenter. Alla rättigheter förbehållna.</div>
+              <div className="flex gap-4">
+                <a href="#" className="hover:text-[#B68F52] transition-colors">Integritetspolicy</a>
+                <span className="text-gray-300">|</span>
+                <a href="#" className="hover:text-[#B68F52] transition-colors">Cookies</a>
+              </div>
             </div>
           </footer>
         </div>
-
-      </div>
       )}
     </div>
   );

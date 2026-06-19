@@ -15,6 +15,7 @@ interface NoticeboardViewProps {
   onDeleteNotice: (id: string) => void;
   onUpdateNotice?: (notice: NoticePost) => void;
   highlightedNoticeId?: string;
+  initialCategory?: NoticeboardCategory | "Alla";
 }
 
 export default function NoticeboardView({
@@ -25,9 +26,17 @@ export default function NoticeboardView({
   onDeleteNotice,
   onUpdateNotice,
   highlightedNoticeId,
+  initialCategory = "Alla",
 }: NoticeboardViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<NoticeboardCategory | "Alla">("Alla");
+  const [selectedCategory, setSelectedCategory] = useState<NoticeboardCategory | "Alla">(initialCategory);
+  
+  React.useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
+    }
+  }, [initialCategory]);
+
   const [showAddModal, setShowAddModal] = useState(false);
 
   // Form states for new notice
