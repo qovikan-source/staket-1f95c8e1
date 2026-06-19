@@ -88,6 +88,20 @@ function sanitizeFilename(filename: string): string {
     .replace(/[^a-zA-Z0-9_\-\.]/g, "");
 }
 
+/**
+ * Computes the storage path inside the (now private) `documents` bucket for
+ * a given FileItem, mirroring the layout used by `uploadFile`.
+ */
+function storagePathForFile(file: FileItem): string {
+  const sanitizedName = sanitizeFilename(file.name);
+  const rawFolder = file.folder as string | undefined;
+  const storageFolder =
+    rawFolder === "Pantbrev" || rawFolder === "Pantbrev Lgh Betekn." ? "Pantbrev" : rawFolder;
+  const subfolder =
+    file.category === "Styrelsefiler" && storageFolder ? `styrelse/${storageFolder}` : "medlemmar";
+  return `${subfolder}/${sanitizedName}`;
+}
+
 function mapSpaceToFrontend(db: any): VacantSpace {
   return {
     id: db.id,
