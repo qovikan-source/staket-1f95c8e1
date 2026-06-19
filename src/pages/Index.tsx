@@ -203,6 +203,24 @@ export default function Index() {
     };
   }, [activeTour, tourStepIndex]);
 
+  // Auto-advance tab steps if already on the active tab
+  useEffect(() => {
+    if (!activeTour) return;
+    const currentSteps = TOURS[activeTour];
+    const step = currentSteps?.[tourStepIndex];
+    if (!step) return;
+
+    if (step.selector === '#tab-administration' && (activeTab === 'administration' || activeTab === 'login')) {
+      setTourStepIndex((prev) => prev + 1);
+    }
+    if (step.selector === '#tab-anslagstavlan' && activeTab === 'anslagstavlan') {
+      setTourStepIndex((prev) => prev + 1);
+    }
+    if (step.selector === '#tab-filer' && activeTab === 'filer') {
+      setTourStepIndex((prev) => prev + 1);
+    }
+  }, [activeTour, tourStepIndex, activeTab]);
+
   const handleSendChatbotMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     const query = chatInput.trim();
@@ -294,7 +312,35 @@ ${query}`;
         const data = await response.json();
         const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (rawText) {
-          aiResponse = rawText;
+          let text = rawText;
+          const lowerQuery = query.toLowerCase();
+
+          // Programmatic fallback to ensure the tag is ALWAYS appended if we explain a tour procedure but forgot the tag
+          if (!/START_TOUR/i.test(text)) {
+            // Check create_member
+            if (
+              (lowerQuery.includes("medlem") || lowerQuery.includes("användare") || lowerQuery.includes("profil") || lowerQuery.includes("skapa konto")) &&
+              (lowerQuery.includes("skapa") || lowerQuery.includes("lägg till") || lowerQuery.includes("registrera") || lowerQuery.includes("ny") || lowerQuery.includes("hur"))
+            ) {
+              text += "\n\n[START_TOUR:create_member]";
+            }
+            // Check create_notice
+            else if (
+              (lowerQuery.includes("anslag") || lowerQuery.includes("nyhet") || lowerQuery.includes("post") || lowerQuery.includes("meddelande") || lowerQuery.includes("skriva på anslagstavla")) &&
+              (lowerQuery.includes("skapa") || lowerQuery.includes("lägg till") || lowerQuery.includes("publicera") || lowerQuery.includes("skriv") || lowerQuery.includes("gör") || lowerQuery.includes("hur"))
+            ) {
+              text += "\n\n[START_TOUR:create_notice]";
+            }
+            // Check upload_file
+            else if (
+              (lowerQuery.includes("fil") || lowerQuery.includes("dokument") || lowerQuery.includes("ladda") || lowerQuery.includes("arkiv") || lowerQuery.includes("pdf")) &&
+              (lowerQuery.includes("upp") || lowerQuery.includes("lägg till") || lowerQuery.includes("spara") || lowerQuery.includes("ladda upp") || lowerQuery.includes("hur"))
+            ) {
+              text += "\n\n[START_TOUR:upload_file]";
+            }
+          }
+
+          aiResponse = text;
           success = true;
           console.log(`Lyckades med modell: ${model}`);
           break;
@@ -1414,7 +1460,7 @@ ${query}`;
                         {/* Messages Area */}
                         <div className="flex-1 p-4 overflow-y-auto space-y-4 text-xs">
                           {chatMessages.map((msg, idx) => {
-                            const tourRegex = /\*?\[\s*START_TOUR\s*:\s*(create_member|create_notice|upload_file)\s*\]\*?/i;
+                            const tourRegex = /[\*\s_-]*\[\s*START_TOUR\s*:\s*(create_member|create_notice|upload_file)\s*\][\*\s_-]*/i;
                             const match = tourRegex.exec(msg.text);
                             const cleanText = msg.text.replace(tourRegex, "").trim();
                             const tourId = match ? match[1]?.toLowerCase() : null;

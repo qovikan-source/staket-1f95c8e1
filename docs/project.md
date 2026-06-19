@@ -57,6 +57,8 @@ The codebase is highly modularized, separating each principal view tab into self
 
 ### F. Document Hub (`src/components/DocumentHubView.tsx`)
 - Private folder registry categorized into Medlemsfiler or Styrelsefiler (with subfolders for Administration, Ekonomi, Arkiv, and Pantbrev).
+- Offers Board folders grouped into dynamic year-based subfolders.
+- Provides administrators with bulk actions, including multi-select files edit, search result ZIP packaging, and **checkbox selection of individual root folders and year subfolders** to download multiple custom folders together as a single ZIP file.
 
 ### G. Member Address Book (`src/components/ContactBookView.tsx`)
 - Searchable directory of active tenants, defaulted to List View with a grid/card toggle options. Automatically hides administrators and members without a registered unit or company.
@@ -64,8 +66,13 @@ The codebase is highly modularized, separating each principal view tab into self
 ### H. Administrator Workspace (`src/components/AdminView.tsx`)
 - Private registry management. Allows full member creation, role filter sorting (Alla, Medlemmar, Hyresgäst, Styrelse, Administrator), profile edits, vacancy posting, and document management.
 
+### I. Guided Interactive Tours (Click-Guides)
+- Step-by-step interactive tours showing the user where to click to perform actions (creating users, publishing notices, uploading documents) with a pulsing coordinate indicator.
+- Fully integrated with the chatbot: when users ask how to perform actions, the chatbot automatically appends the corresponding `[START_TOUR:...]` tag to initiate the guide. Includes smart auto-advance logic if the user is already on the target page.
+
 ---
 
 ## 4. Key Security & Compliance Rules
 - Environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) are kept isolated and are never hardcoded inside source repositories.
 - Document organization requires file uploads to flow through the Admin portal rather than direct console drags, securing Postgres registry mapping integrity.
+- Role-based permissions strictly control access: only administrators can bulk download, delete notices, edit profiles, or manage vacancy space listings.
