@@ -8,6 +8,9 @@ import { dbService } from "../lib/db";
 import { Users, FileText, Bell, Plus, ArrowUp, ArrowDown, Edit2, Trash2, CheckCircle2, AlertTriangle, ShieldCheck, Building2, Sparkles } from "lucide-react";
 import { UserProfile, UserRole, NoticePost, FileItem, VacantSpace, FileCategory } from "../types";
 
+// @ts-ignore
+import technicalManualText from "../../docs/technical_manual.md?raw";
+
 interface AdminViewProps {
   role: UserRole;
   profiles: UserProfile[];
@@ -22,9 +25,10 @@ interface AdminViewProps {
   onDeleteFile: (id: string, name: string, category: FileCategory) => void;
   onAddSpace: (space: Omit<VacantSpace, "id" | "createdAt">) => void;
   onDeleteSpace: (id: string) => void;
+  activeProfileName?: string;
 }
 
-type AdminSubTab = "användare" | "filer" | "anslagstavla" | "lediga_lokaler";
+type AdminSubTab = "användare" | "filer" | "anslagstavla" | "lediga_lokaler" | "ai_support";
 
 export default function AdminView({
   role: activeUserRole,
@@ -40,11 +44,11 @@ export default function AdminView({
   onDeleteFile,
   onAddSpace,
   onDeleteSpace,
+  activeProfileName = "Admin",
 }: AdminViewProps) {
   const [subTab, setSubTab] = useState<AdminSubTab>("användare");
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showAddSpaceModal, setShowAddSpaceModal] = useState(false);
-
   // Sorting state for profiles
   const [sortField, setSortField] = useState<keyof UserProfile>("unit");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
@@ -845,6 +849,7 @@ export default function AdminView({
 
               <div className="pt-2 shrink-0">
                 <button
+                  id="btn-save-new-profile"
                   type="submit"
                   disabled={isUploadingLogo}
                   className="w-full px-5 py-3 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-950 cursor-pointer shadow-md rounded-lg disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"

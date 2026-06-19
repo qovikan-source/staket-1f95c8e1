@@ -507,6 +507,7 @@ export default function NoticeboardView({
                   Avbryt
                 </button>
                 <button
+                  id="btn-publish-notice"
                   type="submit"
                   className="px-5 py-2 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg border border-emerald-500 cursor-pointer shadow-2xs"
                 >

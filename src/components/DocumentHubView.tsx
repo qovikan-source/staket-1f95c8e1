@@ -1017,6 +1017,7 @@ export default function DocumentHubView({
                   Avbryt
                 </button>
                 <button
+                  id="btn-save-file"
                   type="submit"
                   disabled={uploadQueue.length === 0 || isUploading}
                   className="px-5 py-2 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg border border-emerald-500 cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wider"

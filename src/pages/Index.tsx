@@ -21,7 +21,8 @@ import {
   X,
   User,
   MapPin,
-  Phone
+  Phone,
+  Sparkles
 } from "lucide-react";
 
 import { UserRole, UserProfile, NoticePost, FileItem, VacantSpace, FileCategory, BoardFolder, NoticeboardCategory, NOTICEBOARD_CATEGORIES } from "../types";
@@ -38,6 +39,9 @@ import {
   saveSpaces
 } from "../initialData";
 
+// @ts-ignore
+import technicalManualText from "../../docs/technical_manual.md?raw";
+
 // View components
 import HomeView from "../components/HomeView";
 import OurCompaniesView from "../components/OurCompaniesView";
@@ -51,6 +55,32 @@ import AdminView from "../components/AdminView";
 import LoginView from "../components/LoginView";
 
 const sortedCategories = [...NOTICEBOARD_CATEGORIES].sort((a, b) => a.localeCompare(b, "sv"));
+
+interface TourStep {
+  selector: string;
+  message: string;
+  actionType: "click" | "input" | "any";
+}
+
+const TOURS: Record<string, TourStep[]> = {
+  create_member: [
+    { selector: '#tab-administration', message: "Klicka på 'Alla användare' i vänstermenyn för att öppna medlemsregistret.", actionType: "click" },
+    { selector: '#btn-add-member', message: "Klicka på den gröna knappen 'Skapa ny användare' längst upp till höger.", actionType: "click" },
+    { selector: '#user-name', message: "Skriv in namnet på personen du vill lägga till.", actionType: "input" },
+    { selector: '#btn-save-new-profile', message: "Klicka på den mörka knappen 'SKAPA ANVÄNDARE' längst ner för att spara medlemmen.", actionType: "click" }
+  ],
+  create_notice: [
+    { selector: '#tab-anslagstavlan', message: "Klicka på 'Anslagstavlan' i vänstermenyn för att se alla anslag.", actionType: "click" },
+    { selector: '#btn-new-notice', message: "Klicka på den mörka knappen 'Skapa ny post' längst upp till höger.", actionType: "click" },
+    { selector: '#form-title', message: "Skriv in rubriken på ditt nya anslag.", actionType: "input" },
+    { selector: '#btn-publish-notice', message: "Klicka på den gröna knappen 'Publicera nu' längst ner för att lägga upp anslaget.", actionType: "click" }
+  ],
+  upload_file: [
+    { selector: '#tab-filer', message: "Klicka på 'Filer' i vänstermenyn för att öppna dokumentarkivet.", actionType: "click" },
+    { selector: '#btn-upload-file', message: "Klicka på den mörka knappen 'Ladda upp dokument' längst upp till höger.", actionType: "click" },
+    { selector: '#btn-save-file', message: "När du valt en eller flera filer att ladda upp, klicka på denna knapp för att spara dem.", actionType: "click" }
+  ]
+};
 
 export default function Index() {
   // State definitions matching localStorage loaders
@@ -82,6 +112,197 @@ export default function Index() {
   const [pendingNoticeId, setPendingNoticeId] = useState<string | null>(null);
   const [highlightedNoticeId, setHighlightedNoticeId] = useState<string | null>(null);
   const [selectedNoticeboardCategory, setSelectedNoticeboardCategory] = useState<NoticeboardCategory | "Alla">("Alla");
+
+  // Floating Chatbot State
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "ai"; text: string }>>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [chatbotApiKey, setChatbotApiKey] = useState(() => {
+    return (import.meta.env.VITE_GEMINI_API_KEY as string) || localStorage.getItem("staket_gemini_api_key") || "";
+  });
+  const [tempApiKeyInput, setTempApiKeyInput] = useState("");
+
+  // Tour walkthrough state
+  const [activeTour, setActiveTour] = useState<string | null>(null);
+  const [tourStepIndex, setTourStepIndex] = useState<number>(0);
+  const [indicatorCoords, setIndicatorCoords] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+
+  useEffect(() => {
+    if (role === "Administrator") {
+      const displayName = currentUserProfile?.name === "Roh" ? "Zinar" : (currentUserProfile?.name || "Admin");
+      setChatMessages([
+        { sender: "ai", text: `Hej ${displayName}! Hur kan jag hjälpa dig med portalens funktioner idag?` }
+      ]);
+    }
+  }, [currentUserProfile, role]);
+
+  // Tour coordinate tracking and click logic
+  useEffect(() => {
+    if (!activeTour) {
+      setIndicatorCoords(null);
+      return;
+    }
+    const currentSteps = TOURS[activeTour];
+    const step = currentSteps?.[tourStepIndex];
+    if (!step) {
+      // Tour completed!
+      setActiveTour(null);
+      setTourStepIndex(0);
+      alert("Bra jobbat! Du har slutfört alla steg i den guidade turen.");
+      return;
+    }
+
+    const updatePosition = () => {
+      const element = document.querySelector(step.selector);
+      if (element) {
+        const rect = element.getBoundingClientRect();
+        setIndicatorCoords({
+          top: rect.top,
+          left: rect.left,
+          width: rect.width,
+          height: rect.height
+        });
+      } else {
+        setIndicatorCoords(null);
+      }
+    };
+
+    updatePosition();
+    const interval = setInterval(updatePosition, 250);
+
+    const handleGlobalClick = (e: MouseEvent) => {
+      const element = document.querySelector(step.selector);
+      if (element && element.contains(e.target as Node)) {
+        setTimeout(() => {
+          setTourStepIndex((prev) => prev + 1);
+        }, 200);
+      }
+    };
+
+    window.addEventListener("click", handleGlobalClick, true);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("click", handleGlobalClick, true);
+    };
+  }, [activeTour, tourStepIndex]);
+
+  const handleSendChatbotMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = chatInput.trim();
+    if (!query) return;
+    if (query.length > 600) {
+      alert("Frågan får inte vara längre än 600 tecken.");
+      return;
+    }
+
+    setChatMessages((prev) => [...prev, { sender: "user", text: query }]);
+    setChatInput("");
+    setIsAiLoading(true);
+
+    const displayName = currentUserProfile?.name === "Roh" ? "Zinar" : (currentUserProfile?.name || "Admin");
+
+    const promptText = `Du är portalens inbyggda systemlogik och databas-manual för Stäket-portalen.
+Här är din interna systemmanual och databas-schema som din enda kunskapskälla:
+===
+${technicalManualText}
+===
+
+Instruktioner för svar:
+1. Agera som om du ÄR själva systemmanualen och systemlogiken. Hänvisa INTE till "manualen" (säg inte t.ex. "enligt manualen" eller "manualen anger"). Ge raka och direkta svar som om du talar som portalens inbyggda logik.
+2. Basera ditt svar ENBART på den tillhandahållna interna manualen. Om manualen INTE innehåller svaret, ska du berätta att användaren bör fråga skaparen "Sirin" för hjälp. Hitta inte på svar själv.
+3. Svara på samma språk som användarens fråga (User input: "${query}").
+4. Håll svaret extremt kort och koncist. Slösa inte tokens på artigheter.
+5. VIKTIGT: Svara i ren formaterad text utan några markdown-symboler (använd absolut inte stjärnor (**), fyrkanter (#), bakticks (\`) eller andra markdown-tecken). Formatera med vanliga radbrytningar och enkla streck (-) för listor.
+6. Hälsa INTE på användaren och säg inte hej eller användarens namn, då chatten redan innehåller en välkomsthälsning. Gå direkt på svaret.
+7. Använd EXTREMT ENKEL svenska i dina svar. Förklara på ett sätt som är så enkelt att till och med en 10-åring förstår det direkt. Använd bara vanliga, korta och enkla ord. Undvik krångliga tekniska ord.
+8. Om användaren (eller systemmanualen) nämner eller refererar till "Roh", använd alltid namnet "Zinar". Användarens visningsnamn är annars "${displayName}".
+9. Om administratören frågar hur man skapar en ny medlem/användare, skapar ett anslag, eller laddar upp en dokumentfil, måste du lägga till den exakta taggen längst ner i ditt svar så att systemet kan erbjuda en stegvis klick-guide:
+   - För att skapa ny medlem/användare: [START_TOUR:create_member]
+   - För att skapa ett anslag: [START_TOUR:create_notice]
+   - För att ladda upp en fil/dokument: [START_TOUR:upload_file]
+
+Användarens fråga:
+${query}`;
+
+    const models = [
+      "gemini-3.1-flash-lite",
+      "gemini-2.5-flash-lite",
+      "gemini-2.0-flash-lite",
+      "gemini-3.5-flash",
+      "gemini-3-flash",
+      "gemini-2.5-flash",
+      "gemini-2.0-flash",
+      "gemini-3.1-flash-live-preview",
+      "gemini-2.5-flash-live",
+      "gemini-2.5-pro",
+      "gemini-3.1-pro-preview"
+    ];
+
+    let success = false;
+    let aiResponse = "";
+
+    for (const model of models) {
+      if (success) break;
+      try {
+        console.log(`Försöker anropa Gemini med modell: ${model}`);
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${chatbotApiKey}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    {
+                      text: promptText
+                    }
+                  ]
+                }
+              ],
+              generationConfig: {
+                temperature: 0.2
+              }
+            })
+          }
+        );
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData?.error?.message || `HTTP fel ${response.status}`);
+        }
+
+        const data = await response.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawText) {
+          aiResponse = rawText;
+          success = true;
+          console.log(`Lyckades med modell: ${model}`);
+          break;
+        }
+      } catch (err) {
+        console.warn(`Modell ${model} misslyckades:`, err);
+      }
+    }
+
+    setIsAiLoading(false);
+
+    if (success) {
+      setChatMessages((prev) => [...prev, { sender: "ai", text: aiResponse }]);
+    } else {
+      setChatMessages((prev) => [
+        ...prev,
+        {
+          sender: "ai",
+          text: "Kunde inte generera svar. Kontrollera din Gemini API-nyckel eller kontakta skaparen 'Sirin' för hjälp."
+        }
+      ]);
+    }
+  };
 
   // Save role and activeTab to localStorage and sanitize page paths on role changes
   useEffect(() => {
@@ -898,6 +1119,7 @@ export default function Index() {
                 </div>
                 <div className="space-y-0.5">
                   <button
+                    id="tab-anslagstavlan"
                     onClick={() => handleTabClick("anslagstavlan")}
                     className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
                       activeTab === "anslagstavlan"
@@ -909,6 +1131,7 @@ export default function Index() {
                     Anslagstavlan
                   </button>
                   <button
+                    id="tab-filer"
                     onClick={() => handleTabClick("filer")}
                     className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
                       activeTab === "filer"
@@ -937,6 +1160,7 @@ export default function Index() {
               <div>
                 <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2">Administration</div>
                 <button
+                  id="tab-administration"
                   onClick={() => handleTabClick("administration")}
                   className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
                     activeTab === "administration"
@@ -1080,6 +1304,7 @@ export default function Index() {
                   onDeleteFile={handleDeleteFile}
                   onAddSpace={handleAddSpace}
                   onDeleteSpace={handleDeleteSpace}
+                  activeProfileName={currentUserProfile?.name}
                 />
               )}
             </main>
@@ -1095,6 +1320,197 @@ export default function Index() {
                 <span>Inloggad som Admin</span>
               </div>
             </footer>
+
+            {/* Floating Admin Chatbot */}
+            {role === "Administrator" && (
+              <>
+                {/* Chat Trigger Button */}
+                <button
+                  onClick={() => setChatOpen(!chatOpen)}
+                  className="fixed bottom-12 right-6 z-50 p-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer flex items-center justify-center border border-emerald-400"
+                  title="AI Supportassistent"
+                >
+                  {chatOpen ? <X className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
+                </button>
+
+                {/* Chat Widget Window */}
+                {chatOpen && (
+                  <div className="fixed bottom-28 right-6 w-96 h-[500px] z-50 bg-white shadow-2xl rounded-2xl border border-slate-100 flex flex-col overflow-hidden animate-scale-up">
+                    {/* Header */}
+                    <div className="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-emerald-400" />
+                        <span className="text-xs font-bold uppercase tracking-wider">AI Kundtjänst</span>
+                      </div>
+                      <div className="flex items-center gap-2.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const displayName = currentUserProfile?.name === "Roh" ? "Zinar" : (currentUserProfile?.name || "Admin");
+                            setChatMessages([
+                              { sender: "ai", text: `Hej ${displayName}! Hur kan jag hjälpa dig med portalens funktioner idag?` }
+                            ]);
+                          }}
+                          className="text-[10px] bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold px-2.5 py-1 rounded-lg border border-slate-700 transition-colors cursor-pointer"
+                        >
+                          Starta Ny Chatt
+                        </button>
+                        <button
+                          onClick={() => setChatOpen(false)}
+                          className="text-slate-400 hover:text-white cursor-pointer"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </div>
+
+                    {!chatbotApiKey ? (
+                      <div className="flex-1 p-5 bg-slate-50 flex flex-col justify-center gap-4 text-xs">
+                        <div className="space-y-2">
+                          <p className="font-semibold text-slate-700">Aktivera AI Kundtjänst med Gemini API-nyckel</p>
+                          <p className="text-slate-500">
+                            Ingen Gemini API-nyckel hittades i din miljö (<code>VITE_GEMINI_API_KEY</code>). Ange din nyckel nedan för att starta assistenten. Nyckeln sparas i din webbläsares localStorage.
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                          <input
+                            type="password"
+                            placeholder="Ange Gemini API-nyckel..."
+                            value={tempApiKeyInput}
+                            onChange={(e) => setTempApiKeyInput(e.target.value)}
+                            className="px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white focus:outline-emerald-500"
+                          />
+                          <button
+                            onClick={() => {
+                              if (tempApiKeyInput.trim()) {
+                                localStorage.setItem("staket_gemini_api_key", tempApiKeyInput.trim());
+                                setChatbotApiKey(tempApiKeyInput.trim());
+                              }
+                            }}
+                            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs transition-colors cursor-pointer text-center"
+                          >
+                            Spara nyckel
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex-1 flex flex-col bg-slate-50/30 overflow-hidden">
+                        {/* Messages Area */}
+                        <div className="flex-1 p-4 overflow-y-auto space-y-4 text-xs">
+                          {chatMessages.map((msg, idx) => {
+                            const tourRegex = /\[START_TOUR:(create_member|create_notice|upload_file)\]/;
+                            const match = tourRegex.exec(msg.text);
+                            const cleanText = msg.text.replace(tourRegex, "").trim();
+                            const tourId = match ? match[1] : null;
+
+                            return (
+                              <div
+                                key={idx}
+                                className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
+                              >
+                                <div
+                                  className={`max-w-[85%] rounded-2xl p-3 shadow-2xs leading-relaxed ${
+                                    msg.sender === "user"
+                                      ? "bg-slate-950 text-white rounded-br-none"
+                                      : "bg-white text-slate-800 border border-slate-100 rounded-bl-none"
+                                  }`}
+                                >
+                                  <div>
+                                    <p className="whitespace-pre-wrap">{cleanText}</p>
+                                    {tourId && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          setActiveTour(tourId);
+                                          setTourStepIndex(0);
+                                          setChatOpen(false);
+                                        }}
+                                        className="mt-3 w-full flex items-center justify-center gap-2 py-2 px-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold rounded-xl transition-all cursor-pointer shadow-3xs text-[10px] uppercase tracking-wider animate-pulse"
+                                      >
+                                        <span className="w-1.5 h-1.5 bg-slate-950 rounded-full animate-ping"></span>
+                                        Starta klick-guide
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                          {isAiLoading && (
+                            <div className="flex justify-start">
+                              <div className="bg-white text-slate-800 border border-slate-100 rounded-2xl rounded-bl-none p-3 shadow-2xs flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></span>
+                                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+                                <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Input Area */}
+                        <form onSubmit={handleSendChatbotMessage} className="p-3 border-t border-slate-100 flex gap-2 shrink-0 bg-white">
+                          <input
+                            type="text"
+                            maxLength={600}
+                            placeholder="Ställ en fråga... (max 600 tecken)"
+                            value={chatInput}
+                            onChange={(e) => setChatInput(e.target.value)}
+                            className="flex-1 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-emerald-500 focus:bg-white transition-all text-xs"
+                          />
+                          <button
+                            type="submit"
+                            disabled={isAiLoading || !chatInput.trim()}
+                            className="px-4 py-2 bg-slate-950 text-white hover:bg-slate-900 font-bold rounded-xl text-xs disabled:opacity-50 transition-colors cursor-pointer"
+                          >
+                            Skicka
+                          </button>
+                        </form>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Tour Overlay elements */}
+                {activeTour && (
+                  <div className="fixed top-4 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-850 text-white px-5 py-3.5 rounded-2xl shadow-2xl z-[99998] flex items-center gap-4 text-xs font-semibold animate-bounce max-w-sm sm:max-w-md border-emerald-500/30">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-ping shrink-0"></div>
+                    <div className="space-y-0.5 min-w-0">
+                      <p className="font-extrabold text-emerald-400 uppercase text-[9px] tracking-wider">Steg {tourStepIndex + 1} av {TOURS[activeTour]?.length}</p>
+                      <p className="text-slate-200 text-xs leading-normal font-medium">{TOURS[activeTour]?.[tourStepIndex]?.message}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setActiveTour(null);
+                        setTourStepIndex(0);
+                      }}
+                      className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 hover:text-rose-400 rounded-lg transition-colors cursor-pointer text-[10px] font-bold shrink-0"
+                    >
+                      Avbryt
+                    </button>
+                  </div>
+                )}
+
+                {activeTour && indicatorCoords && (
+                  <div
+                    style={{
+                      position: "fixed",
+                      top: indicatorCoords.top - 4,
+                      left: indicatorCoords.left - 4,
+                      width: indicatorCoords.width + 8,
+                      height: indicatorCoords.height + 8,
+                      pointerEvents: "none",
+                      zIndex: 99999
+                    }}
+                    className="rounded-xl border-2 border-emerald-500 shadow-[0_0_0_8px_rgba(16,185,129,0.3)] animate-pulse"
+                  >
+                    <div className="absolute -top-6 left-0 bg-emerald-500 text-slate-950 text-[9px] font-bold px-2 py-0.5 rounded shadow-sm flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 bg-slate-950 rounded-full animate-ping"></span>
+                      Tryck här!
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       ) : (
