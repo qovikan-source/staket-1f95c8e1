@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Folder, FileText, Download, Plus, Trash2, Eye, ShieldAlert, CheckCircle, Settings, Edit, X } from "lucide-react";
 import { FileItem, FileCategory, BoardFolder, BOARD_FOLDERS, UserRole } from "../types";
+import { dbService } from "../lib/db";
 
 interface DocumentHubViewProps {
   files: FileItem[];
@@ -272,13 +273,20 @@ export default function DocumentHubView({
     );
   };
 
-  const handleDownload = (file: FileItem) => {
+  const handleDownload = async (file: FileItem) => {
     setDownloadingFileId(file.id);
-    setTimeout(() => {
-      setDownloadingFileId(null);
+    try {
+      const signedUrl = await dbService.getSignedFileUrl(file, 60);
+      window.open(signedUrl, "_blank", "noopener,noreferrer");
       setDownloadSuccessText(`Laddade ner: ${file.name}`);
       setTimeout(() => setDownloadSuccessText(null), 3000);
-    }, 1200);
+    } catch (err) {
+      console.error("Failed to generate signed URL for download:", err);
+      setDownloadSuccessText("Kunde inte ladda ner filen. Försök igen.");
+      setTimeout(() => setDownloadSuccessText(null), 3000);
+    } finally {
+      setDownloadingFileId(null);
+    }
   };
 
   const handleMultipleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -683,17 +691,14 @@ export default function DocumentHubView({
                     )}
                     
                     <div 
-                      onClick={() => {
+                      onClick={async () => {
                         if (file.isOptimistic) return;
-                        let fileUrl = file.url;
-                        if (!fileUrl) {
-                          const sanitizedName = file.name.replace(/[åä]/g, "a").replace(/[ÅÄ]/g, "A").replace(/ö/g, "o").replace(/Ö/g, "O").replace(/\s+/g, "_").replace(/[^a-zA-Z0-9_\-\.]/g, "");
-                          const storageFolder = (file.folder === "Pantbrev" || (file.folder as string) === "Pantbrev Lgh Betekn.") ? "Pantbrev" : file.folder;
-                          const subfolder = file.category === "Styrelsefiler" && storageFolder ? `styrelse/${storageFolder}` : "medlemmar";
-                          const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "";
-                          fileUrl = `${supabaseUrl}/storage/v1/object/public/documents/${subfolder}/${sanitizedName}`;
+                        try {
+                          const signedUrl = await dbService.getSignedFileUrl(file, 60);
+                          window.open(signedUrl, "_blank", "noopener,noreferrer");
+                        } catch (err) {
+                          console.error("Failed to open document:", err);
                         }
-                        window.open(fileUrl, "_blank");
                       }}
                       className={`flex items-center gap-3 truncate flex-1 min-w-0 ${file.isOptimistic ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
                       title={file.isOptimistic ? "Laddar upp..." : "Klicka för att öppna dokumentet i en ny flik"}
