@@ -295,7 +295,7 @@ export default function Index() {
         pathName = "anslagstavlan";
         break;
       case "filer":
-        title = "Dokument & Blanketter — Stäket Företagscenter";
+        title = "Dokument & Filer — Stäket Företagscenter";
         desc = "Ladda ner dokument, mötesprotokoll, blanketter och stadgar för medlemmar i föreningen.";
         pathName = "filer";
         break;
