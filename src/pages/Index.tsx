@@ -1143,6 +1143,7 @@ ${query}`;
                     Filer
                   </button>
                   <button
+                    id="tab-kontaktboken"
                     onClick={() => handleTabClick("kontaktboken")}
                     className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
                       activeTab === "kontaktboken"

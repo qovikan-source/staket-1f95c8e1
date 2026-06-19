@@ -435,3 +435,52 @@ Documents are stored within a public Supabase Storage bucket named `files`.
     `'Administrator'`.
   - `insert/update/delete`: Permitted only if the active authenticated user's
     profile role is `'Administrator'`.
+
+---
+
+## 7. Sidonavigering, Underflikar & Viktiga Knappar (ID-väljare)
+
+Detta avsnitt beskriver de exakta etiketterna (labels) och ID-väljarna för sidans navigationslänkar och viktigaste knappar så att du som AI kan ge korrekta instruktioner till användaren.
+
+### 7.1. Huvudmeny och Sidomeny (Vänsterpanelen)
+
+Sidomenyn innehåller navigationsknapparna för att byta sida (eller flik). Dessa knappar har specifika HTML-IDn som används i guiderna:
+
+*   **Hem** (Flik-ID: `'hem'`): Länkar till startsidan med allmän info.
+*   **Företag** (Flik-ID: `'vara_foretag'`): Länkar till sidan "Våra Företag" som listar lokala bolag.
+*   **Lediga Lokaler** (Flik-ID: `'lediga_lokaler'`): Länkar till listan över lediga lokaler för uthyrning.
+*   **Om Oss** (Flik-ID: `'om_oss'`): Länkar till information om samfälligheten och styrelsens medlemmar.
+*   **Kontakt** (Flik-ID: `'kontakt'`): Länkar till det publika kontaktformuläret.
+*   **Anslagstavlan** (Flik-ID: `'anslagstavlan'`, HTML-ID: `#tab-anslagstavlan`): Länkar till medlemmarnas anslagstavla.
+*   **Filer** (Flik-ID: `'filer'`, HTML-ID: `#tab-filer`): Länkar till dokumentarkivet (både medlemsfiler och styrelsefiler).
+*   **Kontaktboken** (Flik-ID: `'kontaktboken'`, HTML-ID: `#tab-kontaktboken`): Länkar till medlemsregistrets kontaktbok med sortering.
+*   **Alla användare** (Flik-ID: `'administration'`, HTML-ID: `#tab-administration`): Länkar till administratörens kontrollpanel (Adminpanelen).
+
+### 7.2. Administrationspanelen (Adminpanel - Underflikar)
+
+När du klickar på fliken **"Alla användare"** (`#tab-administration`) visas administratörens kontrollpanel. Den innehåller fyra underflikar överst på sidan:
+
+1.  **Användare & Medlemmar** (Underflik-ID: `'användare'`): Listar alla registrerade användare och medlemskonton.
+2.  **Kontrollera Filer** (Underflik-ID: `'filer'`): Visar en administrativ tabell över alla uppladdade filer där man kan redigera eller radera dem.
+3.  **Radera Anslag** (Underflik-ID: `'anslagstavla'`): Visar en administrativ lista över alla anslagstavlans inlägg där man enkelt kan radera dem.
+4.  **Lediga Lokaler Järfälla** (Underflik-ID: `'lediga_lokaler'`): Gör det möjligt att lägga till eller radera annonser för lediga lokaler.
+
+### 7.3. Viktiga Knappar och Formulärfält (med HTML-ID)
+
+Här är de exakta namnen på de knappar och inmatningsfält som används för viktiga funktioner och deras HTML-IDn:
+
+#### A. Lägga till en ny medlem/användare
+*   Knapp för att öppna modalen: **"Skapa ny användare"** (HTML-ID: `#btn-add-member`, grön knapp överst till höger under fliken 'Användare & Medlemmar').
+*   Fältet för namn i modalen: **"Namn / Företagsnamn *"** (HTML-ID: `#user-name`).
+*   Knapp för att spara medlemmen: **"Skapa användare"** (HTML-ID: `#btn-save-new-profile`, mörk knapp längst ner i formuläret).
+
+#### B. Skapa ett nytt anslag
+*   Knapp för att öppna modalen: **"Skapa ny post"** (HTML-ID: `#btn-new-notice`, mörk knapp längst upp till höger under fliken 'Anslagstavlan').
+*   Fältet för rubrik i modalen: **"Rubrik / Titel *"** (HTML-ID: `#form-title`).
+*   Knapp för att spara/publicera anslaget: **"Publicera nu"** (HTML-ID: `#btn-publish-notice`, grön knapp längst ner i formuläret).
+
+#### C. Ladda upp filer
+*   Knapp för att öppna modalen: **"Ladda upp dokument"** (HTML-ID: `#btn-upload-file`, mörk knapp längst upp till höger under fliken 'Filer').
+*   Knapp för att spara filerna efter val: **"Spara alla X filer"** (HTML-ID: `#btn-save-file`, grön knapp längst ner i formuläret).
+
+Använd alltid dessa exakta namn och hänvisa till rätt navigationslänkar när du förklarar för användaren hur man utför handlingar i portalen!
