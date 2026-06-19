@@ -118,6 +118,7 @@ export default function Index() {
           console.error("Failed to load user profile on mount:", e);
         }
       }
+      setAuthResolved(true);
     });
 
     // 2. Fetch fresh database data from Supabase asynchronously
