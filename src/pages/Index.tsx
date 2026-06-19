@@ -218,10 +218,10 @@ Instruktioner för svar:
 6. Hälsa INTE på användaren och säg inte hej eller användarens namn, då chatten redan innehåller en välkomsthälsning. Gå direkt på svaret.
 7. Använd EXTREMT ENKEL svenska i dina svar. Förklara på ett sätt som är så enkelt att till och med en 10-åring förstår det direkt. Använd bara vanliga, korta och enkla ord. Undvik krångliga tekniska ord.
 8. Om användaren (eller systemmanualen) nämner eller refererar till "Roh", använd alltid namnet "Zinar". Användarens visningsnamn är annars "${displayName}".
-9. Om administratören frågar hur man skapar en ny medlem/användare, skapar ett anslag, eller laddar upp en dokumentfil, måste du lägga till den exakta taggen längst ner i ditt svar så att systemet kan erbjuda en stegvis klick-guide:
-   - För att skapa ny medlem/användare: [START_TOUR:create_member]
-   - För att skapa ett anslag: [START_TOUR:create_notice]
-   - För att ladda upp en fil/dokument: [START_TOUR:upload_file]
+9. Om frågan handlar om att lägga till eller skapa en ny medlem/användare (t.ex. "skapa medlem", "skapa användare", "lägg till medlem", "ny användare"), MÅSTE du skriva exakt denna tagg längst ner i ditt svar: [START_TOUR:create_member]
+10. Om frågan handlar om att skapa eller lägga till ett anslag eller nyhet (t.ex. "skapa anslag", "nytt anslag", "göra ett anslag", "skapa post"), MÅSTE du skriva exakt denna tagg längst ner i ditt svar: [START_TOUR:create_notice]
+11. Om frågan handlar om att ladda upp eller lägga till filer/dokument (t.ex. "ladda upp fil", "ladda upp dokument", "lägga till filer"), MÅSTE du skriva exakt denna tagg längst ner i ditt svar: [START_TOUR:upload_file]
+12. Lägg INTE till några stjärnor (*), punkter (.) eller någon formatering runt eller inuti dessa [START_TOUR:...] taggar. Skriv dem rent på en egen ny rad.
 
 Användarens fråga:
 ${query}`;
@@ -1399,10 +1399,10 @@ ${query}`;
                         {/* Messages Area */}
                         <div className="flex-1 p-4 overflow-y-auto space-y-4 text-xs">
                           {chatMessages.map((msg, idx) => {
-                            const tourRegex = /\[START_TOUR:(create_member|create_notice|upload_file)\]/;
+                            const tourRegex = /\*?\[\s*START_TOUR\s*:\s*(create_member|create_notice|upload_file)\s*\]\*?/i;
                             const match = tourRegex.exec(msg.text);
                             const cleanText = msg.text.replace(tourRegex, "").trim();
-                            const tourId = match ? match[1] : null;
+                            const tourId = match ? match[1]?.toLowerCase() : null;
 
                             return (
                               <div
