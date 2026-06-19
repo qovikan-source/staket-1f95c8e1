@@ -66,10 +66,11 @@ export default function Index() {
   });
 
   // Selected Demo Role for evaluation
-  const [role, setRole] = useState<UserRole>(() => {
-    const saved = localStorage.getItem("staket_user_role");
-    return (saved as UserRole) || "Besökare";
-  });
+  // Role MUST be derived from the Supabase session + profiles query — never
+  // trust localStorage, which can be tampered with by the client to reveal
+  // member/admin-only UI before the session check resolves.
+  const [role, setRole] = useState<UserRole>("Besökare");
+  const [authResolved, setAuthResolved] = useState(false);
 
   // Mobile menu open trigger
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -84,7 +85,6 @@ export default function Index() {
 
   // Save role and activeTab to localStorage and sanitize page paths on role changes
   useEffect(() => {
-    localStorage.setItem("staket_user_role", role);
     localStorage.setItem("staket_active_tab", activeTab);
 
     const isMemberTab = ["anslagstavlan", "filer", "kontaktboken"].includes(activeTab);
@@ -118,6 +118,7 @@ export default function Index() {
           console.error("Failed to load user profile on mount:", e);
         }
       }
+      setAuthResolved(true);
     });
 
     // 2. Fetch fresh database data from Supabase asynchronously

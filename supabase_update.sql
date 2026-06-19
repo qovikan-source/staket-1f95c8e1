@@ -45,11 +45,29 @@ CREATE OR REPLACE FUNCTION public.create_new_user(
 )
 RETURNS jsonb
 SECURITY DEFINER
+SET search_path = public, auth
 AS $$
 DECLARE
   new_user_id uuid;
   encrypted_pw text;
 BEGIN
+  -- Caller-role guard: only Administrators may create new users
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Authentication required';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'Administrator'
+  ) THEN
+    RAISE EXCEPTION 'Insufficient privileges: only Administrators can create users';
+  END IF;
+
+  -- Validate requested role is one of the allowed values
+  IF new_role NOT IN ('Administrator', 'Styrelse', 'Medlem', 'Hyresgäst') THEN
+    RAISE EXCEPTION 'Invalid role specified';
+  END IF;
+
   -- Check if user already exists
   IF EXISTS (SELECT 1 FROM auth.users WHERE email = new_email) THEN
     RAISE EXCEPTION 'En användare med denna e-postadress finns redan.';
@@ -129,3 +147,8 @@ BEGIN
   RETURN jsonb_build_object('id', new_user_id, 'email', new_email);
 END;
 $$ LANGUAGE plpgsql;
+
+-- 7. Restrict EXECUTE on the RPC to authenticated users only (no anon)
+REVOKE ALL ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text) FROM anon;
+GRANT EXECUTE ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text) TO authenticated;
