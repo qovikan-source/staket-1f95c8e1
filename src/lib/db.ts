@@ -362,10 +362,13 @@ export const dbService = {
 
   async uploadCompanyLogo(file: File): Promise<string> {
     const sanitizedName = sanitizeFilename(file.name);
-    const filePath = `logos/${Date.now()}-${sanitizedName}`;
+    const filePath = `${Date.now()}-${sanitizedName}`;
 
+    // Logos are intentionally world-readable (shown on public company pages),
+    // so they live in a dedicated public `logos` bucket rather than the
+    // now-private `documents` bucket used for member/board files.
     const { error: uploadError } = await supabase.storage
-      .from("documents")
+      .from("logos")
       .upload(filePath, file, {
         cacheControl: "3600",
         upsert: true,
@@ -374,9 +377,22 @@ export const dbService = {
     if (uploadError) throw uploadError;
 
     const { data: { publicUrl } } = supabase.storage
-      .from("documents")
+      .from("logos")
       .getPublicUrl(filePath);
 
     return publicUrl;
-  }
+  },
+
+  /**
+   * Returns a short-lived signed URL (default 60s) for a file stored in the
+   * private `documents` bucket. Access is enforced server-side by Storage RLS.
+   */
+  async getSignedFileUrl(file: FileItem, expiresInSeconds: number = 60): Promise<string> {
+    const path = storagePathForFile(file);
+    const { data, error } = await supabase.storage
+      .from("documents")
+      .createSignedUrl(path, expiresInSeconds);
+    if (error) throw error;
+    return data.signedUrl;
+  },
 };
