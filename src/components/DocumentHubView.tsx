@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Folder, FileText, Download, Plus, Trash2, Eye, ShieldAlert, CheckCircle, Settings, Edit, X } from "lucide-react";
 import { FileItem, FileCategory, BoardFolder, BOARD_FOLDERS, UserRole } from "../types";
+import { dbService } from "../lib/db";
 
 interface DocumentHubViewProps {
   files: FileItem[];
@@ -272,13 +273,20 @@ export default function DocumentHubView({
     );
   };
 
-  const handleDownload = (file: FileItem) => {
+  const handleDownload = async (file: FileItem) => {
     setDownloadingFileId(file.id);
-    setTimeout(() => {
-      setDownloadingFileId(null);
+    try {
+      const signedUrl = await dbService.getSignedFileUrl(file, 60);
+      window.open(signedUrl, "_blank", "noopener,noreferrer");
       setDownloadSuccessText(`Laddade ner: ${file.name}`);
       setTimeout(() => setDownloadSuccessText(null), 3000);
-    }, 1200);
+    } catch (err) {
+      console.error("Failed to generate signed URL for download:", err);
+      setDownloadSuccessText("Kunde inte ladda ner filen. Försök igen.");
+      setTimeout(() => setDownloadSuccessText(null), 3000);
+    } finally {
+      setDownloadingFileId(null);
+    }
   };
 
   const handleMultipleFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
