@@ -152,3 +152,104 @@ $$ LANGUAGE plpgsql;
 REVOKE ALL ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text) FROM anon;
 GRANT EXECUTE ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text) TO authenticated;
+
+-- =========================================================================
+-- 8. Lock down the `documents` storage bucket (board & member files)
+-- =========================================================================
+-- Run these once in the Supabase SQL Editor. Logos move to a separate public
+-- `logos` bucket so member/board files can be private without breaking the
+-- public company pages.
+
+-- 8a. Make the existing `documents` bucket private
+UPDATE storage.buckets SET public = false WHERE id = 'documents';
+
+-- 8b. Create a public `logos` bucket for company logos (idempotent)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('logos', 'logos', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- 8c. RLS policies on storage.objects for the `documents` bucket
+--     (RLS is already enabled on storage.objects by Supabase.)
+
+-- Drop any previous versions of these policies so this block is re-runnable
+DROP POLICY IF EXISTS "documents: authenticated read member files" ON storage.objects;
+DROP POLICY IF EXISTS "documents: board read board files" ON storage.objects;
+DROP POLICY IF EXISTS "documents: board write" ON storage.objects;
+DROP POLICY IF EXISTS "documents: board update" ON storage.objects;
+DROP POLICY IF EXISTS "documents: board delete" ON storage.objects;
+DROP POLICY IF EXISTS "logos: public read" ON storage.objects;
+DROP POLICY IF EXISTS "logos: authenticated write" ON storage.objects;
+
+-- Members (any authenticated user) may read non-board files in `documents`
+CREATE POLICY "documents: authenticated read member files"
+ON storage.objects FOR SELECT
+TO authenticated
+USING (
+  bucket_id = 'documents'
+  AND (storage.foldername(name))[1] <> 'styrelse'
+);
+
+-- Only Styrelse / Administrator may read board files (styrelse/* prefix)
+CREATE POLICY "documents: board read board files"
+ON storage.objects FOR SELECT
+TO authenticated
+USING (
+  bucket_id = 'documents'
+  AND (storage.foldername(name))[1] = 'styrelse'
+  AND EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role IN ('Styrelse', 'Administrator')
+  )
+);
+
+-- Only Styrelse / Administrator may upload/update/delete in `documents`
+CREATE POLICY "documents: board write"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'documents'
+  AND EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role IN ('Styrelse', 'Administrator')
+  )
+);
+
+CREATE POLICY "documents: board update"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (
+  bucket_id = 'documents'
+  AND EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role IN ('Styrelse', 'Administrator')
+  )
+);
+
+CREATE POLICY "documents: board delete"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (
+  bucket_id = 'documents'
+  AND EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role IN ('Styrelse', 'Administrator')
+  )
+);
+
+-- 8d. RLS policies for the public `logos` bucket
+CREATE POLICY "logos: public read"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'logos');
+
+CREATE POLICY "logos: authenticated write"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'logos');
+
+-- NOTE: After running this, any previously-shared public links to
+-- `documents/...` objects (including the `url` column in public.files) will
+-- stop working. The app now generates short-lived signed URLs on demand via
+-- supabase.storage.from('documents').createSignedUrl(). Existing company
+-- logos referenced by `profiles.logo` will need to be re-uploaded so they
+-- land in the new public `logos` bucket.
