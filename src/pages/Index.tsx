@@ -1376,7 +1376,7 @@ export default function Index() {
                       activeTab === "filer" ? "text-[#B68F52]" : ""
                     }`}
                   >
-                    BLANKETTER &amp; FILER
+                    FILER
                   </button>
                   <button
                     onClick={() => {
