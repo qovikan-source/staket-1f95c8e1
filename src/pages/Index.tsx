@@ -180,11 +180,26 @@ export default function Index() {
       }
     };
 
-    window.addEventListener("click", handleGlobalClick, true);
+    const handleGlobalInput = (e: Event) => {
+      const element = document.querySelector(step.selector);
+      const target = e.target as HTMLInputElement | HTMLTextAreaElement | null;
+      if (element && target && element === target && target.value.trim().length > 0) {
+        setTimeout(() => {
+          setTourStepIndex((prev) => prev + 1);
+        }, 600);
+      }
+    };
+
+    if (step.actionType === "input") {
+      window.addEventListener("input", handleGlobalInput, true);
+    } else {
+      window.addEventListener("click", handleGlobalClick, true);
+    }
 
     return () => {
       clearInterval(interval);
       window.removeEventListener("click", handleGlobalClick, true);
+      window.removeEventListener("input", handleGlobalInput, true);
     };
   }, [activeTour, tourStepIndex]);
 
