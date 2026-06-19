@@ -484,3 +484,16 @@ Här är de exakta namnen på de knappar och inmatningsfält som används för v
 *   Knapp för att spara filerna efter val: **"Spara alla X filer"** (HTML-ID: `#btn-save-file`, grön knapp längst ner i formuläret).
 
 Använd alltid dessa exakta namn och hänvisa till rätt navigationslänkar när du förklarar för användaren hur man utför handlingar i portalen!
+
+### 7.4. Gruppnedladdning av filer som ZIP-arkiv (Endast Administrator)
+
+Administratörer har tillgång till en kraftfull bulk-nedladdningsfunktion under fliken **Filer** (`#tab-filer`):
+
+1.  **Välj enskilda mappar**: När administratören visar "Alla mappar" i Styrelsearkivet finns det en kryssruta bredvid varje huvudmapp (t.ex. *Administration*, *Ekonomi*, *Pantbrev*, *Arkiv*). Man kan markera flera mappar och klicka på **"Ladda ner markerade mappar (.zip) (X)"** för att ladda ner dem tillsammans.
+2.  **Välj enskilda årsmappar**: Inne i en huvudmapp (t.ex. *Ekonomi*) visas en kryssruta i övre högra hörnet på varje årskort. Man kan markera specifika år (t.ex. *År 2026* och *År 2025*) och klicka på **"Ladda ner markerade år (.zip) (X)"** för att ladda ner bara dessa år.
+3.  **Ladda ner markerade (.zip)**: Genom att markera kryssrutorna bredvid enskilda filer visas bulk-åtgärdsfältet. Knappen **"Ladda ner (.zip) (X)"** paketerar de valda filerna till en ZIP-fil och laddar ner dem.
+4.  **Ladda ner hel mapp (.zip)**: När man navigerar in i en specifik mapp under Styrelsefiler (t.ex. *Ekonomi* eller *Administration*) visas en knapp bredvid rubriken: **"Ladda ner hela mappen [Mappnamn] (.zip)"**. Den laddar ner alla filer i den mappen.
+5.  **Ladda ner specifik årsmapp (.zip)**: Inne i en specifik årsmapp (t.ex. *Ekonomi / År 2026*) visas i brödsmulsnavigeringen knappen **"Ladda ner År [År] (.zip)"** som paketerar alla dokument från det specifika året.
+6.  **Zip:a alla matchade**: I sökfältet visas knappen **"Zip:a alla matchade (X)"** bredvid sökresultaten. Den gör det möjligt att söka efter specifika filer (t.ex. "protokoll") och ladda ner alla sökresultat på en gång som ett ZIP-arkiv.
+
+Detta ZIP-arkiv bevarar automatiskt undermappsstrukturen (t.ex. `Ekonomi/År 2026/filnamn.pdf`) vid nedladdning. Funktionerna är dolda för vanliga medlemmar och hyresgäster.
