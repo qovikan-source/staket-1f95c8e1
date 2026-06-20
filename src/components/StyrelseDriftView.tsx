@@ -33,7 +33,7 @@ export default function StyrelseDriftView() {
 
           <div className="p-4 rounded-xl border border-slate-50 bg-slate-50/50 space-y-2">
             <h3 className="font-bold text-slate-800 text-sm">Rickard Holmlund</h3>
-            <span className="inline-block px-2 py-0.5 text-[10px] bg-slate-200 text-slate-700 rounded-md font-semibold">Styrelsemedlem</span>
+            <span className="inline-block px-2 py-0.5 text-[10px] bg-slate-200 text-slate-700 rounded-md font-semibold">Sekreterare</span>
             <p className="text-xs text-slate-500 mt-1">Lokalägare som bidrar i styrelsearbetet med teknisk expertis, underhållsprojekt och lokala frågor.</p>
           </div>
 

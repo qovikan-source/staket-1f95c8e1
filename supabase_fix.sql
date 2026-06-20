@@ -1,34 +1,136 @@
--- Run this SQL in your Supabase SQL Editor (https://supabase.com/dashboard) to update the backend constraints and triggers.
+-- Supabase Fix Script: Run this in your Supabase SQL Editor (https://supabase.com/dashboard)
+-- This script fixes login issues, repairs missing identities, and enables self-healing for user creation/updates.
 
--- 1. Drop the existing role check constraint on the profiles table
+-- PRE-STEP: Ensure missing columns exist in public.profiles
 ALTER TABLE public.profiles 
-DROP CONSTRAINT IF EXISTS profiles_role_check;
+ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS website TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS logo TEXT DEFAULT '';
 
--- 2. Add the updated check constraint including 'Hyresgäst'
-ALTER TABLE public.profiles 
-ADD CONSTRAINT profiles_role_check 
-CHECK (role IN ('Administrator', 'Styrelse', 'Medlem', 'Hyresgäst'));
+-- 0. Fix GoTrue 500 error: convert NULL values in auth.users string columns to empty strings
+UPDATE auth.users
+SET
+  confirmation_token = COALESCE(confirmation_token, ''),
+  recovery_token = COALESCE(recovery_token, ''),
+  email_change_token_new = COALESCE(email_change_token_new, ''),
+  email_change = COALESCE(email_change, ''),
+  is_super_admin = COALESCE(is_super_admin, false),
+  is_sso_user = COALESCE(is_sso_user, false)
+WHERE confirmation_token IS NULL
+   OR recovery_token IS NULL
+   OR email_change_token_new IS NULL
+   OR email_change IS NULL
+   OR is_super_admin IS NULL
+   OR is_sso_user IS NULL;
 
--- 3. Create a trigger function to delete the auth user when their public profile is deleted
-CREATE OR REPLACE FUNCTION public.handle_delete_user()
-RETURNS TRIGGER AS $$
+-- 1. Repair all existing users who have auth.users records but are missing auth.identities rows
+INSERT INTO auth.identities (
+  id,
+  user_id,
+  identity_data,
+  provider,
+  provider_id,
+  last_sign_in_at,
+  created_at,
+  updated_at
+)
+SELECT
+  id, -- Using UUID directly (matching auth.identities.id column type)
+  id,
+  jsonb_build_object('sub', id, 'email', email, 'email_verified', true),
+  'email',
+  id::text,
+  now(),
+  created_at,
+  updated_at
+FROM auth.users u
+WHERE NOT EXISTS (
+  SELECT 1 FROM auth.identities i WHERE i.user_id = u.id
+)
+ON CONFLICT DO NOTHING;
+
+-- 2. Self-healing database migration block:
+-- Find users who only exist in `public.profiles` (seed users or failed RPC creations) and create their authentication records.
+DO $$
+DECLARE
+  r RECORD;
+  encrypted_pw text;
 BEGIN
-  DELETE FROM auth.users WHERE id = OLD.id;
-  RETURN OLD;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+  -- Default password for newly created auth records is 'Staket2026!'
+  encrypted_pw := crypt('Staket2026!', gen_salt('bf', 10));
 
--- 4. Create the trigger on the profiles table
-DROP TRIGGER IF EXISTS on_profile_deleted ON public.profiles;
-CREATE TRIGGER on_profile_deleted
-  AFTER DELETE ON public.profiles
-  FOR EACH ROW 
-  EXECUTE FUNCTION public.handle_delete_user();
+  FOR r IN 
+    SELECT p.id, p.email, p.name 
+    FROM public.profiles p
+    LEFT JOIN auth.users u ON p.id = u.id
+    WHERE u.id IS NULL AND p.email IS NOT NULL AND p.email <> ''
+  LOOP
+    -- Verify no other user has this email in auth.users
+    IF NOT EXISTS (SELECT 1 FROM auth.users WHERE email = r.email) THEN
+      -- Insert user into auth.users safely
+      INSERT INTO auth.users (
+        id,
+        instance_id,
+        email,
+        encrypted_password,
+        email_confirmed_at,
+        raw_app_meta_data,
+        raw_user_meta_data,
+        aud,
+        role,
+        created_at,
+        updated_at,
+        confirmation_token,
+        recovery_token,
+        email_change_token_new,
+        email_change,
+        is_super_admin,
+        is_sso_user
+      ) VALUES (
+        r.id,
+        '00000000-0000-0000-0000-000000000000',
+        r.email,
+        encrypted_pw,
+        now(),
+        '{"provider":"email","providers":["email"]}'::jsonb,
+        jsonb_build_object('name', r.name),
+        'authenticated',
+        'authenticated',
+        now(),
+        now(),
+        '',
+        '',
+        '',
+        '',
+        false,
+        false
+      );
 
--- 5. Enable pgcrypto extension if not already enabled (needed for crypt and gen_salt)
-CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
+      -- Insert matching identity for GoTrue login
+      INSERT INTO auth.identities (
+        id,
+        user_id,
+        identity_data,
+        provider,
+        provider_id,
+        last_sign_in_at,
+        created_at,
+        updated_at
+      ) VALUES (
+        r.id, -- Using UUID directly
+        r.id,
+        jsonb_build_object('sub', r.id, 'email', r.email, 'email_verified', true),
+        'email',
+        r.id::text,
+        now(),
+        now(),
+        now()
+      );
+    END IF;
+  END LOOP;
+END $$;
 
--- 6. Create RPC function to securely create both the auth user and public profile in one transaction
+-- 3. Update the create_new_user RPC to insert into auth.identities and use a safer insert format
 CREATE OR REPLACE FUNCTION public.create_new_user(
   new_email text,
   new_password text,
@@ -126,7 +228,7 @@ BEGIN
     created_at,
     updated_at
   ) VALUES (
-    new_user_id::text,
+    new_user_id, -- Using UUID directly
     new_user_id,
     jsonb_build_object('sub', new_user_id, 'email', new_email, 'email_verified', true),
     'email',
@@ -169,114 +271,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- 7. Restrict EXECUTE on the RPC to authenticated users only (no anon)
-REVOKE ALL ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text) FROM anon;
-GRANT EXECUTE ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text) TO authenticated;
-
--- =========================================================================
--- 8. Lock down the `documents` storage bucket (board & member files)
--- =========================================================================
--- Run these once in the Supabase SQL Editor. Logos move to a separate public
--- `logos` bucket so member/board files can be private without breaking the
--- public company pages.
-
--- 8a. Make the existing `documents` bucket private
-UPDATE storage.buckets SET public = false WHERE id = 'documents';
-
--- 8b. Create a public `logos` bucket for company logos (idempotent)
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('logos', 'logos', true)
-ON CONFLICT (id) DO UPDATE SET public = true;
-
--- 8c. RLS policies on storage.objects for the `documents` bucket
---     (RLS is already enabled on storage.objects by Supabase.)
-
--- Drop any previous versions of these policies so this block is re-runnable
-DROP POLICY IF EXISTS "documents: authenticated read member files" ON storage.objects;
-DROP POLICY IF EXISTS "documents: board read board files" ON storage.objects;
-DROP POLICY IF EXISTS "documents: board write" ON storage.objects;
-DROP POLICY IF EXISTS "documents: board update" ON storage.objects;
-DROP POLICY IF EXISTS "documents: board delete" ON storage.objects;
-DROP POLICY IF EXISTS "logos: public read" ON storage.objects;
-DROP POLICY IF EXISTS "logos: authenticated write" ON storage.objects;
-
--- Members (any authenticated user) may read non-board files in `documents`
-CREATE POLICY "documents: authenticated read member files"
-ON storage.objects FOR SELECT
-TO authenticated
-USING (
-  bucket_id = 'documents'
-  AND (storage.foldername(name))[1] <> 'styrelse'
-);
-
--- Only Styrelse / Administrator may read board files (styrelse/* prefix)
-CREATE POLICY "documents: board read board files"
-ON storage.objects FOR SELECT
-TO authenticated
-USING (
-  bucket_id = 'documents'
-  AND (storage.foldername(name))[1] = 'styrelse'
-  AND EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role IN ('Styrelse', 'Administrator')
-  )
-);
-
--- Only Styrelse / Administrator may upload/update/delete in `documents`
-CREATE POLICY "documents: board write"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (
-  bucket_id = 'documents'
-  AND EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role IN ('Styrelse', 'Administrator')
-  )
-);
-
-CREATE POLICY "documents: board update"
-ON storage.objects FOR UPDATE
-TO authenticated
-USING (
-  bucket_id = 'documents'
-  AND EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role IN ('Styrelse', 'Administrator')
-  )
-);
-
-CREATE POLICY "documents: board delete"
-ON storage.objects FOR DELETE
-TO authenticated
-USING (
-  bucket_id = 'documents'
-  AND EXISTS (
-    SELECT 1 FROM public.profiles
-    WHERE id = auth.uid() AND role IN ('Styrelse', 'Administrator')
-  )
-);
-
--- 8d. RLS policies for the public `logos` bucket
-CREATE POLICY "logos: public read"
-ON storage.objects FOR SELECT
-TO public
-USING (bucket_id = 'logos');
-
-CREATE POLICY "logos: authenticated write"
-ON storage.objects FOR INSERT
-TO authenticated
-WITH CHECK (bucket_id = 'logos');
-
--- NOTE: After running this, any previously-shared public links to
--- `documents/...` objects (including the `url` column in public.files) will
--- stop working. The app now generates short-lived signed URLs on demand via
--- supabase.storage.from('documents').createSignedUrl(). Existing company
--- logos referenced by `profiles.logo` will need to be re-uploaded so they
--- land in the new public `logos` bucket.
-
-
--- 9. Create RPC function to securely update both auth user credentials and profile info (Only for Administrators)
+-- 4. Update the admin_update_user RPC to support self-healing and insert into auth.identities if missing
 CREATE OR REPLACE FUNCTION public.admin_update_user(
   target_user_id uuid,
   new_email text,
@@ -382,7 +377,7 @@ BEGIN
         created_at,
         updated_at
       ) VALUES (
-        target_user_id::text,
+        target_user_id, -- Using UUID directly
         target_user_id,
         jsonb_build_object('sub', target_user_id, 'email', email_val, 'email_verified', true),
         'email',
@@ -408,7 +403,7 @@ BEGIN
         created_at,
         updated_at
       ) VALUES (
-        target_user_id::text,
+        target_user_id, -- Using UUID directly
         target_user_id,
         jsonb_build_object('sub', target_user_id, 'email', email_val, 'email_verified', true),
         'email',
@@ -460,7 +455,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Restrict EXECUTE on the RPC to authenticated users only (no anon)
+-- 5. Ensure the RPC can be executed by authenticated users
 REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) FROM anon;
 GRANT EXECUTE ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) TO authenticated;
+

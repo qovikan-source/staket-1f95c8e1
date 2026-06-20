@@ -85,6 +85,37 @@ const TOURS: Record<string, TourStep[]> = {
 };
 
 export default function Index() {
+  // Dynamic website logo URL state with fallback strategy
+  const [websiteLogoUrl, setWebsiteLogoUrl] = useState(() => {
+    try {
+      const publicUrl = supabase.storage
+        .from("logos")
+        .getPublicUrl("logo/staket-foretagscenter-logo.png").data.publicUrl;
+      return publicUrl;
+    } catch (e) {
+      return "/staket-foretagscenter-logo.png";
+    }
+  });
+
+  const handleLogoError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const target = e.currentTarget;
+    try {
+      const tryRootLogos = supabase.storage.from("logos").getPublicUrl("staket-foretagscenter-logo.png").data.publicUrl;
+      const tryLogoBucket = supabase.storage.from("logo").getPublicUrl("staket-foretagscenter-logo.png").data.publicUrl;
+      const localFallback = "/staket-foretagscenter-logo.png";
+
+      if (target.src === websiteLogoUrl) {
+        target.src = tryRootLogos;
+      } else if (target.src === tryRootLogos) {
+        target.src = tryLogoBucket;
+      } else if (target.src === tryLogoBucket) {
+        target.src = localFallback;
+      }
+    } catch (err) {
+      target.src = "/staket-foretagscenter-logo.png";
+    }
+  };
+
   // State definitions matching localStorage loaders
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
   const [notices, setNotices] = useState<NoticePost[]>([]);
@@ -1609,7 +1640,8 @@ ${query}`;
             <div className="max-w-7xl w-full mx-auto px-4 md:px-8 flex items-center justify-between">
               <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleTabClick("hem")}>
                 <img 
-                  src="/staket-foretagscenter-logo.png" 
+                  src={websiteLogoUrl} 
+                  onError={handleLogoError}
                   alt="Stäket Företagscenter Logo" 
                   className="h-12 md:h-16 w-auto object-contain" 
                 />
@@ -1701,7 +1733,8 @@ ${query}`;
                 {/* Left spacer matching main header logo width */}
                 <div className="flex items-center gap-3 opacity-0 pointer-events-none select-none lg:block hidden">
                   <img 
-                    src="/staket-foretagscenter-logo.png" 
+                    src={websiteLogoUrl} 
+                    onError={handleLogoError}
                     alt="Spacer" 
                     className="h-12 md:h-16 w-auto object-contain" 
                   />
