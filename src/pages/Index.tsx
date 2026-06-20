@@ -1073,7 +1073,7 @@ ${query}`;
     if (currentUserProfile) return currentUserProfile.name;
     if (role === "Medlem") return "Thomas Berglund";
     if (role === "Hyresgäst") return "Henrik Hyresgäst";
-    if (role === "Styrelse") return "Alexander Krasar";
+    if (role === "Styrelse") return "Alexander Karasar";
     return "Admin Adminsson";
   };
 
@@ -1095,7 +1095,7 @@ ${query}`;
                 } else {
                   setCurrentUserProfile({
                     id: "quick-user",
-                    name: selectedRole === "Styrelse" ? "Alexander Krasar" : selectedRole === "Medlem" ? "Thomas Berglund" : selectedRole === "Hyresgäst" ? "Henrik Hyresgäst" : "Admin Adminsson",
+                    name: selectedRole === "Styrelse" ? "Alexander Karasar" : selectedRole === "Medlem" ? "Thomas Berglund" : selectedRole === "Hyresgäst" ? "Henrik Hyresgäst" : "Admin Adminsson",
                     role: selectedRole,
                     email: "",
                     phone: "",
