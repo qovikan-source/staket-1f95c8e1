@@ -31,12 +31,12 @@ export const initialSpaces: VacantSpace[] = [
 export const initialProfiles: UserProfile[] = [
   {
     id: "p1",
-    name: "Alexander Krasar",
+    name: "Alexander Karasar",
     role: "Styrelse",
-    email: "alexander.krasar@foreningen.se",
+    email: "alexander.karasar@foreningen.se",
     phone: "070-123 45 67",
     orgNr: "556123-4567",
-    company: "Krasar Holding AB",
+    company: "Karasar Holding AB",
     unit: "Lokal 22",
     address: "Regeringsgatan 48, Stockholm",
   },
@@ -127,7 +127,7 @@ export const initialNotices: NoticePost[] = [
     content: "Härmed kallas medlemmarna i Brf. Stäkets Företagscenter till ordinarie föreningsstämma. Dagordning och stämmomaterial har skickats till samtliga medlemmar och finns tillgängligt i dokumentarkivet.",
     date: "2026-04-27",
     isPinned: true,
-    author: "Alexander Krasar (Ordförande)",
+    author: "Alexander Karasar (Ordförande)",
   },
   {
     id: "n2",
@@ -136,7 +136,7 @@ export const initialNotices: NoticePost[] = [
     content: "Kallelse till ordinarie föreningsstämma i Brf. Stäkets Företagscenter. Fullmaktsblanketter och årsberättelse finns under 'FILER' -> 'Medlemsfiler'.",
     date: "2025-05-06",
     isPinned: false,
-    author: "Alexander Krasar (Styrelse)",
+    author: "Alexander Karasar (Styrelse)",
   },
   {
     id: "n3",
@@ -154,7 +154,7 @@ export const initialNotices: NoticePost[] = [
     content: "Från och med den 20 juni kommer grindarna att hållas öppna måndag till fredag kl 07.00 - 18.00. Övriga tider krävs giltig passerbricka eller kod. Den nya sommarkoden för kvällar och helger har skickats ut via e-post till alla registrerade lokalägare. Vänligen lämna inte ut koden till obehöriga av säkerhetsskäl.",
     date: "2024-05-01",
     isPinned: false,
-    author: "Alexander Krasar (Ordförande)",
+    author: "Alexander Karasar (Ordförande)",
   },
   {
     id: "n5",

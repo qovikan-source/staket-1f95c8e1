@@ -14,7 +14,7 @@ export default function StyrelseDriftView() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
           <div className="p-4 rounded-xl border border-slate-50 bg-slate-50/50 space-y-2">
-            <h3 className="font-bold text-slate-800 text-sm">Alexander Krasar</h3>
+            <h3 className="font-bold text-slate-800 text-sm">Alexander Karasar</h3>
             <span className="inline-block px-2 py-0.5 text-[10px] bg-slate-200 text-slate-700 rounded-md font-semibold">Ordförande</span>
             <p className="text-xs text-slate-500 mt-1">Lokalägare som leder styrelsemöten, sköter externa leverantörer och fastighetsavtal.</p>
           </div>
