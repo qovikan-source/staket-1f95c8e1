@@ -253,3 +253,89 @@ WITH CHECK (bucket_id = 'logos');
 -- supabase.storage.from('documents').createSignedUrl(). Existing company
 -- logos referenced by `profiles.logo` will need to be re-uploaded so they
 -- land in the new public `logos` bucket.
+
+
+-- 9. Create RPC function to securely update both auth user credentials and profile info (Only for Administrators)
+CREATE OR REPLACE FUNCTION public.admin_update_user(
+  target_user_id uuid,
+  new_email text,
+  new_password text DEFAULT NULL,
+  new_role text DEFAULT NULL,
+  new_name text DEFAULT NULL,
+  new_phone text DEFAULT NULL,
+  new_company text DEFAULT NULL,
+  new_org_nr text DEFAULT NULL,
+  new_unit text DEFAULT NULL,
+  new_address text DEFAULT NULL,
+  new_description text DEFAULT NULL,
+  new_website text DEFAULT NULL,
+  new_logo text DEFAULT NULL
+)
+RETURNS jsonb
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+  encrypted_pw text;
+BEGIN
+  -- Caller-role guard: only Administrators may update users
+  IF auth.uid() IS NULL THEN
+    RAISE EXCEPTION 'Authentication required';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'Administrator'
+  ) THEN
+    RAISE EXCEPTION 'Insufficient privileges: only Administrators can update users';
+  END IF;
+
+  -- Validate target user exists
+  IF NOT EXISTS (SELECT 1 FROM auth.users WHERE id = target_user_id) THEN
+    RAISE EXCEPTION 'User not found';
+  END IF;
+
+  -- Update auth.users email if changed and not empty
+  IF new_email IS NOT NULL AND new_email <> '' THEN
+    -- Check if another user has this email
+    IF EXISTS (SELECT 1 FROM auth.users WHERE email = new_email AND id <> target_user_id) THEN
+      RAISE EXCEPTION 'En användare med denna e-postadress finns redan.';
+    END IF;
+
+    UPDATE auth.users 
+    SET email = new_email, email_confirmed_at = now() 
+    WHERE id = target_user_id;
+  END IF;
+
+  -- Update password if provided and not empty
+  IF new_password IS NOT NULL AND new_password <> '' THEN
+    encrypted_pw := crypt(new_password, gen_salt('bf', 10));
+    UPDATE auth.users 
+    SET encrypted_password = encrypted_pw, updated_at = now() 
+    WHERE id = target_user_id;
+  END IF;
+
+  -- Update profiles
+  UPDATE public.profiles
+  SET 
+    name = COALESCE(new_name, name),
+    role = COALESCE(new_role, role),
+    email = COALESCE(new_email, email),
+    phone = COALESCE(new_phone, phone),
+    company = COALESCE(new_company, company),
+    org_nr = COALESCE(new_org_nr, org_nr),
+    unit = COALESCE(new_unit, unit),
+    address = COALESCE(new_address, address),
+    description = COALESCE(new_description, description),
+    website = COALESCE(new_website, website),
+    logo = COALESCE(new_logo, logo)
+  WHERE id = target_user_id;
+
+  RETURN jsonb_build_object('success', true, 'id', target_user_id);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Restrict EXECUTE on the RPC to authenticated users only (no anon)
+REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) FROM anon;
+GRANT EXECUTE ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) TO authenticated;

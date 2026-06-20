@@ -270,9 +270,12 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {notices && notices.slice(0, 3).map((notice) => {
-              const { day, month } = getNoticeAbbreviation(notice.date);
-              const cleanExcerpt = notice.content.length > 120 
+            {[...notices]
+              .sort((a, b) => b.date.localeCompare(a.date))
+              .slice(0, 3)
+              .map((notice) => {
+                const { day, month } = getNoticeAbbreviation(notice.date);
+                const cleanExcerpt = notice.content.length > 120 
                 ? notice.content.substring(0, 120) + "..."
                 : notice.content;
               return (

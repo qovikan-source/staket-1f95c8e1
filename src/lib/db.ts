@@ -205,8 +205,72 @@ export const dbService = {
     return this.insertProfile(p);
   },
 
-  async updateProfile(id: string, p: Partial<UserProfile>): Promise<UserProfile> {
-    const { data, error } = await supabase.from("profiles").update(mapProfileToDb(p)).eq("id", id).select().single();
+  async updateProfile(id: string, p: Partial<UserProfile> & { password?: string }): Promise<UserProfile> {
+    // Fetch existing profile to avoid wiping out fields not provided in partial update
+    let existingProfile: UserProfile | null = null;
+    try {
+      const { data: profileData } = await supabase.from("profiles").select("*").eq("id", id).single();
+      if (profileData) {
+        existingProfile = mapProfileToFrontend(profileData);
+      }
+    } catch (e) {
+      console.warn("Could not fetch existing profile for update merging:", e);
+    }
+
+    const emailVal = p.email !== undefined ? p.email : (existingProfile?.email || "");
+    const nameVal = p.name !== undefined ? p.name : (existingProfile?.name || "");
+    const roleVal = p.role !== undefined ? p.role : (existingProfile?.role || "");
+    const phoneVal = p.phone !== undefined ? p.phone : (existingProfile?.phone || "");
+    const companyVal = p.company !== undefined ? p.company : (existingProfile?.company || "");
+    const orgNrVal = p.orgNr !== undefined ? p.orgNr : (existingProfile?.orgNr || "");
+    const unitVal = p.unit !== undefined ? p.unit : (existingProfile?.unit || "");
+    const addressVal = p.address !== undefined ? p.address : (existingProfile?.address || "");
+    const descVal = p.description !== undefined ? p.description : (existingProfile?.description || "");
+    const websiteVal = p.website !== undefined ? p.website : (existingProfile?.website || "");
+    const logoVal = p.logo !== undefined ? p.logo : (existingProfile?.logo || "");
+
+    // 1. Try to use RPC for secure full update (credentials + profile)
+    try {
+      const { data, error } = await supabase.rpc("admin_update_user", {
+        target_user_id: id,
+        new_email: emailVal,
+        new_password: p.password || "",
+        new_role: roleVal,
+        new_name: nameVal,
+        new_phone: phoneVal,
+        new_company: companyVal,
+        new_org_nr: orgNrVal,
+        new_unit: unitVal,
+        new_address: addressVal,
+        new_description: descVal,
+        new_website: websiteVal,
+        new_logo: logoVal,
+      });
+
+      if (error) {
+        console.warn("RPC update failed, falling back to profile-only update:", error.message);
+      } else {
+        // Return updated profile from db
+        const { data: updatedProfile, error: fetchError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", id)
+          .single();
+        if (!fetchError && updatedProfile) {
+          return mapProfileToFrontend(updatedProfile);
+        }
+      }
+    } catch (err) {
+      console.warn("RPC update call threw, falling back to profile-only update:", err);
+    }
+
+    // Fallback: update profiles table directly
+    const { password, ...fieldsToUpdate } = p;
+    const mergedFields = {
+      ...existingProfile,
+      ...fieldsToUpdate,
+    };
+    const { data, error } = await supabase.from("profiles").update(mapProfileToDb(mergedFields)).eq("id", id).select().single();
     if (error) throw error;
     return mapProfileToFrontend(data);
   },

@@ -22,7 +22,8 @@ import {
   User,
   MapPin,
   Phone,
-  Sparkles
+  Sparkles,
+  MessageSquare
 } from "lucide-react";
 
 import { UserRole, UserProfile, NoticePost, FileItem, VacantSpace, FileCategory, BoardFolder, NoticeboardCategory, NOTICEBOARD_CATEGORIES } from "../types";
@@ -53,6 +54,7 @@ import DocumentHubView from "../components/DocumentHubView";
 import ContactBookView from "../components/ContactBookView";
 import AdminView from "../components/AdminView";
 import LoginView from "../components/LoginView";
+import StyrelseDriftView from "../components/StyrelseDriftView";
 
 const sortedCategories = [...NOTICEBOARD_CATEGORIES].sort((a, b) => a.localeCompare(b, "sv"));
 
@@ -244,7 +246,7 @@ ${technicalManualText}
 
 Instruktioner för svar:
 1. Agera som om du ÄR själva systemmanualen och systemlogiken. Hänvisa INTE till "manualen" (säg inte t.ex. "enligt manualen" eller "manualen anger"). Ge raka och direkta svar som om du talar som portalens inbyggda logik.
-2. Basera ditt svar ENBART på den tillhandahållna interna manualen. Om manualen INTE innehåller svaret, ska du berätta att användaren bör fråga skaparen "Sirin" för hjälp. Hitta inte på svar själv.
+2. Basera ditt svar ENBART på den tillhandahållna interna manualen. Om manualen INTE innehåller svaret, ska du berätta att användaren måste kontakta skaparen Sirin på sirin@post.com. Hitta inte på svar själv.
 3. Svara på samma språk som användarens fråga (User input: "${query}").
 4. Håll svaret extremt kort och koncist. Slösa inte tokens på artigheter.
 5. VIKTIGT: Svara i ren formaterad text utan några markdown-symboler (använd absolut inte stjärnor (**), fyrkanter (#), bakticks (\`) eller andra markdown-tecken). Formatera med vanliga radbrytningar och enkla streck (-) för listor.
@@ -338,6 +340,11 @@ ${query}`;
             ) {
               text += "\n\n[START_TOUR:upload_file]";
             }
+          }
+
+          // Programmatic check: Ensure whenever Sirin is mentioned, her contact email is appended/present
+          if (text.toLowerCase().includes("sirin") && !text.toLowerCase().includes("sirin@post.com")) {
+            text = text.replace(/sirin/gi, "Sirin på sirin@post.com");
           }
 
           aiResponse = text;
@@ -905,16 +912,19 @@ ${query}`;
     }
   };
 
-  const handleUpdateProfile = async (id: string, updatedFields: Partial<UserProfile>) => {
+  const handleUpdateProfile = async (id: string, updatedFields: Partial<UserProfile> & { password?: string }) => {
     const originalProfiles = [...profiles];
     const originalUserProfile = currentUserProfile ? { ...currentUserProfile } : null;
 
+    // Separate password from fields we cache optimistically (since password isn't part of UserProfile interface)
+    const { password, ...profileFields } = updatedFields;
+
     // 1. Optimistic Update (Immediate visual response)
-    const optimisticList = profiles.map((p) => (p.id === id ? { ...p, ...updatedFields } : p));
+    const optimisticList = profiles.map((p) => (p.id === id ? { ...p, ...profileFields } : p));
     setProfiles(optimisticList);
     saveProfiles(optimisticList);
     if (currentUserProfile && currentUserProfile.id === id) {
-      setCurrentUserProfile((prev) => (prev ? { ...prev, ...updatedFields } : null));
+      setCurrentUserProfile((prev) => (prev ? { ...prev, ...profileFields } : null));
     }
 
     try {
@@ -1215,6 +1225,18 @@ ${query}`;
                     <Users className="w-3.5 h-3.5 shrink-0" />
                     Kontaktboken
                   </button>
+                  <button
+                    id="tab-styrelse-drift"
+                    onClick={() => handleTabClick("styrelse_drift")}
+                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                      activeTab === "styrelse_drift"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        : "text-slate-400 hover:bg-slate-800"
+                    }`}
+                  >
+                    <Shield className="w-3.5 h-3.5 shrink-0" />
+                    Styrelse &amp; Drift
+                  </button>
                 </div>
               </div>
 
@@ -1270,6 +1292,7 @@ ${query}`;
                   {activeTab === "anslagstavlan" && "Medlemsanslagstavla"}
                   {activeTab === "filer" && "Dokument & Blankettarkiv"}
                   {activeTab === "kontaktboken" && "Medlemskontaktboken"}
+                  {activeTab === "styrelse_drift" && "Styrelse & Drift"}
                   {activeTab === "administration" && "System- & Styrelseadministration"}
                 </h1>
               </div>
@@ -1351,6 +1374,10 @@ ${query}`;
                 <ContactBookView profiles={profiles} />
               )}
 
+              {activeTab === "styrelse_drift" && (
+                <StyrelseDriftView />
+              )}
+
               {activeTab === "administration" && (
                 <AdminView
                   role={role}
@@ -1389,10 +1416,10 @@ ${query}`;
                 {/* Chat Trigger Button */}
                 <button
                   onClick={() => setChatOpen(!chatOpen)}
-                  className="fixed bottom-12 right-6 z-50 p-3.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer flex items-center justify-center border border-emerald-400"
+                  className="fixed bottom-12 right-6 z-50 p-3.5 bg-slate-900 hover:bg-slate-800 text-amber-400 hover:text-amber-300 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer flex items-center justify-center border border-slate-950"
                   title="AI Supportassistent"
                 >
-                  {chatOpen ? <X className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
+                  {chatOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
                 </button>
 
                 {/* Chat Widget Window */}
@@ -1401,7 +1428,7 @@ ${query}`;
                     {/* Header */}
                     <div className="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
                       <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-emerald-400" />
+                        <MessageSquare className="w-4 h-4 text-amber-400" />
                         <span className="text-xs font-bold uppercase tracking-wider">AI Kundtjänst</span>
                       </div>
                       <div className="flex items-center gap-2.5">
@@ -1413,7 +1440,7 @@ ${query}`;
                               { sender: "ai", text: `Hej ${displayName}! Hur kan jag hjälpa dig med portalens funktioner idag?` }
                             ]);
                           }}
-                          className="text-[10px] bg-slate-800 hover:bg-slate-700 text-emerald-400 font-bold px-2.5 py-1 rounded-lg border border-slate-700 transition-colors cursor-pointer"
+                          className="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold px-2.5 py-1 rounded-lg border border-slate-700 transition-colors cursor-pointer"
                         >
                           Starta Ny Chatt
                         </button>
@@ -1440,7 +1467,7 @@ ${query}`;
                             placeholder="Ange Gemini API-nyckel..."
                             value={tempApiKeyInput}
                             onChange={(e) => setTempApiKeyInput(e.target.value)}
-                            className="px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white focus:outline-emerald-500"
+                            className="px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white focus:outline-amber-500"
                           />
                           <button
                             onClick={() => {
@@ -1449,7 +1476,7 @@ ${query}`;
                                 setChatbotApiKey(tempApiKeyInput.trim());
                               }
                             }}
-                            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-xs transition-colors cursor-pointer text-center"
+                            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition-colors cursor-pointer text-center"
                           >
                             Spara nyckel
                           </button>
@@ -1487,7 +1514,7 @@ ${query}`;
                                           setTourStepIndex(0);
                                           setChatOpen(false);
                                         }}
-                                        className="mt-3 w-full flex items-center justify-center gap-2 py-2 px-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold rounded-xl transition-all cursor-pointer shadow-3xs text-[10px] uppercase tracking-wider animate-pulse"
+                                        className="mt-3 w-full flex items-center justify-center gap-2 py-2 px-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold rounded-xl transition-all cursor-pointer shadow-3xs text-[10px] uppercase tracking-wider animate-pulse"
                                       >
                                         <span className="w-1.5 h-1.5 bg-slate-950 rounded-full animate-ping"></span>
                                         Starta klick-guide
@@ -1517,7 +1544,7 @@ ${query}`;
                             placeholder="Ställ en fråga... (max 600 tecken)"
                             value={chatInput}
                             onChange={(e) => setChatInput(e.target.value)}
-                            className="flex-1 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-emerald-500 focus:bg-white transition-all text-xs"
+                            className="flex-1 px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 focus:outline-amber-500 focus:bg-white transition-all text-xs"
                           />
                           <button
                             type="submit"
@@ -1588,7 +1615,7 @@ ${query}`;
                 />
               </div>
 
-              <nav className="hidden lg:flex items-center gap-7 text-[11px] font-bold tracking-wider text-[#0B2C24]">
+              <nav className="hidden lg:flex items-center gap-7 text-[13px] font-bold tracking-wider text-[#0B2C24]">
                 <button
                   onClick={() => handleTabClick("hem")}
                   className={`hover:text-[#B68F52] transition-colors cursor-pointer pb-1 ${
@@ -1681,7 +1708,7 @@ ${query}`;
                 </div>
 
                 {/* Sub-header Navigation Links */}
-                <nav className="flex items-center gap-7 text-[11px] font-bold tracking-wider text-[#0B2C24] w-full lg:w-auto lg:justify-start">
+                <nav className="flex items-center gap-7 text-[13px] font-bold tracking-wider text-[#0B2C24] w-full lg:w-auto lg:justify-start">
                   {/* Anslagstavlan Category Dropdown */}
                   <div className="relative group flex items-center h-full py-2">
                     <button
@@ -1689,7 +1716,7 @@ ${query}`;
                         setSelectedNoticeboardCategory("Alla");
                         handleTabClick("anslagstavlan");
                       }}
-                      className={`hover:text-[#B68F52] text-[11px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer flex items-center gap-1.5 ${
+                      className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer flex items-center gap-1.5 ${
                         activeTab === "anslagstavlan" ? "text-[#B68F52]" : ""
                       }`}
                     >
@@ -1704,7 +1731,7 @@ ${query}`;
                           setSelectedNoticeboardCategory("Alla");
                           handleTabClick("anslagstavlan");
                         }}
-                        className="w-full text-left px-4 py-2 text-[10px] text-gray-700 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-bold border-b border-gray-50"
+                        className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-bold border-b border-gray-50"
                       >
                         ALLA KATEGORIER
                       </button>
@@ -1715,7 +1742,7 @@ ${query}`;
                             setSelectedNoticeboardCategory(cat);
                             handleTabClick("anslagstavlan");
                           }}
-                          className="w-full text-left px-4 py-2 text-[10px] text-gray-600 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-semibold border-b border-gray-50 last:border-0"
+                          className="w-full text-left px-4 py-2 text-xs text-gray-600 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-semibold border-b border-gray-50 last:border-0"
                         >
                           {cat}
                         </button>
@@ -1725,7 +1752,7 @@ ${query}`;
 
                   <button
                     onClick={() => handleTabClick("filer")}
-                    className={`hover:text-[#B68F52] text-[11px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
+                    className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
                       activeTab === "filer" ? "text-[#B68F52]" : ""
                     }`}
                   >
@@ -1734,11 +1761,20 @@ ${query}`;
 
                   <button
                     onClick={() => handleTabClick("kontaktboken")}
-                    className={`hover:text-[#B68F52] text-[11px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
+                    className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
                       activeTab === "kontaktboken" ? "text-[#B68F52]" : ""
                     }`}
                   >
                     KONTAKTBOKEN
+                  </button>
+
+                  <button
+                    onClick={() => handleTabClick("styrelse_drift")}
+                    className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
+                      activeTab === "styrelse_drift" ? "text-[#B68F52]" : ""
+                    }`}
+                  >
+                    STYRELSE &amp; DRIFT
                   </button>
                 </nav>
 
@@ -1759,7 +1795,7 @@ ${query}`;
 
           {/* MOBILE MENU DROPDOWN DRAWER */}
           {mobileMenuOpen && (
-            <div className="lg:hidden bg-white border-b border-gray-100 shadow-lg px-6 py-4 space-y-3 flex flex-col font-bold tracking-wider text-[11px] text-[#0B2C24] animate-fade-in absolute top-20 left-0 w-full z-50 max-h-[80vh] overflow-y-auto">
+            <div className="lg:hidden bg-white border-b border-gray-100 shadow-lg px-6 py-4 space-y-3 flex flex-col font-bold tracking-wider text-[13px] text-[#0B2C24] animate-fade-in absolute top-20 left-0 w-full z-50 max-h-[80vh] overflow-y-auto">
               <button
                 onClick={() => {
                   handleTabClick("hem");
@@ -1819,7 +1855,7 @@ ${query}`;
               {role !== "Besökare" && (
                 <>
                   <div className="border-b border-slate-100 py-1">
-                    <div className="text-[10px] text-gray-400 font-bold uppercase tracking-widest pb-1">ANSLAGSTAVLAN</div>
+                    <div className="text-[11px] text-gray-400 font-bold uppercase tracking-widest pb-1">ANSLAGSTAVLAN</div>
                     <div className="pl-3 py-1 flex flex-col gap-2">
                       <button
                         onClick={() => {
@@ -1827,7 +1863,7 @@ ${query}`;
                           handleTabClick("anslagstavlan");
                           setMobileMenuOpen(false);
                         }}
-                        className="text-left text-[10.5px] font-semibold text-gray-700 hover:text-[#B68F52]"
+                        className="text-left text-xs font-semibold text-gray-700 hover:text-[#B68F52]"
                       >
                         Alla Kategorier
                       </button>
@@ -1839,7 +1875,7 @@ ${query}`;
                             handleTabClick("anslagstavlan");
                             setMobileMenuOpen(false);
                           }}
-                          className="text-left text-[10px] font-medium text-gray-500 hover:text-[#B68F52]"
+                          className="text-left text-xs font-medium text-gray-500 hover:text-[#B68F52]"
                         >
                           {cat}
                         </button>
@@ -1867,6 +1903,17 @@ ${query}`;
                     }`}
                   >
                     KONTAKTBOKEN
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleTabClick("styrelse_drift");
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                      activeTab === "styrelse_drift" ? "text-[#B68F52]" : ""
+                    }`}
+                  >
+                    STYRELSE &amp; DRIFT
                   </button>
                 </>
               )}
@@ -1952,6 +1999,9 @@ ${query}`;
                   )}
                   {activeTab === "kontaktboken" && (
                     <ContactBookView profiles={profiles} />
+                  )}
+                  {activeTab === "styrelse_drift" && (
+                    <StyrelseDriftView />
                   )}
                 </div>
               </div>

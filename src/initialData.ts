@@ -168,7 +168,7 @@ export const initialNotices: NoticePost[] = [
   {
     id: "n6",
     title: "Soptömning under midsommarhelgen samt container på plats",
-    category: "Sophantering & Container",
+    category: "Sophantering",
     content: "Det kommer finnas en stor grovavfallscontainer uppställd på parkeringens baksida. Passa på att rensa ur era lokaler. Observera att miljöfarligt avfall, elektronik och däck INTE får slängas i denna container. Soptömningen sker som vanligt tisdagen efter midsommar.",
     date: "2024-04-10",
     isPinned: false,

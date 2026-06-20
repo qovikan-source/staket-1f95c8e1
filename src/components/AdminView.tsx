@@ -19,7 +19,7 @@ interface AdminViewProps {
   spaces: VacantSpace[];
   onAddProfile: (profile: Omit<UserProfile, "id"> & { password?: string }) => void;
   onUpdateRole: (id: string, role: UserRole) => void;
-  onUpdateProfile: (id: string, profile: Partial<UserProfile>) => void;
+  onUpdateProfile: (id: string, profile: Partial<UserProfile> & { password?: string }) => void;
   onDeleteProfile: (id: string) => void;
   onDeleteNotice: (id: string) => void;
   onDeleteFile: (id: string, name: string, category: FileCategory) => void;
@@ -70,6 +70,8 @@ export default function AdminView({
   const [editWebsite, setEditWebsite] = useState("");
   const [editLogoFileName, setEditLogoFileName] = useState("");
   const [editLogoFile, setEditLogoFile] = useState<File | null>(null);
+  const [editPassword, setEditPassword] = useState("");
+  const [editRepeatPassword, setEditRepeatPassword] = useState("");
   const [isUpdatingUser, setIsUpdatingUser] = useState(false);
 
   // Form states for new available space
@@ -178,6 +180,8 @@ export default function AdminView({
     setEditWebsite(p.website || "");
     setEditLogoFileName(p.logo || "");
     setEditLogoFile(null);
+    setEditPassword("");
+    setEditRepeatPassword("");
   };
 
   const handleEditUserSubmit = async (e: React.FormEvent) => {
@@ -185,6 +189,20 @@ export default function AdminView({
     if (!editingProfile) return;
 
     setIsUpdatingUser(true);
+
+    if (editPassword) {
+      if (editPassword !== editRepeatPassword) {
+        alert("Lösenorden matchar inte.");
+        setIsUpdatingUser(false);
+        return;
+      }
+      if (editPassword.length < 6) {
+        alert("Lösenordet måste vara minst 6 tecken långt.");
+        setIsUpdatingUser(false);
+        return;
+      }
+    }
+
     let logoUrl = editingProfile.logo || "";
     if (editLogoFile) {
       try {
@@ -205,7 +223,8 @@ export default function AdminView({
       address: editAddress || "Regeringsgatan 48, Stockholm",
       description: editDescription,
       website: editWebsite,
-      logo: logoUrl
+      logo: logoUrl,
+      ...(editPassword ? { password: editPassword } : {})
     });
 
     setEditingProfile(null);
@@ -919,121 +938,145 @@ export default function AdminView({
                 </select>
               </div>
 
-              {(editRole === "Medlem" || editRole === "Hyresgäst") && (
-                <div className="pt-4 pb-2 border-t border-slate-100 flex items-center justify-center">
-                  <span className="text-[10px] text-slate-500 font-semibold tracking-wide uppercase">
-                    Medlems- / Hyresgästinformation
-                  </span>
+              <div className="pt-4 pb-2 border-t border-slate-100 flex items-center justify-center">
+                <span className="text-[10px] text-slate-500 font-semibold tracking-wide uppercase">
+                  Säkerhetsuppgifter (Valfritt)
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Lösenord (Lämna tomt för att behålla nuvarande)</label>
+                <input
+                  type="password"
+                  placeholder="••••••••••••"
+                  value={editPassword}
+                  onChange={(e) => setEditPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Upprepa Lösenord</label>
+                <input
+                  type="password"
+                  placeholder="Upprepa Lösenord"
+                  value={editRepeatPassword}
+                  onChange={(e) => setEditRepeatPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                />
+              </div>
+
+              <div className="pt-4 pb-2 border-t border-slate-100 flex items-center justify-center">
+                <span className="text-[10px] text-slate-500 font-semibold tracking-wide uppercase">
+                  Medlems- &amp; Profiluppgifter
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Företag / Organisation</label>
+                  <input
+                    type="text"
+                    placeholder="Företagsnamn"
+                    value={editCompany}
+                    onChange={(e) => setEditCompany(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
                 </div>
-              )}
 
-              {(editRole === "Medlem" || editRole === "Hyresgäst") && (
-                <div className="space-y-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Företag</label>
-                    <input
-                      type="text"
-                      placeholder="Företagsnamn"
-                      value={editCompany}
-                      onChange={(e) => setEditCompany(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Lokal NR</label>
-                    <input
-                      type="text"
-                      placeholder="t.ex. 22"
-                      value={editUnit}
-                      onChange={(e) => setEditUnit(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Adress</label>
-                    <input
-                      type="text"
-                      placeholder="Gatuadress"
-                      value={editAddress}
-                      onChange={(e) => setEditAddress(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Telefon</label>
-                    <input
-                      type="text"
-                      placeholder="Telefonnummer"
-                      value={editPhone}
-                      onChange={(e) => setEditPhone(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Org. Nr.</label>
-                    <input
-                      type="text"
-                      placeholder="Organisationsnummer"
-                      value={editOrgNr}
-                      onChange={(e) => setEditOrgNr(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Beskrivning</label>
-                    <textarea
-                      placeholder="Beskrivning av verksamheten..."
-                      rows={3}
-                      value={editDescription}
-                      onChange={(e) => setEditDescription(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Webbaddress</label>
-                    <input
-                      type="text"
-                      placeholder="t.ex. www.foretaget.se"
-                      value={editWebsite}
-                      onChange={(e) => setEditWebsite(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-slate-500 font-semibold mb-1 block">Logotyp:</label>
-                    {editLogoFileName && (
-                      <div className="text-[10px] text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 mb-2 flex items-center justify-between">
-                        <span className="truncate">{editLogoFileName}</span>
-                        <button
-                          type="button"
-                          onClick={() => setEditLogoFileName("")}
-                          className="text-rose-500 font-bold hover:underline"
-                        >
-                          Ta bort
-                        </button>
-                      </div>
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] || null;
-                        setEditLogoFile(file);
-                        setEditLogoFileName(file ? file.name : "");
-                      }}
-                      className="w-full text-[10px] text-slate-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border file:border-slate-300 file:bg-white file:text-xs file:font-semibold hover:file:bg-slate-50 cursor-pointer"
-                    />
-                    <p className="text-[9px] text-slate-400 mt-1">(önskad storlek: 400x240)</p>
-                  </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Lokal NR</label>
+                  <input
+                    type="text"
+                    placeholder="t.ex. 22"
+                    value={editUnit}
+                    onChange={(e) => setEditUnit(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
                 </div>
-              )}
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Adress</label>
+                  <input
+                    type="text"
+                    placeholder="Gatuadress"
+                    value={editAddress}
+                    onChange={(e) => setEditAddress(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Telefon</label>
+                  <input
+                    type="text"
+                    placeholder="Telefonnummer"
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Org. Nr.</label>
+                  <input
+                    type="text"
+                    placeholder="Organisationsnummer"
+                    value={editOrgNr}
+                    onChange={(e) => setEditOrgNr(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Beskrivning</label>
+                  <textarea
+                    placeholder="Beskrivning av verksamheten..."
+                    rows={3}
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Webbaddress</label>
+                  <input
+                    type="text"
+                    placeholder="t.ex. www.foretaget.se"
+                    value={editWebsite}
+                    onChange={(e) => setEditWebsite(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-500 font-semibold mb-1 block">Logotyp / Bild:</label>
+                  {editLogoFileName && (
+                    <div className="text-[10px] text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 mb-2 flex items-center justify-between">
+                      <span className="truncate">{editLogoFileName}</span>
+                      <button
+                        type="button"
+                        onClick={() => setEditLogoFileName("")}
+                        className="text-rose-500 font-bold hover:underline"
+                      >
+                        Ta bort
+                      </button>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setEditLogoFile(file);
+                      setEditLogoFileName(file ? file.name : "");
+                    }}
+                    className="w-full text-[10px] text-slate-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border file:border-slate-300 file:bg-white file:text-xs file:font-semibold hover:file:bg-slate-50 cursor-pointer"
+                  />
+                  <p className="text-[9px] text-slate-400 mt-1">(önskad storlek: 400x240)</p>
+                </div>
+              </div>
 
               <div className="pt-2 shrink-0">
                 <button

@@ -131,14 +131,16 @@ export default function NoticeboardView({
   };
 
   // Filter & Search logic
-  const filteredNotices = notices.filter((n) => {
-    const matchesSearch =
-      n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      n.author.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === "Alla" || n.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
+  const filteredNotices = [...notices]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .filter((n) => {
+      const matchesSearch =
+        n.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        n.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        n.author.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === "Alla" || n.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
 
   // Count helper
   const getCategoryCount = (cat: NoticeboardCategory) => {
@@ -189,12 +191,12 @@ export default function NoticeboardView({
 
         {/* Categories selector dropdown for mobile/tablet alongside chips */}
         <div className="flex items-center gap-2 w-full md:w-auto">
-          <span className="text-xs font-semibold text-slate-400 whitespace-nowrap hidden sm:inline">Kategori:</span>
+          <span className="text-sm font-bold text-slate-500 whitespace-nowrap hidden sm:inline">Kategori:</span>
           <select
             id="select-notice-filter"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value as any)}
-            className="w-full md:w-64 px-3 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors"
+            className="w-full md:w-64 px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors cursor-pointer"
           >
             <option value="Alla">Alla ämnen / Kategorier ({notices.length})</option>
             {NOTICEBOARD_CATEGORIES.map((cat, i) => (

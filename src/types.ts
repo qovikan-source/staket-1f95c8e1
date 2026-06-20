@@ -27,7 +27,7 @@ export type NoticeboardCategory =
   | "Markiser"
   | "Luftkonditioneringsapparatar"
   | "Uthyrningskontrakt"
-  | "Sophantering & Container"
+  | "Sophantering"
   | "Parkeringsplatser"
   | "Larm & Övervakning"
   | "Årsmöten & Föreningens Styrelse"
@@ -43,7 +43,7 @@ export const NOTICEBOARD_CATEGORIES: NoticeboardCategory[] = [
   "Markiser",
   "Luftkonditioneringsapparatar",
   "Uthyrningskontrakt",
-  "Sophantering & Container",
+  "Sophantering",
   "Parkeringsplatser",
   "Larm & Övervakning",
   "Årsmöten & Föreningens Styrelse",

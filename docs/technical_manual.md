@@ -53,13 +53,13 @@ src/
 User permissions are controlled by the `role` attribute stored on each user's
 profile database row.
 
-| User Role              | Navigation Tabs                                                        | Styrelsefiler    | Medlemsfiler     | Noticeboard Write | User CRUD       | Space Uploads    |
-| :--------------------- | :--------------------------------------------------------------------- | :--------------- | :--------------- | :---------------- | :-------------- | :--------------- |
-| **Besökare** (Visitor) | Home, Companies, About Us, Spaces, Contact, Login                      | No               | No               | No                | No              | No               |
-| **Hyresgäst** (Tenant) | Home, Noticeboard, Document Hub, Contact Book, public tabs             | No               | Yes (Read)       | No                | No              | No               |
-| **Medlem** (Member)    | Home, Noticeboard, Document Hub, Contact Book, public tabs             | No               | Yes (Read)       | No                | No              | No               |
-| **Styrelse** (Board)   | Home, Noticeboard, Document Hub, Contact Book, public tabs             | Yes (Read)       | Yes (Read)       | No                | No              | No               |
-| **Administrator**      | Home, Noticeboard, Document Hub, Contact Book, Adminpanel, public tabs | Yes (Read/Write) | Yes (Read/Write) | Yes (Read/Write)  | Yes (Full CRUD) | Yes (Read/Write) |
+| User Role              | Navigation Tabs                                                                        | Styrelsefiler    | Medlemsfiler     | Noticeboard Write | User CRUD       | Space Uploads    |
+| :--------------------- | :------------------------------------------------------------------------------------- | :--------------- | :--------------- | :---------------- | :-------------- | :--------------- |
+| **Besökare** (Visitor) | Home, Companies, About Us, Spaces, Contact, Login                                      | No               | No               | No                | No              | No               |
+| **Hyresgäst** (Tenant) | Home, Noticeboard, Document Hub, Contact Book, Styrelse & Drift, public tabs           | No               | Yes (Read)       | No                | No              | No               |
+| **Medlem** (Member)    | Home, Noticeboard, Document Hub, Contact Book, Styrelse & Drift, public tabs           | No               | Yes (Read)       | No                | No              | No               |
+| **Styrelse** (Board)   | Home, Noticeboard, Document Hub, Contact Book, Styrelse & Drift, public tabs           | Yes (Read)       | Yes (Read)       | No                | No              | No               |
+| **Administrator**      | Home, Noticeboard, Document Hub, Contact Book, Styrelse & Drift, Adminpanel, public tabs| Yes (Read/Write) | Yes (Read/Write) | Yes (Read/Write)  | Yes (Full CRUD) | Yes (Read/Write) |
 
 ---
 
@@ -75,7 +75,7 @@ navigation, session restoration, and page synchronization:
 - `files` (FileItem[]): Local cache array of all documents in the system.
 - `spaces` (VacantSpace[]): Local cache array of all vacant commercial units.
 - `activeTab` (string): Tracks the active page viewport (e.g. `'hem'`,
-  `'anslagstavlan'`, `'filer'`, `'kontaktboken'`, `'administration'`).
+  `'anslagstavlan'`, `'filer'`, `'kontaktboken'`, `'styrelse_drift'`, `'administration'`).
 - `role` (UserRole): The active user's authorization level (defaults to
   `'Besökare'`).
 - `currentUserProfile` (UserProfile | null): Profile details of the currently
@@ -282,6 +282,73 @@ BEGIN
   );
 
   RETURN jsonb_build_object('id', new_user_id, 'email', new_email);
+END;
+$$ LANGUAGE plpgsql;
+```
+
+### 4.5. Backend RPC Function: Secure User Update (Credentials & Profile)
+
+Allows administrators to update any user's credentials (email and/or password) in the private auth schema along with all profile fields in a single transaction:
+
+```sql
+CREATE OR REPLACE FUNCTION public.admin_update_user(
+  target_user_id uuid,
+  new_email text,
+  new_password text DEFAULT NULL,
+  new_role text DEFAULT NULL,
+  new_name text DEFAULT NULL,
+  new_phone text DEFAULT '',
+  new_company text DEFAULT '',
+  new_org_nr text DEFAULT '',
+  new_unit text DEFAULT '',
+  new_address text DEFAULT '',
+  new_description text DEFAULT '',
+  new_website text DEFAULT '',
+  new_logo text DEFAULT ''
+)
+RETURNS jsonb
+SECURITY DEFINER
+SET search_path = public, auth
+AS $$
+DECLARE
+  encrypted_pw text;
+BEGIN
+  -- Check if administrator
+  IF NOT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role = 'Administrator'
+  ) THEN
+    RAISE EXCEPTION 'Insufficient privileges';
+  END IF;
+
+  -- Update email if requested
+  IF new_email IS NOT NULL AND new_email <> '' THEN
+    UPDATE auth.users SET email = new_email, email_confirmed_at = now() WHERE id = target_user_id;
+  END IF;
+
+  -- Update password if requested
+  IF new_password IS NOT NULL AND new_password <> '' THEN
+    encrypted_pw := crypt(new_password, gen_salt('bf', 10));
+    UPDATE auth.users SET encrypted_password = encrypted_pw, updated_at = now() WHERE id = target_user_id;
+  END IF;
+
+  -- Update public profiles
+  UPDATE public.profiles
+  SET 
+    name = COALESCE(new_name, name),
+    role = COALESCE(new_role, role),
+    email = COALESCE(new_email, email),
+    phone = COALESCE(new_phone, phone),
+    company = COALESCE(new_company, company),
+    org_nr = COALESCE(new_org_nr, org_nr),
+    unit = COALESCE(new_unit, unit),
+    address = COALESCE(new_address, address),
+    description = COALESCE(new_description, description),
+    website = COALESCE(new_website, website),
+    logo = COALESCE(new_logo, logo)
+  WHERE id = target_user_id;
+
+  RETURN jsonb_build_object('success', true, 'id', target_user_id);
 END;
 $$ LANGUAGE plpgsql;
 ```
@@ -497,3 +564,30 @@ Administratörer har tillgång till en kraftfull bulk-nedladdningsfunktion under
 6.  **Zip:a alla matchade**: I sökfältet visas knappen **"Zip:a alla matchade (X)"** bredvid sökresultaten. Den gör det möjligt att söka efter specifika filer (t.ex. "protokoll") och ladda ner alla sökresultat på en gång som ett ZIP-arkiv.
 
 Detta ZIP-arkiv bevarar automatiskt undermappsstrukturen (t.ex. `Ekonomi/År 2026/filnamn.pdf`) vid nedladdning. Funktionerna är dolda för vanliga medlemmar och hyresgäster.
+
+### 7.5. Administrativa åtgärder och filhantering
+
+#### Hur ändrar jag roller, detaljer och lösenord på en användare?
+1.  **Gå till Medlemsregistret**: Klicka på fliken **"Alla användare"** (`#tab-administration`) i sidomenyn. Den öppnas på underfliken **"Användare & Medlemmar"**.
+2.  **Ändra Roll, Detaljer & Lösenord**: Klicka på knappen **"Ändra"** (penna-ikonen) längst till höger på raden för den användare du vill ändra. Detta öppnar modalen för att redigera användarprofilen.
+3.  **Redigera och Spara**: I modalen kan du ändra roll, namn, e-post, telefon, adress, beskrivning, webbplats, företagskortets logotyp, samt ange ett nytt lösenord under fälten **"Lösenord"** och **"Upprepa Lösenord"** (vilket uppdaterar inloggningsuppgifterna i databasens privata autentiseringsschema via en säker RPC-funktion). Spara ändringarna genom att klicka på **"SPARA MEDLEM"**.
+
+#### Hur ändrar jag bilden för företagskorten på våra företag?
+Bilden som visas på företagets kort under fliken **"Våra Företag"** motsvarar logotypen i dess användarprofil:
+1.  Klicka på fliken **"Alla användare"** (`#tab-administration`) och leta upp företagets medlemskonto under underfliken **"Användare & Medlemmar"**.
+2.  Klicka på knappen **"Ändra"** (penna-ikonen) för att öppna modalen.
+3.  Scrolla ner till fältet **"Logotyp"**. Om en gammal logotyp finns, klicka först på **"Ta bort"** bredvid filnamnet.
+4.  Klicka på filväljaren under **"Logotyp"** för att välja en ny bildfil från din enhet (rekommenderad storlek: 400x240 pixlar).
+5.  Klicka på **"SPARA MEDLEM"** längst ner. Bilden laddas automatiskt upp till Supabase storage och företagskortet uppdateras direkt.
+
+#### Hur laddar jag ner en fil eller en hel mapp?
+1.  **Ladda ner en enskild fil**: Gå till fliken **Filer** (`#tab-filer`). Leta upp filen i tabellen och klicka på filnamnet eller ladda ner-knappen längst till höger för att ladda ner den.
+2.  **Ladda ner en hel mapp**: Under Styrelsefiler, gå in på mappen (t.ex. *Ekonomi*). Klicka på knappen **"Ladda ner hela mappen [Mappnamn] (.zip)"** bredvid mappens rubrik.
+3.  **Ladda ner markerade mappar eller år**:
+    - På översikten "Alla mappar" kan du markera kryssrutorna bredvid de mappar du vill ladda ner, och klicka på den svarta knappen **"Ladda ner markerade mappar (.zip) (X)"** längst ner.
+    - Inne i en mapp (t.ex. *Ekonomi*) kan du markera kryssrutorna uppe till höger på årskorten (t.ex. *År 2026* och *År 2025*) och klicka på **"Ladda ner markerade år (.zip) (X)"** längst ner.
+    - Det går även att kryssa i enskilda filer i listan eller söka efter filer och klicka på **"Ladda ner (.zip) (X)"** i bulk-åtgärdsfältet eller **"Zip:a alla matchade (X)"**.
+
+#### Hur ändrar jag året eller andra detaljer på en fil?
+1.  **Ändra en enskild fil**: Gå till **"Alla användare"** (`#tab-administration`) och välj underfliken **"Kontrollera Filer"** (eller direkt i fliken **Filer**). Leta upp filen och klicka på **"Ändra"** (penna-ikonen) till höger. I modalen kan du uppdatera filens namn, kategori (Medlemsfiler/Styrelsefiler), styrelsemapp (Administration, Ekonomi, etc.) samt år. Klicka på spara.
+2.  **Ändra flera filer samtidigt (Bulk Edit)**: Markera kryssrutorna bredvid de filer du vill ändra under fliken **Filer** (`#tab-filer`). Klicka på **"Redigera markerade filer"** i det svarta bulk-åtgärdsfältet längst ner. Uppdatera Kategori, Styrelsemapp och År för alla valda filer samtidigt i modalen och klicka på spara. Filerna flyttas automatiskt till sina nya års-undermappar.
