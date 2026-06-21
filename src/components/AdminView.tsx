@@ -115,6 +115,12 @@ export default function AdminView({
     e.preventDefault();
     if (!name || !email) return;
 
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,5}$/;
+    if (!emailRegex.test(email)) {
+      alert("Ange en giltig e-postadress.");
+      return;
+    }
+
     if (password !== repeatPassword) {
       alert("Lösenorden matchar inte.");
       return;
@@ -189,6 +195,15 @@ export default function AdminView({
     if (!editingProfile) return;
 
     setIsUpdatingUser(true);
+
+    if (editEmail) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,5}$/;
+      if (!emailRegex.test(editEmail)) {
+        alert("Ange en giltig e-postadress.");
+        setIsUpdatingUser(false);
+        return;
+      }
+    }
 
     if (editPassword) {
       if (editPassword !== editRepeatPassword) {

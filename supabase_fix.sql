@@ -7,6 +7,32 @@ ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '',
 ADD COLUMN IF NOT EXISTS website TEXT DEFAULT '',
 ADD COLUMN IF NOT EXISTS logo TEXT DEFAULT '';
 
+-- DROP restrictive check constraints on public.profiles.email dynamically
+DO $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN
+        SELECT tc.constraint_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.constraint_column_usage ccu 
+          ON tc.constraint_name = ccu.constraint_name
+          AND tc.table_schema = ccu.table_schema
+        WHERE tc.table_schema = 'public' 
+          AND tc.table_name = 'profiles'
+          AND ccu.column_name = 'email'
+          AND tc.constraint_type = 'CHECK'
+    LOOP
+        EXECUTE 'ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS ' || quote_ident(r.constraint_name);
+    END LOOP;
+END $$;
+
+-- ADD the updated email check constraint (supporting 2 to 5 character TLDs like .se, .eu, .com, .info)
+ALTER TABLE public.profiles 
+ADD CONSTRAINT profiles_email_check 
+CHECK (email ~* '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,5}$');
+
+
 -- 0. Fix GoTrue 500 error: convert NULL values in auth.users string columns to empty strings
 UPDATE auth.users
 SET

@@ -9,6 +9,32 @@ ALTER TABLE public.profiles
 ADD CONSTRAINT profiles_role_check 
 CHECK (role IN ('Administrator', 'Styrelse', 'Medlem', 'Hyresgäst'));
 
+-- DROP restrictive check constraints on public.profiles.email dynamically
+DO $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN
+        SELECT tc.constraint_name
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.constraint_column_usage ccu 
+          ON tc.constraint_name = ccu.constraint_name
+          AND tc.table_schema = ccu.table_schema
+        WHERE tc.table_schema = 'public' 
+          AND tc.table_name = 'profiles'
+          AND ccu.column_name = 'email'
+          AND tc.constraint_type = 'CHECK'
+    LOOP
+        EXECUTE 'ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS ' || quote_ident(r.constraint_name);
+    END LOOP;
+END $$;
+
+-- ADD the updated email check constraint (supporting 2 to 5 character TLDs like .se, .eu, .com, .info)
+ALTER TABLE public.profiles 
+ADD CONSTRAINT profiles_email_check 
+CHECK (email ~* '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,5}$');
+
+
 -- 3. Create a trigger function to delete the auth user when their public profile is deleted
 CREATE OR REPLACE FUNCTION public.handle_delete_user()
 RETURNS TRIGGER AS $$
