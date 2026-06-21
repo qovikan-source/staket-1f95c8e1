@@ -11,7 +11,7 @@ import {
 import { NoticePost, UserRole, UserProfile } from "../types";
 import heroImage from "../../images/staket-foretagscenter-hero.jpg";
 import bildImage from "../../images/bild.jpg";
-import varaVerksamheterImage from "../../images/våra-verksamheter.jpg";
+import varaVerksamheterImage from "../../images/vara-verksamheter.jpg";
 import verkstadOchLagerImage from "../../images/verkstad-och-lager.jpg";
 
 // Import custom font for the cursive/italic text in the design
