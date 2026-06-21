@@ -11,6 +11,8 @@ import {
 import { NoticePost, UserRole, UserProfile } from "../types";
 import heroImage from "../../images/staket-foretagscenter-hero.jpg";
 import bildImage from "../../images/bild.jpg";
+import varaVerksamheterImage from "../../images/våra-verksamheter.jpg";
+import verkstadOchLagerImage from "../../images/verkstad-och-lager.jpg";
 
 // Import custom font for the cursive/italic text in the design
 const style = document.createElement("style");
@@ -214,7 +216,7 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
           {/* Card 2 */}
           <div className="group rounded-2xl overflow-hidden bg-white shadow-lg flex flex-col items-center cursor-pointer" onClick={() => onNavigate("lediga_lokaler")}>
             <div className="w-full h-56 overflow-hidden mask-image-bottom relative">
-              <img src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?q=80&w=800" alt="Rymliga verkstadslokaler och lagerlokaler" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <img src={verkstadOchLagerImage} alt="Rymliga verkstadslokaler och lagerlokaler" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
             </div>
             <div className="px-6 pb-6 pt-4 w-full relative z-10 flex items-start gap-4">
@@ -234,7 +236,7 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
           {/* Card 3 */}
           <div className="group rounded-2xl overflow-hidden bg-white shadow-lg flex flex-col items-center cursor-pointer" onClick={() => onNavigate("vara_foretag")}>
             <div className="w-full h-56 overflow-hidden mask-image-bottom relative">
-              <img src="https://images.unsplash.com/photo-1605810230434-7631ac76ec81?q=80&w=800" alt="Se etablerade företag i fastigheten" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+              <img src={varaVerksamheterImage} alt="Se etablerade företag i fastigheten" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
             </div>
             <div className="px-6 pb-6 pt-4 w-full relative z-10 flex items-start gap-4">
