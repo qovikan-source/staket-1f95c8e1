@@ -1406,7 +1406,7 @@ ${query}`;
               )}
 
               {activeTab === "styrelse_drift" && (
-                <StyrelseDriftView />
+                <StyrelseDriftView profiles={profiles} />
               )}
 
               {activeTab === "administration" && (
@@ -2034,7 +2034,7 @@ ${query}`;
                     <ContactBookView profiles={profiles} />
                   )}
                   {activeTab === "styrelse_drift" && (
-                    <StyrelseDriftView />
+                    <StyrelseDriftView profiles={profiles} />
                   )}
                 </div>
               </div>

@@ -40,6 +40,7 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
   // 2. Profiles without a valid unit (Lokal) and company (Företag)
   const filteredProfiles = profiles.filter((p) => {
     if (p.role === "Administrator") return false;
+    if (p.hideInContactBook) return false;
 
     const unitVal = (p.unit || "").trim();
     const compVal = (p.company || "").trim();

@@ -67,7 +67,9 @@ CREATE OR REPLACE FUNCTION public.create_new_user(
   new_address text DEFAULT '',
   new_description text DEFAULT '',
   new_website text DEFAULT '',
-  new_logo text DEFAULT ''
+  new_logo text DEFAULT '',
+  new_board_title text DEFAULT '',
+  new_hide_in_contact_book boolean DEFAULT false
 )
 RETURNS jsonb
 SECURITY DEFINER
@@ -175,7 +177,9 @@ BEGIN
     address,
     description,
     website,
-    logo
+    logo,
+    board_title,
+    hide_in_contact_book
   ) VALUES (
     new_user_id,
     new_name,
@@ -188,7 +192,9 @@ BEGIN
     new_address,
     new_description,
     new_website,
-    new_logo
+    new_logo,
+    new_board_title,
+    new_hide_in_contact_book
   );
 
   RETURN jsonb_build_object('id', new_user_id, 'email', new_email);
@@ -196,9 +202,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 7. Restrict EXECUTE on the RPC to authenticated users only (no anon)
-REVOKE ALL ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text) FROM anon;
-GRANT EXECUTE ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text) TO authenticated;
+REVOKE ALL ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text, text, boolean) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text, text, boolean) FROM anon;
+GRANT EXECUTE ON FUNCTION public.create_new_user(text, text, text, text, text, text, text, text, text, text, text, text, text, boolean) TO authenticated;
 
 -- =========================================================================
 -- 8. Lock down the `documents` storage bucket (board & member files)
@@ -322,7 +328,9 @@ CREATE OR REPLACE FUNCTION public.admin_update_user(
   new_address text DEFAULT NULL,
   new_description text DEFAULT NULL,
   new_website text DEFAULT NULL,
-  new_logo text DEFAULT NULL
+  new_logo text DEFAULT NULL,
+  new_board_title text DEFAULT NULL,
+  new_hide_in_contact_book boolean DEFAULT NULL
 )
 RETURNS jsonb
 SECURITY DEFINER
@@ -485,7 +493,9 @@ BEGIN
     address = COALESCE(new_address, address),
     description = COALESCE(new_description, description),
     website = COALESCE(new_website, website),
-    logo = COALESCE(new_logo, logo)
+    logo = COALESCE(new_logo, logo),
+    board_title = COALESCE(new_board_title, board_title),
+    hide_in_contact_book = COALESCE(new_hide_in_contact_book, hide_in_contact_book)
   WHERE id = target_user_id;
 
   RETURN jsonb_build_object('success', true, 'id', target_user_id);
@@ -493,9 +503,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Restrict EXECUTE on the RPC to authenticated users only (no anon)
-REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) FROM anon;
-GRANT EXECUTE ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) TO authenticated;
+REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text, text, boolean) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text, text, boolean) FROM anon;
+GRANT EXECUTE ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text, text, boolean) TO authenticated;
 
 -- ==========================================
 -- Migration for Vacant Spaces Multiple Images and Storage Bucket
@@ -545,3 +555,34 @@ BEGIN
   SET img_urls = ARRAY[img_url] 
   WHERE img_urls = '{}' OR img_urls IS NULL AND img_url IS NOT NULL AND img_url <> '';
 END $$;
+
+-- ==========================================
+-- Migration for Styrelse Board Titles
+-- ==========================================
+
+-- 1. Add the board_title column if it doesn't exist
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'board_title'
+  ) THEN
+    ALTER TABLE public.profiles ADD COLUMN board_title text;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns 
+    WHERE table_schema = 'public' AND table_name = 'profiles' AND column_name = 'hide_in_contact_book'
+  ) THEN
+    ALTER TABLE public.profiles ADD COLUMN hide_in_contact_book boolean DEFAULT false;
+  END IF;
+END $$;
+
+-- 2. Populate the board_title and description for existing default members if they exist
+UPDATE public.profiles SET board_title = 'Ordförande', description = 'Lokalägare som leder styrelsemöten, sköter externa leverantörer och fastighetsavtal.' WHERE name = 'Alexander Karasar' AND role = 'Styrelse';
+UPDATE public.profiles SET board_title = 'Vice ordförande', description = 'Sköter föreningens ekonomi tillsammans med ordföranden samt hanterar löpande fakturering, budgetering och årsredovisningar.' WHERE name = 'Lotta Odbratt' AND role = 'Styrelse';
+UPDATE public.profiles SET board_title = 'Kassör / Webbansvarig', description = 'Ansvarar för föreningens digitala plattformar, IT-infrastruktur, medlemsportal samt delat ekonomi- och redovisningsansvar.' WHERE name = 'Robar Halandal' AND role = 'Styrelse';
+UPDATE public.profiles SET board_title = 'Sekreterare', description = 'Lokalägare som bidrar i styrelsearbetet med teknisk expertis, underhållsprojekt och lokala frågor.' WHERE name = 'Rickard Holmlund' AND role = 'Styrelse';
+UPDATE public.profiles SET board_title = 'Styrelsemedlem', description = 'Lokalägare som deltar i styrelsens strategiska beslut och stöttar utvecklingen av samfällighetens gemensamma ytor.' WHERE name = 'Yucel Onmaz' AND role = 'Styrelse';
+UPDATE public.profiles SET board_title = 'Fastighetsförvaltare / Säkerhetsansvarig', description = 'Ansvarar för den löpande tillsynen, infartsgrindar, soprum, säkerhetsanordningar samt dagligt fastighetsunderhåll.' WHERE name = 'Murat Kizil' AND role = 'Styrelse';
+

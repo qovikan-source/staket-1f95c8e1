@@ -19,6 +19,8 @@ function mapProfileToFrontend(db: any): UserProfile {
     description: db.description || "",
     website: db.website || "",
     logo: db.logo || "",
+    boardTitle: db.board_title || "",
+    hideInContactBook: db.hide_in_contact_book || false,
   };
 }
 
@@ -35,6 +37,8 @@ function mapProfileToDb(p: Partial<UserProfile>) {
     description: p.description,
     website: p.website,
     logo: p.logo,
+    board_title: p.boardTitle,
+    hide_in_contact_book: p.hideInContactBook,
   };
 }
 
@@ -178,6 +182,8 @@ export const dbService = {
           new_description: p.description || "",
           new_website: p.website || "",
           new_logo: p.logo || "",
+          new_board_title: p.boardTitle || "",
+          new_hide_in_contact_book: p.hideInContactBook || false,
         });
         
         if (error) {
@@ -196,6 +202,7 @@ export const dbService = {
             description: p.description || "",
             website: p.website || "",
             logo: p.logo || "",
+            hideInContactBook: p.hideInContactBook || false,
           };
         }
       } catch (err) {
@@ -247,6 +254,8 @@ export const dbService = {
         new_description: descVal,
         new_website: websiteVal,
         new_logo: logoVal,
+        new_board_title: p.boardTitle !== undefined ? p.boardTitle : (existingProfile?.boardTitle || ""),
+        new_hide_in_contact_book: p.hideInContactBook !== undefined ? p.hideInContactBook : (existingProfile?.hideInContactBook || false),
       });
 
       if (error) {

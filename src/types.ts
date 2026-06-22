@@ -18,6 +18,8 @@ export interface UserProfile {
   description?: string;
   website?: string;
   logo?: string;
+  boardTitle?: string;
+  hideInContactBook?: boolean;
 }
 
 export type NoticeboardCategory =

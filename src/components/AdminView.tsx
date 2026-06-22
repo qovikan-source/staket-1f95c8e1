@@ -68,6 +68,8 @@ export default function AdminView({
   const [editAddress, setEditAddress] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editWebsite, setEditWebsite] = useState("");
+  const [editBoardTitle, setEditBoardTitle] = useState("");
+  const [editHideInContactBook, setEditHideInContactBook] = useState(false);
   const [editLogoFileName, setEditLogoFileName] = useState("");
   const [editLogoFile, setEditLogoFile] = useState<File | null>(null);
   const [editPassword, setEditPassword] = useState("");
@@ -98,6 +100,8 @@ export default function AdminView({
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
   const [website, setWebsite] = useState("");
+  const [boardTitle, setBoardTitle] = useState("");
+  const [hideInContactBook, setHideInContactBook] = useState(false);
   const [logoFileName, setLogoFileName] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -235,7 +239,9 @@ export default function AdminView({
       address: address || "Regeringsgatan 48, Stockholm",
       description,
       website,
-      logo: logoUrl || logoFileName
+      logo: logoUrl || logoFileName,
+      boardTitle,
+      hideInContactBook
     });
 
     // Reset Form
@@ -251,6 +257,8 @@ export default function AdminView({
     setAddress("");
     setDescription("");
     setWebsite("");
+    setBoardTitle("");
+    setHideInContactBook(false);
     setLogoFileName("");
     setSelectedGalleryLogoUrl("");
     setLogoFile(null);
@@ -269,6 +277,8 @@ export default function AdminView({
     setEditAddress(p.address || "");
     setEditDescription(p.description || "");
     setEditWebsite(p.website || "");
+    setEditBoardTitle(p.boardTitle || "");
+    setEditHideInContactBook(p.hideInContactBook || false);
     setEditLogoFileName(p.logo || "");
     setEditSelectedGalleryLogoUrl(p.logo || "");
     setEditLogoFile(null);
@@ -325,6 +335,8 @@ export default function AdminView({
       description: editDescription,
       website: editWebsite,
       logo: logoUrl,
+      boardTitle: editBoardTitle,
+      hideInContactBook: editHideInContactBook,
       ...(editPassword ? { password: editPassword } : {})
     });
 
@@ -1016,116 +1028,138 @@ export default function AdminView({
                 />
               </div>
 
-              {(role === "Medlem" || role === "Hyresgäst") && (
-                <div className="pt-4 pb-2 border-t border-slate-100 flex items-center justify-center">
-                  <span className="text-[10px] text-slate-500 font-semibold tracking-wide uppercase">
-                    Fylles I Endast För Rollen "Medlem" eller "Hyresgäst".
-                  </span>
+              <div className="pt-4 pb-2 border-t border-slate-100 flex items-center justify-center">
+                <span className="text-[10px] text-slate-500 font-semibold tracking-wide uppercase">
+                  Profiluppgifter
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Företag</label>
+                  <input
+                    id="user-company"
+                    type="text"
+                    placeholder="Företag"
+                    value={company}
+                    onChange={(e) => setCompany(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
                 </div>
-              )}
 
-              {(role === "Medlem" || role === "Hyresgäst") && (
-                <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Lokal NR</label>
+                  <input
+                    id="user-unit"
+                    type="text"
+                    placeholder="Lokal NR"
+                    value={unit}
+                    onChange={(e) => setUnit(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Adress</label>
+                  <input
+                    id="user-address"
+                    type="text"
+                    placeholder="Adress"
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Telefon</label>
+                  <input
+                    id="user-phone"
+                    type="text"
+                    placeholder="Telefon"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Org. Nr.</label>
+                  <input
+                    id="user-orgnr"
+                    type="text"
+                    placeholder="Org. Nr."
+                    value={orgNr}
+                    onChange={(e) => setOrgNr(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Beskrivning</label>
+                  <textarea
+                    id="user-description"
+                    placeholder="Beskrivning"
+                    rows={3}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Webbaddress</label>
+                  <input
+                    id="user-website"
+                    type="text"
+                    placeholder="Webbaddress"
+                    value={website}
+                    onChange={(e) => setWebsite(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                  />
+                </div>
+
+                {(role === "Styrelse" || role === "Administrator") && (
                   <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Företag</label>
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Styrelse-post / Roll</label>
                     <input
-                      id="user-company"
+                      id="user-board-title"
                       type="text"
-                      placeholder="Företag"
-                      value={company}
-                      onChange={(e) => setCompany(e.target.value)}
+                      placeholder="t.ex. Ordförande, Sekreterare"
+                      value={boardTitle}
+                      onChange={(e) => setBoardTitle(e.target.value)}
                       className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
                     />
                   </div>
+                )}
 
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Lokal NR</label>
+                <div className="space-y-1">
+                  <label className="text-[10px] text-slate-500 font-semibold mb-1 block">Logotyp:</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null;
+                      setLogoFile(file);
+                      setLogoFileName(file ? file.name : "");
+                    }}
+                    className="w-full text-[10px] text-slate-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border file:border-slate-300 file:bg-white file:text-xs file:font-semibold hover:file:bg-slate-50 cursor-pointer"
+                  />
+                  <p className="text-[9px] text-slate-400 mt-1">(önskad storlek: 400x240)</p>
+                  <div className="flex items-center gap-2 pt-3">
                     <input
-                      id="user-unit"
-                      type="text"
-                      placeholder="Lokal NR"
-                      value={unit}
-                      onChange={(e) => setUnit(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                      type="checkbox"
+                      id="hideInContactBook"
+                      checked={hideInContactBook}
+                      onChange={(e) => setHideInContactBook(e.target.checked)}
+                      className="rounded border-slate-300 text-slate-900 focus:ring-slate-950 h-4 w-4 cursor-pointer"
                     />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Adress</label>
-                    <input
-                      id="user-address"
-                      type="text"
-                      placeholder="Adress"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Telefon</label>
-                    <input
-                      id="user-phone"
-                      type="text"
-                      placeholder="Telefon"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Org. Nr.</label>
-                    <input
-                      id="user-orgnr"
-                      type="text"
-                      placeholder="Org. Nr."
-                      value={orgNr}
-                      onChange={(e) => setOrgNr(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Beskrivning</label>
-                    <textarea
-                      id="user-description"
-                      placeholder="Beskrivning"
-                      rows={3}
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-500 uppercase">Webbaddress</label>
-                    <input
-                      id="user-website"
-                      type="text"
-                      placeholder="Webbaddress"
-                      value={website}
-                      onChange={(e) => setWebsite(e.target.value)}
-                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] text-slate-500 font-semibold mb-1 block">Logotyp:</label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0] || null;
-                        setLogoFile(file);
-                        setLogoFileName(file ? file.name : "");
-                      }}
-                      className="w-full text-[10px] text-slate-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border file:border-slate-300 file:bg-white file:text-xs file:font-semibold hover:file:bg-slate-50 cursor-pointer"
-                    />
-                    <p className="text-[9px] text-slate-400 mt-1">(önskad storlek: 400x240)</p>
+                    <label htmlFor="hideInContactBook" className="text-xs text-slate-700 font-semibold select-none cursor-pointer">
+                      Dölj i kontaktboken
+                    </label>
                   </div>
                 </div>
-              )}
+              </div>
 
               <div className="pt-2 shrink-0">
                 <button
@@ -1311,6 +1345,19 @@ export default function AdminView({
                   />
                 </div>
 
+                {(editRole === "Styrelse" || editRole === "Administrator") && (
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase">Styrelse-post / Roll</label>
+                    <input
+                      type="text"
+                      placeholder="t.ex. Ordförande, Sekreterare"
+                      value={editBoardTitle}
+                      onChange={(e) => setEditBoardTitle(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
+                    />
+                  </div>
+                )}
+
                 <div className="space-y-1">
                   <label className="text-[10px] text-slate-500 font-semibold mb-1 block">Logotyp / Bild:</label>
                   {editLogoFileName && (
@@ -1336,6 +1383,18 @@ export default function AdminView({
                     className="w-full text-[10px] text-slate-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border file:border-slate-300 file:bg-white file:text-xs file:font-semibold hover:file:bg-slate-50 cursor-pointer"
                   />
                   <p className="text-[9px] text-slate-400 mt-1">(önskad storlek: 400x240)</p>
+                  <div className="flex items-center gap-2 pt-3">
+                    <input
+                      type="checkbox"
+                      id="editHideInContactBook"
+                      checked={editHideInContactBook}
+                      onChange={(e) => setEditHideInContactBook(e.target.checked)}
+                      className="rounded border-slate-300 text-slate-900 focus:ring-slate-950 h-4 w-4 cursor-pointer"
+                    />
+                    <label htmlFor="editHideInContactBook" className="text-xs text-slate-700 font-semibold select-none cursor-pointer">
+                      Dölj i kontaktboken
+                    </label>
+                  </div>
                 </div>
               </div>
 
@@ -1630,3 +1689,5 @@ export default function AdminView({
     </div>
   );
 }
+
+
