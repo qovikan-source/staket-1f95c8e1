@@ -40,6 +40,7 @@ export default function AvailableSpacesView({
   const [contactMsg, setContactMsg] = useState("");
   const [contactProduct, setContactProduct] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [activeImageIndexes, setActiveImageIndexes] = useState<Record<string, number>>({});
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -119,13 +120,43 @@ export default function AvailableSpacesView({
                       >
                         <div className="flex flex-col md:flex-row gap-6">
                           {/* Left Panel Image with Size Overlays */}
-                          <div className="w-full md:w-56 h-40 rounded-xl overflow-hidden shrink-0 bg-slate-50 border border-slate-100 relative">
-                            <img 
-                              src={space.imgUrl || "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800"} 
-                              alt={space.title} 
-                              className="w-full h-full object-cover" 
-                            />
-                            <div className="absolute top-2 left-2 px-2.5 py-0.5 bg-slate-900 border border-slate-800 text-white rounded text-[10px] font-bold uppercase tracking-wider shadow-sm">
+                          <div className="w-full md:w-56 h-40 rounded-xl overflow-hidden shrink-0 bg-slate-50 border border-slate-100 relative group">
+                            {(() => {
+                              const activeIdx = activeImageIndexes[space.id] || 0;
+                              const imageUrls = space.imgUrls && space.imgUrls.length > 0
+                                ? space.imgUrls
+                                : [space.imgUrl || "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800"];
+                              const currentImg = imageUrls[activeIdx] || imageUrls[0];
+                              return (
+                                <>
+                                  <img 
+                                    src={currentImg} 
+                                    alt={space.title} 
+                                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                                  />
+                                  {imageUrls.length > 1 && (
+                                    <div className="absolute bottom-2 left-2 right-2 flex gap-1 justify-center bg-slate-950/50 backdrop-blur-xs py-1 px-1.5 rounded-lg z-10">
+                                      {imageUrls.map((_, idx) => (
+                                        <button
+                                          key={idx}
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            setActiveImageIndexes(prev => ({ ...prev, [space.id]: idx }));
+                                          }}
+                                          className={`w-1.5 h-1.5 rounded-full transition-all cursor-pointer ${
+                                            activeIdx === idx
+                                              ? "bg-amber-400 scale-125"
+                                              : "bg-white/50 hover:bg-white/80"
+                                          }`}
+                                        />
+                                      ))}
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
+                            <div className="absolute top-2 left-2 px-2.5 py-0.5 bg-slate-900/80 backdrop-blur-xs border border-slate-700 text-white rounded text-[10px] font-bold uppercase tracking-wider shadow-sm z-10">
                               {space.totalArea.startsWith("ca ") ? space.totalArea.split(" ").slice(0, 3).join(" ") : space.totalArea.split(" ").slice(0, 2).join(" ")}
                             </div>
                           </div>

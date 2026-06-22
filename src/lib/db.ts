@@ -114,6 +114,7 @@ function mapSpaceToFrontend(db: any): VacantSpace {
     detailsUpperLevel: db.details_upper_level || "",
     securityInfo: db.security_info || "",
     imgUrl: db.img_url || "",
+    imgUrls: db.img_urls || (db.img_url ? [db.img_url] : []),
     createdAt: db.created_at ? new Date(db.created_at).toISOString().split("T")[0] : "",
   };
 }
@@ -128,7 +129,8 @@ function mapSpaceToDb(s: Partial<VacantSpace>) {
     details_lower_level: s.detailsLowerLevel,
     details_upper_level: s.detailsUpperLevel,
     security_info: s.securityInfo,
-    img_url: s.imgUrl,
+    img_url: s.imgUrl || (s.imgUrls && s.imgUrls[0]) || "",
+    img_urls: s.imgUrls || (s.imgUrl ? [s.imgUrl] : []),
   };
 }
 
@@ -445,6 +447,84 @@ export const dbService = {
       .getPublicUrl(filePath);
 
     return publicUrl;
+  },
+
+  async listCompanyLogos(): Promise<{ name: string; url: string }[]> {
+    const { data, error } = await supabase.storage.from("logos").list("", {
+      limit: 100,
+      sortBy: { column: "created_at", order: "desc" },
+    });
+
+    if (error) {
+      console.error("Failed to list company logos:", error.message);
+      throw error;
+    }
+
+    if (!data) return [];
+
+    return data
+      .filter(file => file.name !== ".emptyFolderPlaceholder")
+      .map(file => {
+        const { data: { publicUrl } } = supabase.storage.from("logos").getPublicUrl(file.name);
+        return { name: file.name, url: publicUrl };
+      });
+  },
+
+  async deleteCompanyLogo(fileName: string): Promise<void> {
+    const { error } = await supabase.storage.from("logos").remove([fileName]);
+    if (error) {
+      console.error("Failed to delete company logo:", error.message);
+      throw error;
+    }
+  },
+
+  async uploadSpaceImage(file: File): Promise<string> {
+    const sanitizedName = sanitizeFilename(file.name);
+    const filePath = `${Date.now()}-${sanitizedName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("spaces")
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: true,
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: { publicUrl } } = supabase.storage
+      .from("spaces")
+      .getPublicUrl(filePath);
+
+    return publicUrl;
+  },
+
+  async listSpaceImages(): Promise<{ name: string; url: string }[]> {
+    const { data, error } = await supabase.storage.from("spaces").list("", {
+      limit: 100,
+      sortBy: { column: "created_at", order: "desc" },
+    });
+
+    if (error) {
+      console.error("Failed to list space images:", error.message);
+      throw error;
+    }
+
+    if (!data) return [];
+
+    return data
+      .filter(file => file.name !== ".emptyFolderPlaceholder")
+      .map(file => {
+        const { data: { publicUrl } } = supabase.storage.from("spaces").getPublicUrl(file.name);
+        return { name: file.name, url: publicUrl };
+      });
+  },
+
+  async deleteSpaceImage(fileName: string): Promise<void> {
+    const { error } = await supabase.storage.from("spaces").remove([fileName]);
+    if (error) {
+      console.error("Failed to delete space image:", error.message);
+      throw error;
+    }
   },
 
   /**

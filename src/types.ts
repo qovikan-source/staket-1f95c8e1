@@ -97,6 +97,7 @@ export interface VacantSpace {
   detailsUpperLevel: string;
   securityInfo: string;
   imgUrl?: string;
+  imgUrls?: string[];
   createdAt: string;
 }
 

@@ -226,6 +226,7 @@ DROP POLICY IF EXISTS "documents: board update" ON storage.objects;
 DROP POLICY IF EXISTS "documents: board delete" ON storage.objects;
 DROP POLICY IF EXISTS "logos: public read" ON storage.objects;
 DROP POLICY IF EXISTS "logos: authenticated write" ON storage.objects;
+DROP POLICY IF EXISTS "logos: authenticated delete" ON storage.objects;
 
 -- Members (any authenticated user) may read non-board files in `documents`
 CREATE POLICY "documents: authenticated read member files"
@@ -293,6 +294,11 @@ CREATE POLICY "logos: authenticated write"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (bucket_id = 'logos');
+
+CREATE POLICY "logos: authenticated delete"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id = 'logos');
 
 -- NOTE: After running this, any previously-shared public links to
 -- `documents/...` objects (including the `url` column in public.files) will
@@ -490,3 +496,52 @@ $$ LANGUAGE plpgsql;
 REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) FROM anon;
 GRANT EXECUTE ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) TO authenticated;
+
+-- ==========================================
+-- Migration for Vacant Spaces Multiple Images and Storage Bucket
+-- ==========================================
+
+-- 1. Create the `spaces` bucket for vacant spaces images (idempotent)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('spaces', 'spaces', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- 2. Setup RLS policies on storage.objects for the `spaces` bucket
+DROP POLICY IF EXISTS "spaces: public read" ON storage.objects;
+DROP POLICY IF EXISTS "spaces: authenticated write" ON storage.objects;
+DROP POLICY IF EXISTS "spaces: authenticated delete" ON storage.objects;
+
+CREATE POLICY "spaces: public read"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'spaces');
+
+CREATE POLICY "spaces: authenticated write"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (bucket_id = 'spaces');
+
+CREATE POLICY "spaces: authenticated delete"
+ON storage.objects FOR DELETE
+TO authenticated
+USING (bucket_id = 'spaces');
+
+-- 3. Modify vacant_spaces table to support array of image URLs
+DO $$
+BEGIN
+  -- Add img_urls column if it doesn't exist
+  IF NOT EXISTS (
+    SELECT 1 
+    FROM information_schema.columns 
+    WHERE table_schema = 'public' 
+      AND table_name = 'vacant_spaces' 
+      AND column_name = 'img_urls'
+  ) THEN
+    ALTER TABLE public.vacant_spaces ADD COLUMN img_urls text[] DEFAULT '{}';
+  END IF;
+
+  -- Populate img_urls from existing img_url values if img_urls is empty
+  UPDATE public.vacant_spaces 
+  SET img_urls = ARRAY[img_url] 
+  WHERE img_urls = '{}' OR img_urls IS NULL AND img_url IS NOT NULL AND img_url <> '';
+END $$;

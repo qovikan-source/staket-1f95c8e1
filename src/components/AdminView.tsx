@@ -3,9 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { dbService } from "../lib/db";
-import { Users, FileText, Bell, Plus, ArrowUp, ArrowDown, Edit2, Trash2, CheckCircle2, AlertTriangle, ShieldCheck, Building2, Sparkles } from "lucide-react";
+import { Users, FileText, Bell, Plus, ArrowUp, ArrowDown, Edit2, Trash2, CheckCircle2, AlertTriangle, ShieldCheck, Building2, Sparkles, Image, Upload, Copy } from "lucide-react";
 import { UserProfile, UserRole, NoticePost, FileItem, VacantSpace, FileCategory } from "../types";
 
 // @ts-ignore
@@ -28,7 +28,7 @@ interface AdminViewProps {
   activeProfileName?: string;
 }
 
-type AdminSubTab = "användare" | "filer" | "anslagstavla" | "lediga_lokaler" | "ai_support";
+type AdminSubTab = "användare" | "filer" | "anslagstavla" | "lediga_lokaler" | "ai_support" | "galleri";
 
 export default function AdminView({
   role: activeUserRole,
@@ -102,6 +102,90 @@ export default function AdminView({
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
+  // Gallery states
+  const [selectedGalleryLogoUrl, setSelectedGalleryLogoUrl] = useState("");
+  const [editSelectedGalleryLogoUrl, setEditSelectedGalleryLogoUrl] = useState("");
+  const [showGalleryPickerModal, setShowGalleryPickerModal] = useState<"add" | "edit" | null>(null);
+  const [galleryLogos, setGalleryLogos] = useState<{ name: string; url: string }[]>([]);
+  const [isLoadingGallery, setIsLoadingGallery] = useState(false);
+  const [galleryUploadFile, setGalleryUploadFile] = useState<File | null>(null);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+
+  // Space Gallery states
+  const [galleryCategory, setGalleryCategory] = useState<"logos" | "spaces">("logos");
+  const [spaceImages, setSpaceImages] = useState<{ name: string; url: string }[]>([]);
+  const [isLoadingSpaceImages, setIsLoadingSpaceImages] = useState(false);
+  const [spaceImageUploadFile, setSpaceImageUploadFile] = useState<File | null>(null);
+  const [isUploadingSpaceImage, setIsUploadingSpaceImage] = useState(false);
+  const [selectedGallerySpaceImageUrls, setSelectedGallerySpaceImageUrls] = useState<string[]>([]);
+  const [showSpaceGalleryPickerModal, setShowSpaceGalleryPickerModal] = useState<boolean>(false);
+
+  const fetchGalleryLogos = async () => {
+    setIsLoadingGallery(true);
+    try {
+      const list = await dbService.listCompanyLogos();
+      setGalleryLogos(list);
+    } catch (err) {
+      console.error("Failed to load gallery logos:", err);
+    } finally {
+      setIsLoadingGallery(false);
+    }
+  };
+
+  const fetchSpaceImages = async () => {
+    setIsLoadingSpaceImages(true);
+    try {
+      const list = await dbService.listSpaceImages();
+      setSpaceImages(list);
+    } catch (err) {
+      console.error("Failed to load space images:", err);
+    } finally {
+      setIsLoadingSpaceImages(false);
+    }
+  };
+
+  const handleDeleteGalleryLogo = async (name: string) => {
+    if (!window.confirm("Är du säker på att du vill ta bort den här logotypen permanent från galleriet?")) return;
+    try {
+      await dbService.deleteCompanyLogo(name);
+      fetchGalleryLogos();
+    } catch (err) {
+      alert("Kunde inte radera logotypen.");
+    }
+  };
+
+  const handleDeleteSpaceImage = async (name: string) => {
+    if (!window.confirm("Är du säker på att du vill ta bort den här bilden permanent från galleriet?")) return;
+    try {
+      await dbService.deleteSpaceImage(name);
+      fetchSpaceImages();
+    } catch (err) {
+      alert("Kunde inte radera bilden.");
+    }
+  };
+
+  useEffect(() => {
+    if (subTab === "galleri") {
+      if (galleryCategory === "logos") {
+        fetchGalleryLogos();
+      } else {
+        fetchSpaceImages();
+      }
+    }
+  }, [subTab, galleryCategory]);
+
+  useEffect(() => {
+    if (showGalleryPickerModal) {
+      fetchGalleryLogos();
+    }
+  }, [showGalleryPickerModal]);
+
+  useEffect(() => {
+    if (showSpaceGalleryPickerModal) {
+      fetchSpaceImages();
+    }
+  }, [showSpaceGalleryPickerModal]);
+
   const handleSort = (field: keyof UserProfile) => {
     if (sortField === field) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -126,7 +210,7 @@ export default function AdminView({
       return;
     }
 
-    let logoUrl = "";
+    let logoUrl = selectedGalleryLogoUrl || "";
     if (logoFile) {
       setIsUploadingLogo(true);
       try {
@@ -168,6 +252,7 @@ export default function AdminView({
     setDescription("");
     setWebsite("");
     setLogoFileName("");
+    setSelectedGalleryLogoUrl("");
     setLogoFile(null);
     setShowAddUserModal(false);
   };
@@ -185,6 +270,7 @@ export default function AdminView({
     setEditDescription(p.description || "");
     setEditWebsite(p.website || "");
     setEditLogoFileName(p.logo || "");
+    setEditSelectedGalleryLogoUrl(p.logo || "");
     setEditLogoFile(null);
     setEditPassword("");
     setEditRepeatPassword("");
@@ -218,7 +304,7 @@ export default function AdminView({
       }
     }
 
-    let logoUrl = editingProfile.logo || "";
+    let logoUrl = editSelectedGalleryLogoUrl || editingProfile.logo || "";
     if (editLogoFile) {
       try {
         logoUrl = await dbService.uploadCompanyLogo(editLogoFile);
@@ -243,6 +329,8 @@ export default function AdminView({
     });
 
     setEditingProfile(null);
+    setEditSelectedGalleryLogoUrl("");
+    setEditLogoFileName("");
     setIsUpdatingUser(false);
   };
 
@@ -258,6 +346,10 @@ export default function AdminView({
       .map(item => item.trim())
       .filter(item => item.length > 0);
 
+    const finalImgUrls = selectedGallerySpaceImageUrls.length > 0 
+      ? selectedGallerySpaceImageUrls 
+      : [spaceImgUrl || "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800"];
+
     onAddSpace({
       title: spaceTitle,
       location: spaceLocation,
@@ -267,7 +359,8 @@ export default function AdminView({
       detailsLowerLevel: spaceDetailsLower || "Körbar tillträdesyta med vikport.",
       detailsUpperLevel: spaceDetailsUpper || "Öppen planlösning.",
       securityInfo: spaceSecurityInfo || "Stäket företagscenter har 24h övervakningssystem",
-      imgUrl: spaceImgUrl || "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800"
+      imgUrl: finalImgUrls[0],
+      imgUrls: finalImgUrls
     });
 
     // Reset Form
@@ -280,6 +373,7 @@ export default function AdminView({
     setSpaceDetailsUpper("");
     setSpaceSecurityInfo("Stäket företagscenter har 24h övervakningssystem och eget hemsidan");
     setSpaceImgUrl("");
+    setSelectedGallerySpaceImageUrls([]);
     setShowAddSpaceModal(false);
   };
 
@@ -393,6 +487,18 @@ export default function AdminView({
         >
           <Building2 className="w-4 h-4" />
           Lediga Lokaler Järfälla ({spaces.length})
+        </button>
+
+        <button
+          onClick={() => setSubTab("galleri")}
+          className={`px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 cursor-pointer transition-colors border ${
+            subTab === "galleri"
+              ? "bg-slate-900 text-white border-slate-950"
+              : "bg-white text-slate-600 border-slate-100 hover:bg-slate-50"
+          }`}
+        >
+          <Image className="w-4 h-4" />
+          Galleri &amp; Bilder
         </button>
       </div>
 
@@ -682,6 +788,146 @@ export default function AdminView({
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ACTIVE SUBTAB 5 - GALLERY */}
+      {subTab === "galleri" && (
+        <div className="space-y-4 animate-fade-in">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <h3 className="font-bold text-slate-800 text-base">Bildgalleri</h3>
+              <p className="text-xs text-slate-500">Hantera uppladdade bilder för lokaler och medlemslogotyper.</p>
+            </div>
+          </div>
+
+          <div className="flex bg-slate-100 p-1 rounded-xl w-full max-w-sm shrink-0 mb-4">
+            <button
+              onClick={() => setGalleryCategory("logos")}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg cursor-pointer transition-colors ${
+                galleryCategory === "logos" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Företagslogotyper
+            </button>
+            <button
+              onClick={() => setGalleryCategory("spaces")}
+              className={`flex-1 py-2 text-xs font-bold rounded-lg cursor-pointer transition-colors ${
+                galleryCategory === "spaces" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              Lokalbilder
+            </button>
+          </div>
+
+          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-2xs p-6">
+            <div className="mb-6 flex flex-col sm:flex-row items-center gap-4 justify-between border-b border-slate-100 pb-6">
+               <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shrink-0">
+                    <Upload className="w-5 h-5" />
+                 </div>
+                 <div>
+                   <h4 className="font-bold text-slate-800 text-sm">Ladda upp ny bild</h4>
+                   <p className="text-[10px] text-slate-500">Accepterade format: JPG, PNG, WEBP.</p>
+                 </div>
+               </div>
+               
+               <div className="flex items-center gap-2 w-full sm:w-auto">
+                 <input
+                   type="file"
+                   accept="image/*"
+                   onChange={(e) => {
+                     const file = e.target.files?.[0] || null;
+                     if (galleryCategory === "logos") setGalleryUploadFile(file);
+                     else setSpaceImageUploadFile(file);
+                   }}
+                   className="flex-1 sm:w-48 text-[10px] text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-100 file:text-slate-700 file:text-xs file:font-bold hover:file:bg-slate-200 cursor-pointer"
+                   id="gallery-direct-upload"
+                 />
+                 <button
+                   onClick={async () => {
+                     if (galleryCategory === "logos" && galleryUploadFile) {
+                       setIsUploadingGallery(true);
+                       try {
+                         await dbService.uploadCompanyLogo(galleryUploadFile);
+                         setGalleryUploadFile(null);
+                         const input = document.getElementById("gallery-direct-upload") as HTMLInputElement;
+                         if (input) input.value = "";
+                         fetchGalleryLogos();
+                       } catch(err) {
+                         alert("Kunde inte ladda upp logotyp.");
+                       } finally {
+                         setIsUploadingGallery(false);
+                       }
+                     } else if (galleryCategory === "spaces" && spaceImageUploadFile) {
+                       setIsUploadingSpaceImage(true);
+                       try {
+                         await dbService.uploadSpaceImage(spaceImageUploadFile);
+                         setSpaceImageUploadFile(null);
+                         const input = document.getElementById("gallery-direct-upload") as HTMLInputElement;
+                         if (input) input.value = "";
+                         fetchSpaceImages();
+                       } catch(err) {
+                         alert("Kunde inte ladda upp lokalbild.");
+                       } finally {
+                         setIsUploadingSpaceImage(false);
+                       }
+                     }
+                   }}
+                   disabled={(galleryCategory === "logos" ? !galleryUploadFile || isUploadingGallery : !spaceImageUploadFile || isUploadingSpaceImage)}
+                   className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                 >
+                   {galleryCategory === "logos" 
+                      ? (isUploadingGallery ? "Laddar..." : "Ladda upp")
+                      : (isUploadingSpaceImage ? "Laddar..." : "Ladda upp")}
+                 </button>
+               </div>
+            </div>
+
+            {/* Gallery Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {(galleryCategory === "logos" ? galleryLogos : spaceImages).length === 0 ? (
+                <div className="col-span-full py-12 text-center text-slate-400 text-xs font-semibold">
+                  Inga {galleryCategory === "logos" ? "logotyper" : "lokalbilder"} hittades i galleriet.
+                </div>
+              ) : (
+                (galleryCategory === "logos" ? galleryLogos : spaceImages).map((img, idx) => (
+                  <div key={idx} className="group relative bg-slate-50 rounded-xl border border-slate-200 overflow-hidden aspect-square flex items-center justify-center">
+                    <img src={img.url} alt={img.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" />
+                    
+                    <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-2">
+                       <button
+                         type="button"
+                         onClick={() => {
+                           navigator.clipboard.writeText(img.url);
+                           alert("Länk kopierad till urklipp!");
+                         }}
+                         className="p-2 bg-white/10 hover:bg-white/20 text-white rounded-lg backdrop-blur-sm cursor-pointer"
+                         title="Kopiera länk"
+                       >
+                         <Copy className="w-4 h-4" />
+                       </button>
+                       <button
+                         type="button"
+                         onClick={() => {
+                           if (galleryCategory === "logos") handleDeleteGalleryLogo(img.name);
+                           else handleDeleteSpaceImage(img.name);
+                         }}
+                         className="p-2 bg-rose-500/80 hover:bg-rose-500 text-white rounded-lg backdrop-blur-sm cursor-pointer"
+                         title="Radera bild"
+                       >
+                         <Trash2 className="w-4 h-4" />
+                       </button>
+                    </div>
+
+                    <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-slate-900/80 to-transparent">
+                      <p className="text-[9px] text-white font-mono truncate">{img.name}</p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -1218,14 +1464,41 @@ export default function AdminView({
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-slate-500 uppercase">Bild URL (Valfri länk till foto)</label>
-                <input
-                  type="text"
-                  placeholder="https://images.unsplash.com/photo-..."
-                  value={spaceImgUrl}
-                  onChange={(e) => setSpaceImgUrl(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                />
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Lokalbilder (Välj från galleri)</label>
+                {selectedGallerySpaceImageUrls.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2 animate-fade-in">
+                    {selectedGallerySpaceImageUrls.map((url, idx) => (
+                      <div key={idx} className="relative aspect-video rounded-xl overflow-hidden border border-slate-200">
+                         <img src={url} alt={`Vald bild ${idx+1}`} className="w-full h-full object-cover" />
+                         <button
+                           type="button"
+                           onClick={() => setSelectedGallerySpaceImageUrls(prev => prev.filter(u => u !== url))}
+                           className="absolute top-1 right-1 p-1 bg-rose-500 hover:bg-rose-600 text-white rounded-md cursor-pointer shadow-sm"
+                         >
+                           <Trash2 className="w-3 h-3" />
+                         </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => setShowSpaceGalleryPickerModal(true)}
+                      className="aspect-video rounded-xl border border-dashed border-slate-300 hover:border-slate-400 hover:bg-slate-50 flex flex-col items-center justify-center text-slate-400 hover:text-slate-500 cursor-pointer transition-colors"
+                    >
+                      <Plus className="w-4 h-4 mb-1" />
+                      <span className="text-[10px] font-bold">Lägg till</span>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowSpaceGalleryPickerModal(true)}
+                    className="w-full py-3 border border-slate-200 rounded-xl bg-white hover:bg-slate-50 text-slate-700 text-xs font-bold cursor-pointer flex items-center justify-center gap-2 transition-colors"
+                  >
+                    <Image className="w-4 h-4 text-slate-400" />
+                    Välj bilder från galleri
+                  </button>
+                )}
+                <p className="text-[9px] text-slate-400 mt-1">Du kan välja flera bilder till samma annons.</p>
               </div>
 
               <div className="pt-2">
@@ -1237,6 +1510,120 @@ export default function AdminView({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Logo Gallery Picker Modal */}
+      {showGalleryPickerModal && (
+        <div className="fixed inset-0 bg-slate-950/45 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden animate-scale-up">
+            <div className="flex items-center justify-between p-5 bg-slate-900 text-white shrink-0">
+              <div className="space-y-0.5">
+                <h3 className="font-bold text-base flex items-center gap-2"><Image className="w-5 h-5"/> Välj Företagslogotyp</h3>
+                <p className="text-[10px] text-slate-300">Välj en logotyp från galleriet för att koppla till medlemmen.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowGalleryPickerModal(null)}
+                className="text-slate-400 hover:text-white text-xs font-semibold px-2.5 py-1 bg-slate-800 rounded-lg cursor-pointer transition-colors"
+              >
+                Stäng
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              {isLoadingGallery ? (
+                 <div className="py-12 flex items-center justify-center text-slate-400 font-bold text-xs">Laddar galleri...</div>
+              ) : galleryLogos.length === 0 ? (
+                 <div className="py-12 text-center text-slate-400 font-bold text-xs">Inga logotyper hittades i galleriet. Vänligen ladda upp via "Galleri"-fliken först, eller ladda upp filen direkt.</div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {galleryLogos.map((img, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => {
+                         if (showGalleryPickerModal === "add") {
+                           setSelectedGalleryLogoUrl(img.url);
+                           setLogoFileName(img.name);
+                         } else {
+                           setEditSelectedGalleryLogoUrl(img.url);
+                           setEditLogoFileName(img.name);
+                         }
+                         setShowGalleryPickerModal(null);
+                      }}
+                      className="group relative bg-slate-50 rounded-xl border border-slate-200 overflow-hidden aspect-square flex items-center justify-center hover:border-blue-400 hover:shadow-md transition-all cursor-pointer"
+                    >
+                      <img src={img.url} alt={img.name} className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-300" />
+                      <div className="absolute inset-0 bg-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                         <span className="px-3 py-1.5 bg-blue-600 text-white text-[10px] font-bold rounded-lg shadow-sm">VÄLJ</span>
+                      </div>
+                      <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-slate-900/80 to-transparent">
+                        <p className="text-[9px] text-white font-mono truncate">{img.name}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Space Images Gallery Picker Modal */}
+      {showSpaceGalleryPickerModal && (
+        <div className="fixed inset-0 bg-slate-950/45 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-4xl max-h-[85vh] flex flex-col overflow-hidden animate-scale-up">
+            <div className="flex items-center justify-between p-5 bg-slate-900 text-white shrink-0">
+              <div className="space-y-0.5">
+                <h3 className="font-bold text-base flex items-center gap-2"><Image className="w-5 h-5"/> Välj Lokalbilder</h3>
+                <p className="text-[10px] text-slate-300">Välj en eller flera bilder från galleriet att visa i annonsen.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowSpaceGalleryPickerModal(false)}
+                className="text-slate-400 hover:text-white text-xs font-semibold px-2.5 py-1 bg-slate-800 rounded-lg cursor-pointer transition-colors"
+              >
+                Klar
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-6">
+              {isLoadingSpaceImages ? (
+                 <div className="py-12 flex items-center justify-center text-slate-400 font-bold text-xs">Laddar galleri...</div>
+              ) : spaceImages.length === 0 ? (
+                 <div className="py-12 text-center text-slate-400 font-bold text-xs">Inga lokalbilder hittades i galleriet. Vänligen ladda upp via "Galleri"-fliken först.</div>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {spaceImages.map((img, idx) => {
+                    const isSelected = selectedGallerySpaceImageUrls.includes(img.url);
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => {
+                           setSelectedGallerySpaceImageUrls(prev => 
+                             isSelected 
+                               ? prev.filter(u => u !== img.url)
+                               : [...prev, img.url]
+                           );
+                        }}
+                        className={`group relative rounded-xl border-2 overflow-hidden aspect-video flex items-center justify-center transition-all cursor-pointer ${
+                          isSelected ? "border-emerald-500 shadow-md ring-2 ring-emerald-500/20" : "border-slate-200 hover:border-slate-300 bg-slate-50"
+                        }`}
+                      >
+                        <img src={img.url} alt={img.name} className={`w-full h-full object-cover transition-transform duration-300 ${isSelected ? "scale-105" : "group-hover:scale-105"}`} />
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-sm">
+                            <CheckCircle2 className="w-4 h-4" />
+                          </div>
+                        )}
+                        <div className="absolute bottom-0 inset-x-0 p-2 bg-gradient-to-t from-slate-900/80 to-transparent">
+                          <p className="text-[9px] text-white font-mono truncate">{img.name}</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
