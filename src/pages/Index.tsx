@@ -23,7 +23,9 @@ import {
   MapPin,
   Phone,
   Sparkles,
-  MessageSquare
+  MessageSquare,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
 import { UserRole, UserProfile, NoticePost, FileItem, VacantSpace, FileCategory, BoardFolder, NoticeboardCategory, NOTICEBOARD_CATEGORIES } from "../types";
@@ -160,6 +162,17 @@ export default function Index() {
   const [activeTour, setActiveTour] = useState<string | null>(null);
   const [tourStepIndex, setTourStepIndex] = useState<number>(0);
   const [indicatorCoords, setIndicatorCoords] = useState<{ top: number; left: number; width: number; height: number } | null>(null);
+
+  // Collapsible Admin Sidebar State
+  const [isAdminSidebarCollapsed, setIsAdminSidebarCollapsed] = useState(() => {
+    return localStorage.getItem("staket_admin_sidebar_collapsed") === "true";
+  });
+
+  const isCurrentlyCollapsed = isAdminSidebarCollapsed && !mobileMenuOpen;
+
+  useEffect(() => {
+    localStorage.setItem("staket_admin_sidebar_collapsed", String(isAdminSidebarCollapsed));
+  }, [isAdminSidebarCollapsed]);
 
   useEffect(() => {
     if (role === "Administrator") {
@@ -1133,15 +1146,34 @@ ${query}`;
       ) : role === "Administrator" ? (
         <div className="flex-1 flex flex-col lg:flex-row min-h-0 relative">
           {/* Sidebar Navigation Drawer */}
-          <aside className={`lg:w-64 bg-[#1e293b] flex flex-col shrink-0 border-r border-slate-800 transition-all ${mobileMenuOpen ? "flex h-auto w-full absolute inset-x-0 top-0 z-30 shadow-xl border-b" : "hidden lg:flex"}`}>
-            <div className="p-4 border-b border-slate-700/50 flex items-center justify-between">
-              <div className="text-white font-bold text-lg flex items-center gap-2.5">
-                <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center text-xs font-bold shadow-xs">BRF</div>
-                <div className="leading-none">
-                  <div className="text-white text-sm font-bold tracking-tight">BRF PORTALEN</div>
-                  <div className="text-[9px] text-slate-400 font-mono tracking-wider mt-0.5">SMEDEN 14</div>
-                </div>
-              </div>
+          <aside className={`bg-[#1e293b] flex flex-col shrink-0 border-r border-slate-800 transition-all duration-300 ${isCurrentlyCollapsed ? "lg:w-16" : "lg:w-64"} ${mobileMenuOpen ? "flex h-auto w-full absolute inset-x-0 top-0 z-30 shadow-xl border-b" : "hidden lg:flex"}`}>
+            <div className={`p-4 border-b border-slate-700/50 flex items-center ${isCurrentlyCollapsed ? "justify-center px-2 py-3" : "justify-between"}`}>
+              {!isCurrentlyCollapsed ? (
+                <>
+                  <div className="text-white font-bold text-lg flex items-center gap-2.5">
+                    <div className="w-8 h-8 bg-blue-500 rounded flex items-center justify-center text-xs font-bold shadow-xs">BRF</div>
+                    <div className="leading-none">
+                      <div className="text-white text-sm font-bold tracking-tight">BRF PORTALEN</div>
+                      <div className="text-[9px] text-slate-400 font-mono tracking-wider mt-0.5">SMEDEN 14</div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setIsAdminSidebarCollapsed(true)}
+                    className="hidden lg:flex text-slate-400 hover:text-white hover:bg-slate-800 p-1.5 rounded-lg transition-colors cursor-pointer"
+                    title="Minimera sidomeny"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                </>
+              ) : (
+                <button
+                  onClick={() => setIsAdminSidebarCollapsed(false)}
+                  className="hidden lg:flex text-slate-400 hover:text-white hover:bg-slate-800 p-1.5 rounded-lg transition-colors cursor-pointer"
+                  title="Expandera sidomeny"
+                >
+                  <ChevronRight className="w-5 h-5 text-blue-400" />
+                </button>
+              )}
               {/* Mobile close button */}
               <button
                 onClick={() => setMobileMenuOpen(false)}
@@ -1151,155 +1183,211 @@ ${query}`;
               </button>
             </div>
 
-            <nav className="flex-1 p-3.5 space-y-4 overflow-y-auto">
+            <nav className={`flex-1 space-y-4 overflow-y-auto ${isCurrentlyCollapsed ? "p-2" : "p-3.5"}`}>
               {/* Public Section */}
               <div>
-                <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2">Offentlig info</div>
+                {!isCurrentlyCollapsed && (
+                  <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2">Offentlig info</div>
+                )}
                 <div className="space-y-0.5">
                   <button
                     onClick={() => handleTabClick("hem")}
-                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                      isCurrentlyCollapsed 
+                        ? "justify-center py-2.5" 
+                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                    } ${
                       activeTab === "hem"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
+                    title={isCurrentlyCollapsed ? "Hem" : undefined}
                   >
                     <Home className="w-3.5 h-3.5 shrink-0" />
-                    Hem
+                    {!isCurrentlyCollapsed && <span>Hem</span>}
                   </button>
                   <button
                     onClick={() => handleTabClick("vara_foretag")}
-                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                      isCurrentlyCollapsed 
+                        ? "justify-center py-2.5" 
+                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                    } ${
                       activeTab === "vara_foretag"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
+                    title={isCurrentlyCollapsed ? "Företag" : undefined}
                   >
                     <Briefcase className="w-3.5 h-3.5 shrink-0" />
-                    Företag
+                    {!isCurrentlyCollapsed && <span>Företag</span>}
                   </button>
                   <button
                     onClick={() => handleTabClick("lediga_lokaler")}
-                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                      isCurrentlyCollapsed 
+                        ? "justify-center py-2.5" 
+                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                    } ${
                       activeTab === "lediga_lokaler"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
+                    title={isCurrentlyCollapsed ? "Lediga Lokaler" : undefined}
                   >
                     <Building2 className="w-3.5 h-3.5 shrink-0" />
-                    Lediga Lokaler
+                    {!isCurrentlyCollapsed && <span>Lediga Lokaler</span>}
                   </button>
                   <button
                     onClick={() => handleTabClick("om_oss")}
-                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                      isCurrentlyCollapsed 
+                        ? "justify-center py-2.5" 
+                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                    } ${
                       activeTab === "om_oss"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
+                    title={isCurrentlyCollapsed ? "Om Oss" : undefined}
                   >
                     <Info className="w-3.5 h-3.5 shrink-0" />
-                    Om Oss
+                    {!isCurrentlyCollapsed && <span>Om Oss</span>}
                   </button>
                   <button
                     onClick={() => handleTabClick("kontakt")}
-                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                      isCurrentlyCollapsed 
+                        ? "justify-center py-2.5" 
+                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                    } ${
                       activeTab === "kontakt"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
+                    title={isCurrentlyCollapsed ? "Kontakt" : undefined}
                   >
                     <Mail className="w-3.5 h-3.5 shrink-0" />
-                    Kontakt
+                    {!isCurrentlyCollapsed && <span>Kontakt</span>}
                   </button>
                 </div>
               </div>
 
               {/* Members Section */}
               <div>
-                <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2 flex items-center justify-between">
-                  <span>Medlemsportal</span>
-                </div>
+                {!isCurrentlyCollapsed && (
+                  <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2 flex items-center justify-between">
+                    <span>Medlemsportal</span>
+                  </div>
+                )}
                 <div className="space-y-0.5">
                   <button
                     id="tab-anslagstavlan"
                     onClick={() => handleTabClick("anslagstavlan")}
-                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                      isCurrentlyCollapsed 
+                        ? "justify-center py-2.5" 
+                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                    } ${
                       activeTab === "anslagstavlan"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
+                    title={isCurrentlyCollapsed ? "Anslagstavlan" : undefined}
                   >
                     <Bell className="w-3.5 h-3.5 shrink-0" />
-                    Anslagstavlan
+                    {!isCurrentlyCollapsed && <span>Anslagstavlan</span>}
                   </button>
                   <button
                     id="tab-filer"
                     onClick={() => handleTabClick("filer")}
-                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                      isCurrentlyCollapsed 
+                        ? "justify-center py-2.5" 
+                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                    } ${
                       activeTab === "filer"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
+                    title={isCurrentlyCollapsed ? "Filer" : undefined}
                   >
                     <FileText className="w-3.5 h-3.5 shrink-0" />
-                    Filer
+                    {!isCurrentlyCollapsed && <span>Filer</span>}
                   </button>
                   <button
                     id="tab-kontaktboken"
                     onClick={() => handleTabClick("kontaktboken")}
-                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                      isCurrentlyCollapsed 
+                        ? "justify-center py-2.5" 
+                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                    } ${
                       activeTab === "kontaktboken"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
+                    title={isCurrentlyCollapsed ? "Kontaktboken" : undefined}
                   >
                     <Users className="w-3.5 h-3.5 shrink-0" />
-                    Kontaktboken
+                    {!isCurrentlyCollapsed && <span>Kontaktboken</span>}
                   </button>
                   <button
                     id="tab-styrelse-drift"
                     onClick={() => handleTabClick("styrelse_drift")}
-                    className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                      isCurrentlyCollapsed 
+                        ? "justify-center py-2.5" 
+                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                    } ${
                       activeTab === "styrelse_drift"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500 pl-2.5"
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
+                    title={isCurrentlyCollapsed ? "Styrelse & Drift" : undefined}
                   >
                     <Shield className="w-3.5 h-3.5 shrink-0" />
-                    Styrelse &amp; Drift
+                    {!isCurrentlyCollapsed && <span>Styrelse &amp; Drift</span>}
                   </button>
                 </div>
               </div>
 
               {/* Administration Section */}
               <div>
-                <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2">Administration</div>
+                {!isCurrentlyCollapsed && (
+                  <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2">Administration</div>
+                )}
                 <button
                   id="tab-administration"
                   onClick={() => handleTabClick("administration")}
-                  className={`w-full flex items-center gap-2.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all cursor-pointer text-left ${
+                  className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    isCurrentlyCollapsed 
+                      ? "justify-center py-2.5" 
+                      : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                  } ${
                     activeTab === "administration"
-                      ? "bg-violet-600/20 text-violet-400 border-l-2 border-violet-500 pl-2.5"
+                      ? "bg-violet-600/20 text-violet-400 border-l-2 border-violet-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
                       : "text-slate-400 hover:bg-slate-800"
                   }`}
+                  title={isCurrentlyCollapsed ? "Alla användare" : undefined}
                 >
                   <Shield className="w-3.5 h-3.5 shrink-0" />
-                  Alla användare
+                  {!isCurrentlyCollapsed && <span>Alla användare</span>}
                 </button>
               </div>
             </nav>
 
             {/* Profile Status Box at the bottom */}
-            <div className="p-4 border-t border-slate-700/50 mt-auto bg-slate-900/60">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-white font-bold text-xs shrink-0 uppercase">
-                  {getCurrentUserName().charAt(0)}
-                </div>
+            <div className={`p-4 border-t border-slate-700/50 mt-auto bg-slate-900/60 flex ${isCurrentlyCollapsed ? "justify-center" : "items-center gap-3"}`}>
+              <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-white font-bold text-xs shrink-0 uppercase" title={`${getCurrentUserName()} (${role})`}>
+                {getCurrentUserName().charAt(0)}
+              </div>
+              {!isCurrentlyCollapsed && (
                 <div className="min-w-0 flex-1">
                   <div className="text-xs text-white font-semibold truncate">{getCurrentUserName()}</div>
                   <div className="text-[10px] text-slate-400 truncate mt-0.5 leading-none bg-slate-800 px-1.5 py-0.5 rounded w-fit">Rättighet: {role}</div>
                 </div>
-              </div>
+              )}
             </div>
           </aside>
 
@@ -1311,6 +1399,14 @@ ${query}`;
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                   className="lg:hidden p-1 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                >
+                  <Menu className="w-5 h-5" />
+                </button>
+                {/* Desktop Sidebar Toggle Button */}
+                <button
+                  onClick={() => setIsAdminSidebarCollapsed(!isAdminSidebarCollapsed)}
+                  className="hidden lg:flex p-1 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+                  title={isAdminSidebarCollapsed ? "Expandera sidomeny" : "Minimera sidomeny"}
                 >
                   <Menu className="w-5 h-5" />
                 </button>
@@ -1330,7 +1426,7 @@ ${query}`;
 
               {/* Quick CTAs / Search Mock */}
               <div className="flex items-center gap-3">
-                <span className="hidden md:inline-flex items-center gap-1 bg-slate-100 border border-slate-200 text-slate-600 text-[10px] font-bold px-2.5 py-1 rounded">
+                <span className="hidden md:inline-flex items-center gap-1 bg-slate-150 border border-slate-200 text-slate-650 text-[10px] font-bold px-2.5 py-1 rounded">
                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
                   PORTAL ONLINE
                 </span>

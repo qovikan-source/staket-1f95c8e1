@@ -11,6 +11,63 @@ interface ContactBookViewProps {
   profiles: UserProfile[];
 }
 
+// Helper to get card visual accent color class based on role
+const getCardAccentColor = (role: string) => {
+  switch (role) {
+    case "Styrelse":
+      return "bg-emerald-500";
+    case "Hyresgäst":
+      return "bg-sky-500";
+    case "Medlem":
+      return "bg-indigo-500";
+    case "Administrator":
+      return "bg-violet-500";
+    default:
+      return "bg-slate-300";
+  }
+};
+
+// Helper to get badge component based on role
+const getRoleBadge = (role: string, isCardView = false) => {
+  const padding = isCardView ? "px-2 py-0.5 text-[9px] rounded-md" : "px-1.5 py-0.2 text-[8px] rounded";
+  const commonClasses = `inline-block font-bold uppercase border ${padding}`;
+  
+  switch (role) {
+    case "Styrelse":
+      return (
+        <span className={`${commonClasses} text-emerald-700 bg-emerald-50 border-emerald-100`}>
+          {isCardView ? "Styrelse / Ledamot" : "Styrelse"}
+        </span>
+      );
+    case "Hyresgäst":
+      return (
+        <span className={`${commonClasses} text-sky-700 bg-sky-50 border-sky-100`}>
+          Hyresgäst
+        </span>
+      );
+    case "Medlem":
+      return (
+        <span className={`${commonClasses} text-indigo-700 bg-indigo-50 border-indigo-100`}>
+          Medlem
+        </span>
+      );
+    case "Administrator":
+      return (
+        <span className={`${commonClasses} text-violet-700 bg-violet-50 border-violet-100`}>
+          Admin
+        </span>
+      );
+    case "Besökare":
+      return (
+        <span className={`${commonClasses} text-slate-600 bg-slate-50 border-slate-200`}>
+          Besökare
+        </span>
+      );
+    default:
+      return null;
+  }
+};
+
 export default function ContactBookView({ profiles = [] }: ContactBookViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -48,6 +105,11 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
     const hasCompany = compVal !== "" && compVal !== "Ej angivet" && compVal !== "Enskild Firma / Privat";
 
     if (!hasUnit && !hasCompany) return false;
+
+    // Filter out profiles with no digits (numbers) in 'Lokal' (unit) and no digits in 'Org.nr' (orgNr)
+    const hasNumberInUnit = /\d/.test(p.unit || "");
+    const hasNumberInOrgNr = /\d/.test(p.orgNr || "");
+    if (!hasNumberInUnit && !hasNumberInOrgNr) return false;
 
     const q = searchQuery.toLowerCase();
     return (
@@ -193,16 +255,7 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-1.5">
                         <span className="font-medium text-slate-700">{p.name}</span>
-                        {p.role === "Styrelse" && (
-                          <span className="inline-block px-1.5 py-0.2 text-[8px] font-bold text-emerald-700 bg-emerald-50 rounded uppercase border border-emerald-100">
-                            Styrelse
-                          </span>
-                        )}
-                        {p.role === "Hyresgäst" && (
-                          <span className="inline-block px-1.5 py-0.2 text-[8px] font-bold text-sky-700 bg-sky-50 rounded uppercase border border-sky-100">
-                            Hyresgäst
-                          </span>
-                        )}
+                        {getRoleBadge(p.role)}
                       </div>
                     </td>
                     <td className="px-5 py-4 text-slate-500 font-mono">
@@ -237,7 +290,7 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
               className="bg-white rounded-2xl border border-slate-100 shadow-2xs hover:shadow-sm transition-all p-5 flex flex-col justify-between hover:border-slate-200 relative overflow-hidden"
             >
               {/* Card visual accent based on role */}
-              <div className={`absolute top-0 left-0 w-1.5 h-full ${p.role === "Styrelse" ? "bg-emerald-500" : p.role === "Hyresgäst" ? "bg-sky-500" : "bg-slate-300"}`} />
+              <div className={`absolute top-0 left-0 w-1.5 h-full ${getCardAccentColor(p.role)}`} />
 
               <div className="space-y-4 pl-2">
                 <div>
@@ -245,16 +298,7 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
                     <span className="inline-block px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-slate-700 bg-slate-100 rounded-md uppercase border border-slate-200">
                       {p.unit}
                     </span>
-                    {p.role === "Styrelse" && (
-                      <span className="inline-block px-2 py-0.5 text-[9px] font-bold text-emerald-700 bg-emerald-50 rounded-md uppercase border border-emerald-100">
-                        Styrelse / Ledamot
-                      </span>
-                    )}
-                    {p.role === "Hyresgäst" && (
-                      <span className="inline-block px-2 py-0.5 text-[9px] font-bold text-sky-700 bg-sky-50 rounded-md uppercase border border-sky-100">
-                        Hyresgäst
-                      </span>
-                    )}
+                    {getRoleBadge(p.role, true)}
                   </div>
                   <h3 className="font-bold text-slate-800 text-base mt-2">{p.name}</h3>
                 </div>

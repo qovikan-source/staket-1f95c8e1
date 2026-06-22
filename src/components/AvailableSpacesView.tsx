@@ -56,7 +56,8 @@ export default function AvailableSpacesView({
 
   return (
     <div className="space-y-12 animate-fade-in" id="available-spaces-container">
-            {/* Visual Header Banner */}
+      
+      {/* Visual Header Banner */}
       <div className="relative rounded-3xl overflow-hidden bg-slate-900 border border-slate-800 text-slate-100 p-8 md:p-12 shadow-md">
         <div className="absolute inset-0 z-0 opacity-15">
           <img 
@@ -90,7 +91,7 @@ export default function AvailableSpacesView({
                   Letar du efter flexibla och rymliga <strong className="text-slate-800 font-semibold">lediga lokaler i Järfälla</strong>? Det strategiska läget på Skarprättarvägen 7 i Stäket gör vårt företagscenter till ett utmärkt val för bolag som kräver bra logistiklägen nära Stockholm och Mälardalen. Våra lokaler erbjuder flexibilitet för allt från hantverk, verkstad och lager till showroom och kontor.
                 </p>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  Föreningen sköter fastighetens gemensamma infrastruktur såsom grindar, underhåll, och sophantering med högsta professionalitet, vilket håller medlemsavgifter och driftskostnader på en stabil och konkurrenskraftig nivå i Järfälla.
+                  Föreningen sköter fastighetens gemensamma infrastruktur såsom grindar, underhåll, och sophantering med högsta professionalitet, vilket håller driftskostnader på en stabil och konkurrenskraftig nivå i Järfälla.
                 </p>
               </div>
 
@@ -473,7 +474,7 @@ export default function AvailableSpacesView({
               <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               <span>Skarprättarvägen 7, Järfälla</span>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2" style={{ display: "none" }}>
               <Phone className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               <a href="tel:0707772111" className="hover:underline hover:text-white">070 777 2111</a>
             </div>
