@@ -13,17 +13,46 @@ export default function ContactPublicView() {
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
   const [sent, setSent] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !message) return;
-    setSent(true);
-    setTimeout(() => {
-      setName("");
-      setEmail("");
-      setPhone("");
-      setMessage("");
-    }, 2000);
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          access_key: "46a212f8-5873-4817-8c8f-08246c2b61b5",
+          name,
+          email,
+          phone,
+          subject,
+          message,
+          from_name: "Kontaktformulär SF"
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setSent(true);
+        setName("");
+        setEmail("");
+        setPhone("");
+        setMessage("");
+      } else {
+        alert("Kunde inte skicka meddelandet: " + data.message);
+      }
+    } catch (err) {
+      alert("Ett nätverksfel uppstod. Vänligen försök igen senare.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -140,9 +169,12 @@ export default function ContactPublicView() {
               <button
                 id="btn-submit-contact"
                 type="submit"
-                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs transition-colors shadow-sm cursor-pointer"
+                disabled={isSubmitting}
+                className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-xs transition-colors shadow-sm cursor-pointer ${
+                  isSubmitting ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:bg-slate-800"
+                }`}
               >
-                SKICKA FRÅGA
+                {isSubmitting ? "SKICKAR..." : "SKICKA FRÅGA"}
                 <Send className="w-3.5 h-3.5" />
               </button>
             </form>

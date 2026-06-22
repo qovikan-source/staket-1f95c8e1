@@ -40,18 +40,46 @@ export default function AvailableSpacesView({
   const [contactMsg, setContactMsg] = useState("");
   const [contactProduct, setContactProduct] = useState("");
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeImageIndexes, setActiveImageIndexes] = useState<Record<string, number>>({});
 
-  const handleContactSubmit = (e: React.FormEvent) => {
+  const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!contactName || !contactEmail) return;
-    setIsSubmitted(true);
-    setTimeout(() => {
-      setContactName("");
-      setContactEmail("");
-      setContactMsg("");
-      setContactProduct("");
-    }, 2500);
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          access_key: "46a212f8-5873-4817-8c8f-08246c2b61b5",
+          name: contactName,
+          email: contactEmail,
+          subject: contactProduct ? `Intresseanmälan: ${contactProduct}` : "Generell intresseanmälan",
+          message: contactMsg,
+          from_name: "Intresseanmälan SF"
+        })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setIsSubmitted(true);
+        setContactName("");
+        setContactEmail("");
+        setContactMsg("");
+        setContactProduct("");
+      } else {
+        alert("Kunde inte skicka intresseanmälan: " + data.message);
+      }
+    } catch (err) {
+      alert("Ett nätverksfel uppstod. Vänligen försök igen senare.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -461,9 +489,14 @@ export default function AvailableSpacesView({
 
               <button
                 type="submit"
-                className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold block text-xs rounded-lg transition-colors cursor-pointer text-center uppercase tracking-wide border border-amber-600 shadow-sm"
+                disabled={isSubmitting}
+                className={`w-full py-2.5 text-slate-950 font-bold block text-xs rounded-lg transition-colors cursor-pointer text-center uppercase tracking-wide border shadow-sm ${
+                  isSubmitting 
+                    ? "bg-slate-500 text-slate-200 border-slate-600 cursor-not-allowed" 
+                    : "bg-amber-500 hover:bg-amber-400 border-amber-600"
+                }`}
               >
-                Skicka Intresseanmälan
+                {isSubmitting ? "Skickar..." : "Skicka Intresseanmälan"}
               </button>
             </form>
           )}
