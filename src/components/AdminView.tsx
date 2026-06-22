@@ -1145,6 +1145,29 @@ export default function AdminView({
                     }}
                     className="w-full text-[10px] text-slate-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border file:border-slate-300 file:bg-white file:text-xs file:font-semibold hover:file:bg-slate-50 cursor-pointer"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowGalleryPickerModal("add")}
+                    className="w-full mt-1.5 py-1.5 border border-slate-200 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-[10px] font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <Image className="w-3.5 h-3.5 text-slate-400" />
+                    Välj från galleri
+                  </button>
+                  {selectedGalleryLogoUrl && (
+                    <div className="mt-1.5 text-[10px] text-emerald-600 font-semibold bg-emerald-50 p-1.5 rounded border border-emerald-100 flex items-center justify-between">
+                      <span className="truncate">Vald: {logoFileName}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedGalleryLogoUrl("");
+                          setLogoFileName("");
+                        }}
+                        className="text-rose-500 font-bold hover:underline"
+                      >
+                        Rensa
+                      </button>
+                    </div>
+                  )}
                   <p className="text-[9px] text-slate-400 mt-1">(önskad storlek: 400x240)</p>
                   <div className="flex items-center gap-2 pt-3">
                     <input
@@ -1382,6 +1405,29 @@ export default function AdminView({
                     }}
                     className="w-full text-[10px] text-slate-500 file:mr-4 file:py-1 file:px-2 file:rounded file:border file:border-slate-300 file:bg-white file:text-xs file:font-semibold hover:file:bg-slate-50 cursor-pointer"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowGalleryPickerModal("edit")}
+                    className="w-full mt-1.5 py-1.5 border border-slate-200 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-[10px] font-bold cursor-pointer flex items-center justify-center gap-1.5 transition-colors"
+                  >
+                    <Image className="w-3.5 h-3.5 text-slate-400" />
+                    Välj från galleri
+                  </button>
+                  {editSelectedGalleryLogoUrl && (
+                    <div className="mt-1.5 text-[10px] text-emerald-600 font-semibold bg-emerald-50 p-1.5 rounded border border-emerald-100 flex items-center justify-between">
+                      <span className="truncate">Vald: {editLogoFileName}</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditSelectedGalleryLogoUrl("");
+                          setEditLogoFileName("");
+                        }}
+                        className="text-rose-500 font-bold hover:underline"
+                      >
+                        Rensa
+                      </button>
+                    </div>
+                  )}
                   <p className="text-[9px] text-slate-400 mt-1">(önskad storlek: 400x240)</p>
                   <div className="flex items-center gap-2 pt-3">
                     <input

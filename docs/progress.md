@@ -225,6 +225,14 @@ robust editing and filtering tools.
      wrapper, resolving the compilation error and successfully completing
      production bundle builds.
 
+### I. Dynamic Board & Contact Management (June 2026)
+
+- **Database Extension & Schema Updates**: Updated the `profiles` table schema with the `board_title` and `hide_in_contact_book` columns.
+- **Backend Service Alignment**: Updated mapped properties in `dbService` (`src/lib/db.ts`) and database transactions (`create_new_user` and `admin_update_user` RPC functions) to include `hide_in_contact_book` and `board_title`.
+- **Roster & Contact Visibility Control**: Filtered out hidden members in `ContactBookView.tsx` so users setting `hideInContactBook` to true are instantly excluded from list and card displays.
+- **Admin UI Modals with Visibility Toggles**: Added corresponding `Dölj i kontaktboken` checkboxes to both the user creation form and the edit member form inside `AdminView.tsx`, updating active states and persisting the selections back to Supabase.
+- **Environment & Build Verification**: Solved file editing mismatches caused by line ending conversions (CRLF vs LF) through highly targeted single-line edits, and verified compilation with `npx tsc --noEmit`.
+
 ---
 
 ## 3. Core Database & Storage Configuration

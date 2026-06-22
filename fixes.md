@@ -60,3 +60,15 @@ Denna fil dokumenterar de utmaningar vi stötte på under utvecklingen, databasm
 ## 6. Uppkoppling av Login-gränssnittet till Supabase
 *   **Utmaning:** Inloggningsrutan i applikationen (`LoginView.tsx`) var tidigare en demo-simulering med statiska lösenord och fasta konton (`admin@staket.se`, `medlem@staket.se`, etc.).
 *   **Lösning:** Vi kopplade inloggningsformuläret till Supabase Auth med hjälp av `supabase.auth.signInWithPassword`. När inloggningen lyckas hämtas den inloggade användarens profilroll (`Administrator`, `Styrelse`, eller `Medlem`) direkt från `public.profiles` för att omedelbart ge rätt behörigheter och navigering.
+
+---
+
+## 7. Mismatch vid kodändringar till följd av radbrytningstyper (CRLF vs LF)
+*   **Utmaning:** Automatiska kodersättningar via `replace_file_content` misslyckades upprepade gånger med felmeddelandet `target content not found in file` trots att koden kopierats exakt. Detta berodde på att filerna i Windows-miljön sparats med CRLF-radbrytningar (`\r\n`), medan verktyget tolkade söksträngarna med LF-radbrytningar (`\n`).
+*   **Lösning:** Vi begränsade `TargetContent` till att endast vara enskilda rader som inte innehåller några radbrytningstecken. Ersättningen gjordes därefter genom att byta ut den enskilda raden mot önskad multirad-kod. Detta kringgick helt kompabilitetsproblemen mellan CRLF och LF.
+
+---
+
+## 8. RPC-uppdateringar med Supabase GoTrue
+*   **Utmaning:** Att uppdatera användarprofiler via en admin-RPC-funktion krävde synkronisering mellan `auth.users` (för lösenord och e-post) och `public.profiles` (för övriga fält). Om man inte angav lösenord eller roll i frontend skickades tomma strängar som kunde skriva över fälten med felaktiga eller tomma värden.
+*   **Lösning:** Vi modifierade RPC-funktionerna (`admin_update_user` och `create_new_user`) till att ta emot valfria (optional) parametrar med standardvärde `NULL` och använda `COALESCE` för att behålla de gamla värdena om inga nya skickas in. Vi uppdaterade även frontend-koden för att endast skicka parametrar som faktiskt har ändrats.

@@ -132,6 +132,8 @@ CREATE TABLE public.profiles (
   description text DEFAULT '',
   website text DEFAULT '',
   logo text DEFAULT '',
+  board_title text DEFAULT '',
+  hide_in_contact_book boolean DEFAULT false,
   created_at timestamp with time zone DEFAULT now()
 );
 ```
