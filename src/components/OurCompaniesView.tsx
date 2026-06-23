@@ -18,7 +18,7 @@ export default function OurCompaniesView({ profiles }: OurCompaniesViewProps) {
   const activeProfiles = useMemo(() => {
     const list = profiles && profiles.length > 0 ? profiles : loadProfiles();
     // Filter profiles that represent active companies (have a company name and are not administrators)
-    return list.filter((p) => p.company && p.company.trim() !== "" && p.role !== "Administrator");
+    return list.filter((p) => p.company && p.company.trim() !== "" && p.role !== "Administrator" && !p.hideInCompanyPage);
   }, [profiles]);
 
   const filteredCompanies = useMemo(() => {

@@ -20,6 +20,7 @@ export interface UserProfile {
   logo?: string;
   boardTitle?: string;
   hideInContactBook?: boolean;
+  hideInCompanyPage?: boolean;
 }
 
 export type NoticeboardCategory =

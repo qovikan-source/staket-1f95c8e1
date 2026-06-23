@@ -5,7 +5,10 @@
 ALTER TABLE public.profiles 
 ADD COLUMN IF NOT EXISTS description TEXT DEFAULT '',
 ADD COLUMN IF NOT EXISTS website TEXT DEFAULT '',
-ADD COLUMN IF NOT EXISTS logo TEXT DEFAULT '';
+ADD COLUMN IF NOT EXISTS logo TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS board_title TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS hide_in_contact_book BOOLEAN DEFAULT false,
+ADD COLUMN IF NOT EXISTS hide_in_company_page BOOLEAN DEFAULT false;
 
 -- DROP restrictive check constraints on public.profiles.email dynamically
 DO $$
@@ -169,7 +172,10 @@ CREATE OR REPLACE FUNCTION public.create_new_user(
   new_address text DEFAULT '',
   new_description text DEFAULT '',
   new_website text DEFAULT '',
-  new_logo text DEFAULT ''
+  new_logo text DEFAULT '',
+  new_board_title text DEFAULT '',
+  new_hide_in_contact_book boolean DEFAULT false,
+  new_hide_in_company_page boolean DEFAULT false
 )
 RETURNS jsonb
 SECURITY DEFINER
@@ -277,7 +283,10 @@ BEGIN
     address,
     description,
     website,
-    logo
+    logo,
+    board_title,
+    hide_in_contact_book,
+    hide_in_company_page
   ) VALUES (
     new_user_id,
     new_name,
@@ -290,7 +299,10 @@ BEGIN
     new_address,
     new_description,
     new_website,
-    new_logo
+    new_logo,
+    new_board_title,
+    new_hide_in_contact_book,
+    new_hide_in_company_page
   );
 
   RETURN jsonb_build_object('id', new_user_id, 'email', new_email);
@@ -311,7 +323,10 @@ CREATE OR REPLACE FUNCTION public.admin_update_user(
   new_address text DEFAULT NULL,
   new_description text DEFAULT NULL,
   new_website text DEFAULT NULL,
-  new_logo text DEFAULT NULL
+  new_logo text DEFAULT NULL,
+  new_board_title text DEFAULT NULL,
+  new_hide_in_contact_book boolean DEFAULT NULL,
+  new_hide_in_company_page boolean DEFAULT NULL
 )
 RETURNS jsonb
 SECURITY DEFINER
@@ -474,7 +489,10 @@ BEGIN
     address = COALESCE(new_address, address),
     description = COALESCE(new_description, description),
     website = COALESCE(new_website, website),
-    logo = COALESCE(new_logo, logo)
+    logo = COALESCE(new_logo, logo),
+    board_title = COALESCE(new_board_title, board_title),
+    hide_in_contact_book = COALESCE(new_hide_in_contact_book, hide_in_contact_book),
+    hide_in_company_page = COALESCE(new_hide_in_company_page, hide_in_company_page)
   WHERE id = target_user_id;
 
   RETURN jsonb_build_object('success', true, 'id', target_user_id);
@@ -482,7 +500,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- 5. Ensure the RPC can be executed by authenticated users
-REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) FROM anon;
-GRANT EXECUTE ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text) TO authenticated;
+REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text, text, boolean, boolean) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text, text, boolean, boolean) FROM anon;
+GRANT EXECUTE ON FUNCTION public.admin_update_user(uuid, text, text, text, text, text, text, text, text, text, text, text, text, text, boolean, boolean) TO authenticated;
 

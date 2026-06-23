@@ -71,7 +71,7 @@ const getRoleBadge = (role: string, isCardView = false) => {
 export default function ContactBookView({ profiles = [] }: ContactBookViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "card">("list");
+  const [viewMode, setViewMode] = useState<"list" | "card">("card");
 
   // Sorting state: default sorting on unit (Lokal) asc
   const [sortField, setSortField] = useState<keyof UserProfile>("unit");

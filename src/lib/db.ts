@@ -21,6 +21,7 @@ function mapProfileToFrontend(db: any): UserProfile {
     logo: db.logo || "",
     boardTitle: db.board_title || "",
     hideInContactBook: db.hide_in_contact_book || false,
+    hideInCompanyPage: db.hide_in_company_page || false,
   };
 }
 
@@ -39,6 +40,7 @@ function mapProfileToDb(p: Partial<UserProfile>) {
     logo: p.logo,
     board_title: p.boardTitle,
     hide_in_contact_book: p.hideInContactBook,
+    hide_in_company_page: p.hideInCompanyPage,
   };
 }
 
@@ -184,6 +186,7 @@ export const dbService = {
           new_logo: p.logo || "",
           new_board_title: p.boardTitle || "",
           new_hide_in_contact_book: p.hideInContactBook || false,
+          new_hide_in_company_page: p.hideInCompanyPage || false,
         });
         
         if (error) {
@@ -203,6 +206,7 @@ export const dbService = {
             website: p.website || "",
             logo: p.logo || "",
             hideInContactBook: p.hideInContactBook || false,
+            hideInCompanyPage: p.hideInCompanyPage || false,
           };
         }
       } catch (err) {
@@ -256,6 +260,7 @@ export const dbService = {
         new_logo: logoVal,
         new_board_title: p.boardTitle !== undefined ? p.boardTitle : (existingProfile?.boardTitle || ""),
         new_hide_in_contact_book: p.hideInContactBook !== undefined ? p.hideInContactBook : (existingProfile?.hideInContactBook || false),
+        new_hide_in_company_page: p.hideInCompanyPage !== undefined ? p.hideInCompanyPage : (existingProfile?.hideInCompanyPage || false),
       });
 
       if (error) {

@@ -70,6 +70,7 @@ export default function AdminView({
   const [editWebsite, setEditWebsite] = useState("");
   const [editBoardTitle, setEditBoardTitle] = useState("");
   const [editHideInContactBook, setEditHideInContactBook] = useState(false);
+  const [editHideInCompanyPage, setEditHideInCompanyPage] = useState(false);
   const [editLogoFileName, setEditLogoFileName] = useState("");
   const [editLogoFile, setEditLogoFile] = useState<File | null>(null);
   const [editPassword, setEditPassword] = useState("");
@@ -102,6 +103,7 @@ export default function AdminView({
   const [website, setWebsite] = useState("");
   const [boardTitle, setBoardTitle] = useState("");
   const [hideInContactBook, setHideInContactBook] = useState(false);
+  const [hideInCompanyPage, setHideInCompanyPage] = useState(false);
   const [logoFileName, setLogoFileName] = useState("");
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
@@ -241,7 +243,8 @@ export default function AdminView({
       website,
       logo: logoUrl || logoFileName,
       boardTitle,
-      hideInContactBook
+      hideInContactBook,
+      hideInCompanyPage
     });
 
     // Reset Form
@@ -259,6 +262,7 @@ export default function AdminView({
     setWebsite("");
     setBoardTitle("");
     setHideInContactBook(false);
+    setHideInCompanyPage(false);
     setLogoFileName("");
     setSelectedGalleryLogoUrl("");
     setLogoFile(null);
@@ -279,6 +283,7 @@ export default function AdminView({
     setEditWebsite(p.website || "");
     setEditBoardTitle(p.boardTitle || "");
     setEditHideInContactBook(p.hideInContactBook || false);
+    setEditHideInCompanyPage(p.hideInCompanyPage || false);
     setEditLogoFileName(p.logo || "");
     setEditSelectedGalleryLogoUrl(p.logo || "");
     setEditLogoFile(null);
@@ -337,6 +342,7 @@ export default function AdminView({
       logo: logoUrl,
       boardTitle: editBoardTitle,
       hideInContactBook: editHideInContactBook,
+      hideInCompanyPage: editHideInCompanyPage,
       ...(editPassword ? { password: editPassword } : {})
     });
 
@@ -1169,17 +1175,31 @@ export default function AdminView({
                     </div>
                   )}
                   <p className="text-[9px] text-slate-400 mt-1">(önskad storlek: 400x240)</p>
-                  <div className="flex items-center gap-2 pt-3">
-                    <input
-                      type="checkbox"
-                      id="hideInContactBook"
-                      checked={hideInContactBook}
-                      onChange={(e) => setHideInContactBook(e.target.checked)}
-                      className="rounded border-slate-300 text-slate-900 focus:ring-slate-950 h-4 w-4 cursor-pointer"
-                    />
-                    <label htmlFor="hideInContactBook" className="text-xs text-slate-700 font-semibold select-none cursor-pointer">
-                      Dölj i kontaktboken
-                    </label>
+                  <div className="flex flex-col gap-2.5 pt-3">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="hideInContactBook"
+                        checked={hideInContactBook}
+                        onChange={(e) => setHideInContactBook(e.target.checked)}
+                        className="rounded border-slate-300 text-slate-900 focus:ring-slate-950 h-4 w-4 cursor-pointer"
+                      />
+                      <label htmlFor="hideInContactBook" className="text-xs text-slate-700 font-semibold select-none cursor-pointer">
+                        Dölj i kontaktboken
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="hideInCompanyPage"
+                        checked={hideInCompanyPage}
+                        onChange={(e) => setHideInCompanyPage(e.target.checked)}
+                        className="rounded border-slate-300 text-slate-900 focus:ring-slate-950 h-4 w-4 cursor-pointer"
+                      />
+                      <label htmlFor="hideInCompanyPage" className="text-xs text-slate-700 font-semibold select-none cursor-pointer">
+                        Dölj på Våra Företag-sidan
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1429,17 +1449,31 @@ export default function AdminView({
                     </div>
                   )}
                   <p className="text-[9px] text-slate-400 mt-1">(önskad storlek: 400x240)</p>
-                  <div className="flex items-center gap-2 pt-3">
-                    <input
-                      type="checkbox"
-                      id="editHideInContactBook"
-                      checked={editHideInContactBook}
-                      onChange={(e) => setEditHideInContactBook(e.target.checked)}
-                      className="rounded border-slate-300 text-slate-900 focus:ring-slate-950 h-4 w-4 cursor-pointer"
-                    />
-                    <label htmlFor="editHideInContactBook" className="text-xs text-slate-700 font-semibold select-none cursor-pointer">
-                      Dölj i kontaktboken
-                    </label>
+                  <div className="flex flex-col gap-2.5 pt-3">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="editHideInContactBook"
+                        checked={editHideInContactBook}
+                        onChange={(e) => setEditHideInContactBook(e.target.checked)}
+                        className="rounded border-slate-300 text-slate-900 focus:ring-slate-950 h-4 w-4 cursor-pointer"
+                      />
+                      <label htmlFor="editHideInContactBook" className="text-xs text-slate-700 font-semibold select-none cursor-pointer">
+                        Dölj i kontaktboken
+                      </label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id="editHideInCompanyPage"
+                        checked={editHideInCompanyPage}
+                        onChange={(e) => setEditHideInCompanyPage(e.target.checked)}
+                        className="rounded border-slate-300 text-slate-900 focus:ring-slate-950 h-4 w-4 cursor-pointer"
+                      />
+                      <label htmlFor="editHideInCompanyPage" className="text-xs text-slate-700 font-semibold select-none cursor-pointer">
+                        Dölj på Våra Företag-sidan
+                      </label>
+                    </div>
                   </div>
                 </div>
               </div>
