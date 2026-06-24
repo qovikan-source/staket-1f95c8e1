@@ -23,27 +23,27 @@ export default function StyrelseDriftView({ profiles = [] }: { profiles?: UserPr
     <div className="space-y-6 animate-fade-in" id="styrelse-drift-view">
       <div className="bg-white rounded-3xl border border-slate-100 shadow-xs p-6 md:p-8 space-y-6">
         <div className="space-y-1.5">
-          <h2 className="text-xl font-bold text-slate-800">Föreningens Styrelse &amp; Drift</h2>
-          <p className="text-xs text-slate-500">Valda representanter och operativ personal för fastighetstjänster och underhåll.</p>
+          <h2 className="text-xl md:text-2xl font-bold text-slate-800 tracking-wide">FÖRENINGENS STYRELSE &amp; DRIFT</h2>
+          <p className="text-sm text-slate-500">Valda representanter och operativ personal för fastighetstjänster och underhåll.</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
           {hasDbMembers ? (
             styrelseMembers.map(member => (
-              <div key={member.id} className="p-4 rounded-xl border border-slate-50 bg-slate-50/50 space-y-2">
-                <h3 className="font-bold text-slate-800 text-sm">{member.name}</h3>
-                <span className="inline-block px-2 py-0.5 text-[10px] bg-slate-200 text-slate-700 rounded-md font-semibold">
+              <div key={member.id} className="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-2">
+                <h3 className="font-bold text-slate-800 text-base">{member.name}</h3>
+                <span className="inline-block px-2.5 py-1 text-xs bg-slate-200 text-slate-700 rounded-md font-semibold">
                   {member.boardTitle || "Styrelsemedlem"}
                 </span>
-                <p className="text-xs text-slate-500 mt-1">{member.description || "Ingen beskrivning angiven."}</p>
+                <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">{member.description || "Ingen beskrivning angiven."}</p>
               </div>
             ))
           ) : (
             fallbackMembers.map((member, idx) => (
-              <div key={idx} className="p-4 rounded-xl border border-slate-50 bg-slate-50/50 space-y-2">
-                <h3 className="font-bold text-slate-800 text-sm">{member.name}</h3>
-                <span className="inline-block px-2 py-0.5 text-[10px] bg-slate-200 text-slate-700 rounded-md font-semibold">{member.title}</span>
-                <p className="text-xs text-slate-500 mt-1">{member.desc}</p>
+              <div key={idx} className="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-2">
+                <h3 className="font-bold text-slate-800 text-base">{member.name}</h3>
+                <span className="inline-block px-2.5 py-1 text-xs bg-slate-200 text-slate-700 rounded-md font-semibold">{member.title}</span>
+                <p className="text-xs sm:text-sm text-slate-600 mt-1 leading-relaxed">{member.desc}</p>
               </div>
             ))
           )}

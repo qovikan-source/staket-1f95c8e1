@@ -477,8 +477,8 @@ export default function DocumentHubView({
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-3xl font-sans font-bold tracking-tight text-slate-900">Dokumentarkiv</h1>
-          <p className="text-slate-500 text-sm">
+          <h1 className="text-3xl font-sans font-bold tracking-tight text-slate-900">DOKUMENTARKIV</h1>
+          <p className="text-slate-655 text-sm sm:text-base">
             Hämta blanketter, protokoll, stadgar och sammfällighetens ritningar i PDF-format.
           </p>
         </div>
@@ -488,7 +488,7 @@ export default function DocumentHubView({
           <button
             id="btn-upload-file"
             onClick={() => setShowUploadModal(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer text-xs font-semibold shadow-xs"
+            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white hover:bg-slate-800 transition-colors cursor-pointer text-sm font-semibold shadow-xs"
           >
             <Plus className="w-4 h-4" />
             Ladda upp dokument
@@ -506,26 +506,26 @@ export default function DocumentHubView({
                 setActiveCategory("Styrelsefiler");
                 setSelectedFolder("Alla");
               }}
-              className={`px-5 py-2 text-xs font-bold transition-all rounded-lg cursor-pointer flex items-center gap-1.5 ${
+              className={`px-5 py-2 text-sm font-bold transition-all rounded-lg cursor-pointer flex items-center gap-1.5 ${
                 activeCategory === "Styrelsefiler"
                   ? "bg-white text-[#0B2C24] shadow-xs border border-slate-200/40"
                   : "text-slate-500 hover:text-[#0B2C24] hover:bg-white/40"
               }`}
             >
-              🔒 Styrelsefiler
+              🔒 STYRELSEFILER
             </button>
             <button
               onClick={() => {
                 setActiveCategory("Medlemsfiler");
                 setSelectedFolder("Alla");
               }}
-              className={`px-5 py-2 text-xs font-bold transition-all rounded-lg cursor-pointer flex items-center gap-1.5 ${
+              className={`px-5 py-2 text-sm font-bold transition-all rounded-lg cursor-pointer flex items-center gap-1.5 ${
                 activeCategory === "Medlemsfiler"
                   ? "bg-white text-[#0B2C24] shadow-xs border border-slate-200/40"
                   : "text-slate-500 hover:text-[#0B2C24] hover:bg-white/40"
               }`}
             >
-              📁 Medlemsfiler
+              📁 MEDLEMSFILER
             </button>
           </>
         ) : (
@@ -535,9 +535,9 @@ export default function DocumentHubView({
               setActiveCategory("Medlemsfiler");
               setSelectedFolder("Alla");
             }}
-            className={`px-5 py-2 text-xs font-bold transition-all rounded-lg cursor-pointer flex items-center gap-1.5 bg-white text-[#0B2C24] shadow-xs border border-slate-200/40`}
+            className={`px-5 py-2 text-sm font-bold transition-all rounded-lg cursor-pointer flex items-center gap-1.5 bg-white text-[#0B2C24] shadow-xs border border-slate-200/40`}
           >
-            📁 Medlemsfiler
+            📁 MEDLEMSFILER
           </button>
         )}
       </div>
@@ -549,12 +549,12 @@ export default function DocumentHubView({
             <ShieldAlert className="w-8 h-8" />
           </div>
           <div className="space-y-1.5">
-            <h3 className="font-bold text-slate-800 text-base">Åtkomst nekad (Säkerhetsregel)</h3>
-            <p className="text-xs text-slate-500 leading-relaxed max-w-md">
+            <h3 className="font-bold text-slate-800 text-base">ÅTKOMST NEKAD (SÄKERHETSREGEL)</h3>
+            <p className="text-sm text-slate-500 leading-relaxed max-w-md">
               Styrelsefiler är skyddade via Row Level Security (RLS) och är endast synliga för styrelsemedlemmar och administratörer.
             </p>
           </div>
-          <p className="text-[10px] text-slate-400 font-mono">Roll-restriktion: Styrelse / Fastighetsskötare krävs</p>
+          <p className="text-xs text-slate-400 font-mono">Roll-restriktion: Styrelse / Fastighetsskötare krävs</p>
         </div>
       )}
 
@@ -564,11 +564,11 @@ export default function DocumentHubView({
           {/* Subfolders for Board Files strictly subdivided */}
           {activeCategory === "Styrelsefiler" && (
             <div className="space-y-2">
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Mappar i Styrelsearkiv</span>
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">MAPPAR I STYRELSEARKIV</span>
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setSelectedFolder("Alla")}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer transition-colors border ${
+                  className={`px-3 py-1.5 rounded-lg text-sm font-semibold cursor-pointer transition-colors border ${
                     selectedFolder === "Alla"
                       ? "bg-slate-900 text-white border-slate-950"
                       : "bg-white text-slate-600 border-slate-100 hover:bg-slate-50"
@@ -583,7 +583,7 @@ export default function DocumentHubView({
                       key={i}
                       className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all ${
                         selectedFolder === fold
-                          ? "bg-emerald-500 border-emerald-500 text-slate-950"
+                          ? "bg-emerald-500 border-emerald-500 text-slate-955"
                           : isChecked
                           ? "border-emerald-400 bg-emerald-50/15 text-slate-700"
                           : "bg-white text-slate-600 border-slate-100 hover:bg-slate-50"
@@ -603,7 +603,7 @@ export default function DocumentHubView({
                       )}
                       <button
                         onClick={() => setSelectedFolder(fold)}
-                        className="text-xs font-semibold cursor-pointer flex items-center gap-1 bg-transparent border-0 p-0 text-inherit focus:outline-none"
+                        className="text-sm font-semibold cursor-pointer flex items-center gap-1 bg-transparent border-0 p-0 text-inherit focus:outline-none"
                       >
                         <Folder className="w-3.5 h-3.5" />
                         {fold}
@@ -623,7 +623,7 @@ export default function DocumentHubView({
                       downloadFilesAsZip(foldersFiles, "staket-markerade-mappar.zip");
                     }}
                     disabled={isZipping}
-                    className="ml-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-650 text-white hover:bg-emerald-700 font-bold text-[10px] uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                    className="ml-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-650 text-white hover:bg-emerald-700 font-bold text-xs uppercase tracking-wider cursor-pointer disabled:opacity-50"
                   >
                     <Download className="w-3.5 h-3.5" />
                     Ladda ner markerade mappar (.zip) ({selectedMainFolders.length})
@@ -643,12 +643,12 @@ export default function DocumentHubView({
                 placeholder="Sök bland dokument..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors"
               />
             </div>
 
             <div className="flex items-center gap-3">
-              <div className="text-xs text-slate-400 font-medium">
+              <div className="text-sm text-slate-400 font-medium">
                 Visar {filteredFiles.length} av {files.filter((f) => f.category === activeCategory).length} filer
               </div>
               {role === "Administrator" && filteredFiles.length > 0 && (
@@ -661,7 +661,7 @@ export default function DocumentHubView({
                     downloadFilesAsZip(filteredFiles, zipName);
                   }}
                   disabled={isZipping}
-                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#0B2C24] text-white hover:bg-emerald-800 transition-colors font-bold text-[10px] uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-[#0B2C24] text-white hover:bg-emerald-800 transition-colors font-bold text-xs uppercase tracking-wider cursor-pointer disabled:opacity-50"
                 >
                   <Download className="w-3.5 h-3.5" />
                   Zip:a alla matchade ({filteredFiles.length})
@@ -672,7 +672,7 @@ export default function DocumentHubView({
 
           {/* Download Success message */}
           {downloadSuccessText && (
-            <div className="bg-emerald-50 border border-emerald-100 py-3 px-5 rounded-xl flex items-center gap-2.5 text-xs text-emerald-800 animate-scale-up">
+            <div className="bg-emerald-50 border border-emerald-100 py-3 px-5 rounded-xl flex items-center gap-2.5 text-sm text-emerald-800 animate-scale-up">
               <CheckCircle className="w-4 h-4 text-emerald-600 shrink-0 animate-bounce" />
               <span>{downloadSuccessText} (Nersparad i hämtade filer)</span>
             </div>
@@ -680,7 +680,7 @@ export default function DocumentHubView({
 
           {/* Zip Creation Progress feedback */}
           {isZipping && (
-            <div className="bg-blue-50 border border-blue-100 py-3 px-5 rounded-xl flex items-center gap-2.5 text-xs text-blue-800 animate-pulse">
+            <div className="bg-blue-50 border border-blue-100 py-3 px-5 rounded-xl flex items-center gap-2.5 text-sm text-blue-800 animate-pulse">
               <span className="w-2 h-2 bg-blue-600 rounded-full animate-ping shrink-0"></span>
               <span className="font-semibold">{zipProgress}</span>
             </div>
@@ -688,7 +688,7 @@ export default function DocumentHubView({
 
           {/* Admin Bulk Action Bar */}
           {role === "Administrator" && filteredFiles.length > 0 && (
-            <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-xs animate-scale-up">
+            <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 text-sm animate-scale-up">
               <div className="flex items-center gap-3">
                 <input
                   type="checkbox"
@@ -718,14 +718,14 @@ export default function DocumentHubView({
                       setBulkEditYear("no-change");
                       setShowBulkEditModal(true);
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/50 font-bold transition-colors cursor-pointer text-[10px] uppercase tracking-wider"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/50 font-bold transition-colors cursor-pointer text-xs uppercase tracking-wider"
                   >
                     <Edit className="w-3.5 h-3.5" />
                     Ändra markerade ({selectedFileIds.length})
                   </button>
                   <button
                     onClick={handleBulkDelete}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-750 hover:bg-rose-100 border border-rose-200/50 font-bold transition-colors cursor-pointer text-[10px] uppercase tracking-wider"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 text-rose-750 hover:bg-rose-100 border border-rose-200/50 font-bold transition-colors cursor-pointer text-xs uppercase tracking-wider"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     Radera markerade ({selectedFileIds.length})
@@ -738,14 +738,14 @@ export default function DocumentHubView({
                       downloadFilesAsZip(selectedFiles, zipName);
                     }}
                     disabled={isZipping}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-650 text-white hover:bg-emerald-700 border border-emerald-750 font-bold transition-colors cursor-pointer text-[10px] uppercase tracking-wider disabled:opacity-50"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-650 text-white hover:bg-emerald-700 border border-emerald-750 font-bold transition-colors cursor-pointer text-xs uppercase tracking-wider disabled:opacity-50"
                   >
                     <Download className="w-3.5 h-3.5" />
                     Ladda ner (.zip) ({selectedFileIds.length})
                   </button>
                   <button
                     onClick={() => setSelectedFileIds([])}
-                    className="px-3 py-1.5 rounded-lg bg-white text-slate-500 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer font-semibold text-[10px] uppercase tracking-wider"
+                    className="px-3 py-1.5 rounded-lg bg-white text-slate-500 hover:bg-slate-100 border border-slate-200 transition-colors cursor-pointer font-semibold text-xs uppercase tracking-wider"
                   >
                     Avbryt
                   </button>
@@ -753,10 +753,8 @@ export default function DocumentHubView({
               )}
             </div>
           )}
-
-           {/* Breadcrumb if inside a specific year folder */}
           {selectedFolder !== "Alla" && selectedArkivYear !== "Alla" && (
-            <div className="flex flex-wrap items-center gap-2.5 text-xs font-semibold text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-3xs">
+            <div className="flex flex-wrap items-center gap-2.5 text-sm font-semibold text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100 shadow-3xs">
               <span>Mappar</span>
               <span>/</span>
               <span>{selectedFolder}</span>
@@ -776,7 +774,7 @@ export default function DocumentHubView({
                     downloadFilesAsZip(yearFiles, `staket-${selectedFolder.toLowerCase()}-${selectedArkivYear}.zip`);
                   }}
                   disabled={isZipping}
-                  className="ml-3 inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#0B2C24] text-white hover:bg-emerald-800 transition-colors font-bold text-[9px] uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                  className="ml-3 inline-flex items-center gap-1 px-2.5 py-1 rounded bg-[#0B2C24] text-white hover:bg-emerald-800 transition-colors font-bold text-[11px] uppercase tracking-wider cursor-pointer disabled:opacity-50"
                 >
                   <Download className="w-3 h-3" />
                   Ladda ner År {selectedArkivYear} (.zip)
@@ -784,7 +782,7 @@ export default function DocumentHubView({
               )}
               <button 
                 onClick={() => setSelectedArkivYear("Alla")} 
-                className="ml-auto text-xs font-bold text-emerald-600 hover:text-emerald-800 transition-colors flex items-center gap-1 cursor-pointer"
+                className="ml-auto text-sm font-bold text-emerald-600 hover:text-emerald-800 transition-colors flex items-center gap-1 cursor-pointer"
               >
                 ← Gå tillbaka till årsmappar
               </button>
@@ -795,7 +793,7 @@ export default function DocumentHubView({
           {selectedFolder !== "Alla" && selectedArkivYear === "Alla" ? (
             <div className="space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">Årsmappar i {selectedFolder}</span>
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">ÅRSMAPPAR I {selectedFolder.toUpperCase()}</span>
                 <div className="flex items-center gap-2">
                   {role === "Administrator" && selectedYearFolders.length > 0 && (
                     <button
@@ -811,7 +809,7 @@ export default function DocumentHubView({
                         downloadFilesAsZip(folderYearFiles, `staket-${selectedFolder.toLowerCase()}-markerade-ar.zip`);
                       }}
                       disabled={isZipping}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-[10px] uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-bold text-xs uppercase tracking-wider cursor-pointer disabled:opacity-50"
                     >
                       <Download className="w-3.5 h-3.5" />
                       Ladda ner markerade år (.zip) ({selectedYearFolders.length})
@@ -827,7 +825,7 @@ export default function DocumentHubView({
                         downloadFilesAsZip(folderFiles, `staket-${selectedFolder.toLowerCase()}.zip`);
                       }}
                       disabled={isZipping}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#0B2C24] text-white hover:bg-emerald-800 transition-colors font-bold text-[10px] uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#0B2C24] text-white hover:bg-emerald-800 transition-colors font-bold text-xs uppercase tracking-wider cursor-pointer disabled:opacity-50"
                     >
                       <Download className="w-3.5 h-3.5" />
                       Ladda ner hela mappen {selectedFolder} (.zip)
@@ -874,10 +872,10 @@ export default function DocumentHubView({
                           <Folder className="w-5 h-5 fill-emerald-100" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-slate-800 text-sm group-hover:text-emerald-700 transition-colors">
+                          <h4 className="font-bold text-slate-800 text-sm sm:text-base group-hover:text-emerald-700 transition-colors">
                             År {year}
                           </h4>
-                          <p className="text-[11px] text-slate-400 font-medium">
+                          <p className="text-xs text-slate-400 font-medium">
                             {count} {count === 1 ? "fil" : "filer"}
                           </p>
                         </div>
@@ -890,8 +888,8 @@ export default function DocumentHubView({
           ) : filteredFiles.length === 0 ? (
             <div className="border border-dashed border-slate-200 p-12 rounded-2xl text-center bg-slate-50/50 space-y-2">
               <Folder className="w-8 h-8 text-slate-400 mx-auto" />
-              <p className="font-bold text-slate-700 text-sm">Inga filer matchar</p>
-              <p className="text-xs text-slate-400">Försök med ett annat sökord.</p>
+              <p className="font-bold text-slate-700 text-sm sm:text-base">Inga filer matchar</p>
+              <p className="text-sm text-slate-400">Försök med ett annat sökord.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -933,10 +931,10 @@ export default function DocumentHubView({
                         <FileText className={`w-5 h-5 font-bold ${file.isOptimistic ? "animate-pulse text-emerald-500" : ""}`} />
                       </div>
                       <div className="truncate space-y-0.5 min-w-0 flex-1">
-                        <h4 className={`font-bold text-slate-800 text-xs truncate transition-colors ${!file.isOptimistic ? "group-hover:text-emerald-700 group-hover:underline" : ""}`}>
+                        <h4 className={`font-bold text-slate-800 text-sm truncate transition-colors ${!file.isOptimistic ? "group-hover:text-emerald-700 group-hover:underline" : ""}`}>
                           {file.name}
                         </h4>
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-400">
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-400">
                           {file.isOptimistic ? (
                             <span className="text-emerald-600 font-semibold animate-pulse">Laddar upp till Supabase...</span>
                           ) : (

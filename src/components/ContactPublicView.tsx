@@ -58,13 +58,13 @@ export default function ContactPublicView() {
   return (
     <div className="space-y-8 animate-fade-in" id="contact-public-view">
       <div className="space-y-2">
-        <span className="text-[11px] font-black uppercase tracking-widest text-[#B68F52] hover:text-[#A37E3A] transition-colors">
-          Kontakt &amp; Spörsmål
+        <span className="text-xs sm:text-sm font-black uppercase tracking-widest text-[#B68F52] hover:text-[#A37E3A] transition-colors">
+          KONTAKT &amp; SPÖRSMÅL
         </span>
         <h1 className="text-3xl font-sans font-bold tracking-tight text-slate-900 leading-tight">
-          Kontakta Stäket Företagscenter, Järfälla
+          KONTAKTA STÄKET FÖRETAGSCENTER, JÄRFÄLLA
         </h1>
-        <p className="text-slate-500 max-w-2xl text-sm leading-relaxed">
+        <p className="text-slate-650 max-w-2xl text-sm sm:text-base leading-relaxed">
           Har du frågor till samfälligheten, vill rapportera fel i gemensamma utrymmen på området, eller önskar hyra moderna kontors- och verkstadslokaler? Fyll i vårt formulär nedan.
         </p>
       </div>
@@ -79,13 +79,13 @@ export default function ContactPublicView() {
               </div>
               <div className="space-y-1">
                 <h3 className="text-lg font-bold text-slate-800">Ditt meddelande har skickats!</h3>
-                <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                <p className="text-sm text-slate-500 max-w-sm mx-auto">
                   Tack för att du hörde av dig till oss på Stäket Företagscenter. Vi återkopplar så fort som möjligt, vanligtvis redan samma arbetsdag.
                 </p>
               </div>
               <button
                 onClick={() => setSent(false)}
-                className="mt-6 px-4 py-2 text-xs font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
+                className="mt-6 px-4 py-2 text-sm font-semibold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200 transition-colors"
               >
                 Skicka ett till meddelande
               </button>
@@ -93,12 +93,12 @@ export default function ContactPublicView() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
               <h3 className="font-bold text-slate-800 text-lg border-b border-slate-50 pb-3 mb-2">
-                Skicka förfrågan direkt
+                SKICKA FÖRFRÅGAN DIREKT
               </h3>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label htmlFor="input-name" className="text-xs font-semibold text-slate-500">Fullständigt Namn *</label>
+                  <label htmlFor="input-name" className="text-xs sm:text-sm font-semibold text-slate-500">Fullständigt Namn *</label>
                   <input
                     id="input-name"
                     type="text"
@@ -106,12 +106,12 @@ export default function ContactPublicView() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Förnamn och efternamn"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="input-email" className="text-xs font-semibold text-slate-500">E-postadress *</label>
+                  <label htmlFor="input-email" className="text-xs sm:text-sm font-semibold text-slate-500">E-postadress *</label>
                   <input
                     id="input-email"
                     type="email"
@@ -119,31 +119,31 @@ export default function ContactPublicView() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="namn@foretag.se"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label htmlFor="input-phone" className="text-xs font-semibold text-slate-500">Telefonnummer</label>
+                  <label htmlFor="input-phone" className="text-xs sm:text-sm font-semibold text-slate-500">Telefonnummer</label>
                   <input
                     id="input-phone"
                     type="text"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     placeholder="Ex: 070-123 45 67"
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors"
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="select-subject" className="text-xs font-semibold text-slate-500">Typ av ärende</label>
+                  <label htmlFor="select-subject" className="text-xs sm:text-sm font-semibold text-slate-500">Typ av ärende</label>
                   <select
                     id="select-subject"
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors"
                   >
                     <option value="Allmän fråga">Allmän fråga / Information</option>
                     <option value="Lediga Lokaler">Frågor rörande lediga lokaler / hyra</option>
@@ -154,7 +154,7 @@ export default function ContactPublicView() {
               </div>
 
               <div className="space-y-1.5">
-                <label htmlFor="textarea-message" className="text-xs font-semibold text-slate-500">Meddelande *</label>
+                <label htmlFor="textarea-message" className="text-xs sm:text-sm font-semibold text-slate-500">Meddelande *</label>
                 <textarea
                   id="textarea-message"
                   required
@@ -162,7 +162,7 @@ export default function ContactPublicView() {
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
                   placeholder="Beskriv ert ärende, lokalnummer eller förfrågan i detalj..."
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors resize-y"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors resize-y"
                 />
               </div>
 
@@ -170,7 +170,7 @@ export default function ContactPublicView() {
                 id="btn-submit-contact"
                 type="submit"
                 disabled={isSubmitting}
-                className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-xs transition-colors shadow-sm cursor-pointer ${
+                className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-white font-semibold text-sm transition-colors shadow-sm cursor-pointer ${
                   isSubmitting ? "bg-slate-500 cursor-not-allowed" : "bg-slate-900 hover:bg-slate-800"
                 }`}
               >
@@ -184,7 +184,7 @@ export default function ContactPublicView() {
         {/* Info detail block */}
         <div className="lg:col-span-5 space-y-6">
           <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-6">
-            <h3 className="font-bold text-slate-800 text-sm">NAP- &amp; Kontaktuppgifter</h3>
+            <h3 className="font-bold text-slate-800 text-sm sm:text-base">NAP- &amp; KONTAKTUPPGIFTER</h3>
 
             <div className="space-y-4">
               <div className="flex gap-3.5 items-start">
@@ -192,9 +192,9 @@ export default function ContactPublicView() {
                   <MapPin className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-800">Besöksadress</h4>
-                  <p className="text-[11px] text-slate-600 mt-0.5">Skarprättarvägen 7</p>
-                  <p className="text-[11px] text-slate-500">176 77 Järfälla, Stockholm</p>
+                  <h4 className="text-sm font-bold text-slate-800">Besöksadress</h4>
+                  <p className="text-xs sm:text-sm text-slate-650 mt-0.5">Skarprättarvägen 7</p>
+                  <p className="text-xs sm:text-sm text-slate-600">176 77 Järfälla, Stockholm</p>
                 </div>
               </div>
 
@@ -203,11 +203,11 @@ export default function ContactPublicView() {
                   <Phone className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-800">Telefonnummer</h4>
-                  <a href="tel:0707772111" className="text-[11px] text-[#0B2C24] font-semibold hover:underline block mt-0.5">
+                  <h4 className="text-sm font-bold text-slate-800">Telefonnummer</h4>
+                  <a href="tel:0707772111" className="text-xs sm:text-sm text-[#0B2C24] font-semibold hover:underline block mt-0.5">
                     070 777 2111 — Mobil
                   </a>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Måndag - Fredag: 08:00 - 17:00</p>
+                  <p className="text-xs text-slate-500 mt-0.5">Måndag - Fredag: 08:00 - 17:00</p>
                 </div>
               </div>
 
@@ -216,8 +216,8 @@ export default function ContactPublicView() {
                   <Mail className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-800">E-post till samfälligheten</h4>
-                  <a href="mailto:brfsfc@gmail.com" className="text-[11px] text-blue-600 font-semibold hover:underline block mt-0.5">
+                  <h4 className="text-sm font-bold text-slate-800">E-post till samfälligheten</h4>
+                  <a href="mailto:brfsfc@gmail.com" className="text-xs sm:text-sm text-blue-600 font-semibold hover:underline block mt-0.5">
                     brfsfc@gmail.com
                   </a>
                 </div>
@@ -240,8 +240,8 @@ export default function ContactPublicView() {
 
           {/* Alert box */}
           <div className="bg-amber-50/50 p-5 rounded-2xl border border-amber-100/50">
-            <h4 className="text-xs font-semibold text-amber-800 uppercase tracking-wide">Lokaluthyrning &amp; Lediga objekt</h4>
-            <p className="text-xs text-amber-900/80 mt-1 lines-relaxed leading-relaxed">
+            <h4 className="text-sm font-semibold text-amber-800 uppercase tracking-wide">LOKALUTHYRNING &amp; LEDIGA OBJEKT</h4>
+            <p className="text-sm text-amber-900/80 mt-1 leading-relaxed">
               Vi förmedlar kontakt mellan sökande och anslutna lokalägare i Brf. Stäkets Företagscenter. Om ni söker specifika lokalkrav såsom tunga golv, pelarfritt eller spolhall, vänligen specificera detta i meddelandet.
             </p>
           </div>

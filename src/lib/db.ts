@@ -337,6 +337,12 @@ export const dbService = {
     return mapSpaceToFrontend(data);
   },
 
+  async updateSpace(id: string, s: Partial<VacantSpace>): Promise<VacantSpace> {
+    const { data, error } = await supabase.from("vacant_spaces").update(mapSpaceToDb(s)).eq("id", id).select().single();
+    if (error) throw error;
+    return mapSpaceToFrontend(data);
+  },
+
   async deleteSpace(id: string): Promise<void> {
     const { error } = await supabase.from("vacant_spaces").delete().eq("id", id);
     if (error) throw error;

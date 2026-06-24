@@ -23,21 +23,21 @@ style.innerHTML = `
 document.head.appendChild(style);
 
 const getNoticeAbbreviation = (dateStr?: string) => {
-  if (!dateStr) return { day: "27", month: "Apr" };
+  if (!dateStr) return { day: "27", month: "APR" };
   try {
     const parts = dateStr.split("-");
     if (parts.length === 3) {
       const monthNum = parseInt(parts[1], 10);
       const dayNum = parseInt(parts[2], 10);
-      const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const monthAbbr = months[monthNum - 1] || "Apr";
+      const months = ["JAN", "FEB", "MAR", "APR", "MAJ", "JUN", "JUL", "AUG", "SEP", "OKT", "NOV", "DEC"];
+      const monthAbbr = months[monthNum - 1] || "APR";
       const formattedDay = String(dayNum).padStart(2, '0');
       return { day: formattedDay, month: monthAbbr };
     }
   } catch (e) {
     // Fallback
   }
-  return { day: "27", month: "Apr" };
+  return { day: "27", month: "APR" };
 };
 
 interface HomeViewProps {
@@ -88,21 +88,21 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
             </div>
 
             {/* Checks Row */}
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 pt-2 text-[10.5px] font-medium tracking-wide">
-              <div className="flex items-center gap-1.5 drop-shadow-sm">
-                <div className="bg-[#8CA899] rounded-full p-0.5"><Check className="w-3 h-3 text-white stroke-[3]" /></div>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 pt-2.5 text-sm sm:text-base font-bold tracking-wide">
+              <div className="flex items-center gap-2 drop-shadow-sm">
+                <div className="bg-[#8CA899] rounded-full p-0.5"><Check className="w-4 h-4 text-white stroke-[3]" /></div>
                 <span>Kombilokaler (ca 215 m²)</span>
               </div>
-              <div className="flex items-center gap-1.5 drop-shadow-sm">
-                <div className="bg-[#8CA899] rounded-full p-0.5"><Check className="w-3 h-3 text-white stroke-[3]" /></div>
+              <div className="flex items-center gap-2 drop-shadow-sm">
+                <div className="bg-[#8CA899] rounded-full p-0.5"><Check className="w-4 h-4 text-white stroke-[3]" /></div>
                 <span>Bred branschblandning</span>
               </div>
-              <div className="flex items-center gap-1.5 drop-shadow-sm">
-                <div className="bg-[#8CA899] rounded-full p-0.5"><Check className="w-3 h-3 text-white stroke-[3]" /></div>
+              <div className="flex items-center gap-2 drop-shadow-sm">
+                <div className="bg-[#8CA899] rounded-full p-0.5"><Check className="w-4 h-4 text-white stroke-[3]" /></div>
                 <span>Strategiskt invid E18</span>
               </div>
-              <div className="flex items-center gap-1.5 drop-shadow-sm">
-                <div className="bg-[#8CA899] rounded-full p-0.5"><Check className="w-3 h-3 text-white stroke-[3]" /></div>
+              <div className="flex items-center gap-2 drop-shadow-sm">
+                <div className="bg-[#8CA899] rounded-full p-0.5"><Check className="w-4 h-4 text-white stroke-[3]" /></div>
                 <span>Fri parkering</span>
               </div>
             </div>
@@ -112,14 +112,14 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
 
       {/* QUICK FEATURE PILL BAR */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-20 -mt-16 mb-16 lg:mb-20">
-        <div className="bg-white rounded-[32px] shadow-xl border border-gray-100 flex flex-col md:flex-row items-center p-2 lg:p-0">
+        <div className="bg-white rounded-[32px] shadow-xl border border-gray-100 flex flex-col md:flex-row items-center p-3 lg:p-1">
           <div className="flex-1 flex items-center gap-4 p-4 lg:p-6 w-full lg:w-auto hover:bg-gray-50 transition-colors rounded-l-[32px] cursor-pointer" onClick={() => onNavigate("lediga_lokaler")}>
-            <div className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center shrink-0">
-              <Building2 className="w-4 h-4 text-[#0B2C24]" />
+            <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center shrink-0">
+              <Building2 className="w-5 h-5 text-[#0B2C24]" />
             </div>
             <div>
-              <h3 className="font-bold text-[#0B2C24] text-[14px]">Kombilokaler</h3>
-              <p className="text-gray-500 text-[11px] leading-snug mt-0.5 max-w-[190px]">Lager, verkstad &amp; kontor i två plan</p>
+              <h3 className="font-bold text-[#0B2C24] text-base sm:text-lg">Kombilokaler</h3>
+              <p className="text-gray-600 text-[13.5px] sm:text-sm leading-snug mt-1 max-w-[245px]">Lager, verkstad &amp; kontor i två plan</p>
             </div>
           </div>
 
@@ -127,12 +127,12 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
           <div className="w-full h-px bg-gray-100 md:hidden my-2"></div>
 
           <div className="flex-1 flex items-center gap-4 p-4 lg:p-6 w-full lg:w-auto hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => onNavigate("lediga_lokaler")}>
-            <div className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center shrink-0">
-              <Calendar className="w-4 h-4 text-[#0B2C24]" />
+            <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center shrink-0">
+              <Calendar className="w-5 h-5 text-[#0B2C24]" />
             </div>
             <div>
-              <h3 className="font-bold text-[#0B2C24] text-[14px]">Verkstad &amp; Lager</h3>
-              <p className="text-gray-500 text-[11px] leading-snug mt-0.5 max-w-[190px]">Lokaler med portar på ca 215 kvm</p>
+              <h3 className="font-bold text-[#0B2C24] text-base sm:text-lg">Verkstad &amp; Lager</h3>
+              <p className="text-gray-600 text-[13.5px] sm:text-sm leading-snug mt-1 max-w-[245px]">Lokaler med portar på ca 215 kvm</p>
             </div>
           </div>
 
@@ -140,12 +140,12 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
           <div className="w-full h-px bg-gray-100 md:hidden my-2"></div>
 
           <div className="flex-1 flex items-center gap-4 p-4 lg:p-6 w-full lg:w-auto hover:bg-gray-50 transition-colors rounded-r-[32px] cursor-pointer" onClick={() => onNavigate("vara_foretag")}>
-            <div className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center shrink-0">
-              <Users className="w-4 h-4 text-[#0B2C24]" />
+            <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center shrink-0">
+              <Users className="w-5 h-5 text-[#0B2C24]" />
             </div>
             <div>
-              <h3 className="font-bold text-[#0B2C24] text-[14px]">30 Aktiva Företag</h3>
-              <p className="text-gray-500 text-[11px] leading-snug mt-0.5 max-w-[190px]">Fordonsservice, transport, hantverk och teknik</p>
+              <h3 className="font-bold text-[#0B2C24] text-base sm:text-lg">30 Aktiva Företag</h3>
+              <p className="text-gray-600 text-[13.5px] sm:text-sm leading-snug mt-1 max-w-[245px]">Fordonsservice, transport, hantverk och teknik</p>
             </div>
           </div>
         </div>
@@ -154,40 +154,40 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
       {/* SECTION: OM STÄKET */}
       <section id="omoss" className="py-16 bg-transparent text-center px-4 scroll-mt-24">
         <div className="max-w-3xl mx-auto space-y-4 mb-10">
-          <span className="font-cursive text-2xl text-[#B68F52]">Om Stäket Företagscenter</span>
+          <span className="font-cursive text-3xl sm:text-[34px] text-[#B68F52]">Om Stäket Företagscenter</span>
           <h2 className="text-2xl md:text-[36px] font-bold text-[#0B2C24] leading-[1.2] tracking-tight">
             En plats där företag trivs <br />
             och <span className="font-cursive text-[#0B2C24] font-normal px-1 tracking-normal inline-block">utvecklas</span>
           </h2>
           
-          <p className="text-[#0B2C24]/80 text-[14px] leading-relaxed max-w-lg mx-auto pb-2 font-medium italic border-l-4 border-[#B68F52] pl-4 text-left">
+          <p className="text-[#0B2C24]/85 text-[15px] sm:text-base leading-relaxed max-w-xl mx-auto pb-2 font-semibold italic border-l-4 border-[#B68F52] pl-4 text-left">
             "Behöver du tjänster, konsultationer eller bara byta däck eller serva bilen är du alltid välkommen över på en kopp kaffe till vårt trevliga företagscenter, vi tar gärna hand om dig."
           </p>
 
-          <div className="max-w-[450px] mx-auto grid grid-cols-2 gap-3 pb-4">
-            <div className="flex items-center gap-2 justify-start">
-              <div className="w-[18px] h-[18px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
-                <Check className="w-3 h-3 stroke-[3]" />
+          <div className="max-w-[620px] mx-auto grid grid-cols-2 gap-4 pb-4">
+            <div className="flex items-center gap-2.5 justify-start">
+              <div className="w-5.5 h-5.5 rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
               </div>
-              <span className="text-[12px] font-bold text-[#0B2C24] text-left">Kombilokaler (ca 215 m²)</span>
+              <span className="text-[15.5px] sm:text-[17px] font-extrabold text-[#0B2C24] text-left">Kombilokaler (ca 215 m²)</span>
             </div>
-            <div className="flex items-center gap-2 justify-start">
-              <div className="w-[18px] h-[18px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
-                <Check className="w-3 h-3 stroke-[3]" />
+            <div className="flex items-center gap-2.5 justify-start">
+              <div className="w-5.5 h-5.5 rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
               </div>
-              <span className="text-[12px] font-bold text-[#0B2C24] text-left">Strategiskt intill E18</span>
+              <span className="text-[15.5px] sm:text-[17px] font-extrabold text-[#0B2C24] text-left">Strategiskt intill E18</span>
             </div>
-            <div className="flex items-center gap-2 justify-start">
-              <div className="w-[18px] h-[18px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
-                <Check className="w-3 h-3 stroke-[3]" />
+            <div className="flex items-center gap-2.5 justify-start">
+              <div className="w-5.5 h-5.5 rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
               </div>
-              <span className="text-[12px] font-bold text-[#0B2C24] text-left">Mångsidig branschbredd</span>
+              <span className="text-[15.5px] sm:text-[17px] font-extrabold text-[#0B2C24] text-left">Mångsidig branschbredd</span>
             </div>
-            <div className="flex items-center gap-2 justify-start">
-              <div className="w-[18px] h-[18px] rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
-                <Check className="w-3 h-3 stroke-[3]" />
+            <div className="flex items-center gap-2.5 justify-start">
+              <div className="w-5.5 h-5.5 rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
+                <Check className="w-3.5 h-3.5 stroke-[3]" />
               </div>
-              <span className="text-[12px] font-bold text-[#0B2C24] text-left">Fria parkeringsplatser</span>
+              <span className="text-[15.5px] sm:text-[17px] font-extrabold text-[#0B2C24] text-left">Fria parkeringsplatser</span>
             </div>
           </div>
         </div>
@@ -205,10 +205,10 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
               </div>
               <div className="flex-1 text-left">
                 <div className="flex items-center justify-between pb-1">
-                  <h3 className="text-[15px] font-bold text-[#0B2C24]">Kombilokaler</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-[#0B2C24]">Kombilokaler</h3>
                   <ArrowRight className="w-4 h-4 text-[#0B2C24] group-hover:text-[#B68F52] transition-colors" />
                 </div>
-                <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">Flexibla lokaler på 215 kvm fördelat på två plan med egen port. Idealisk lösning för verksamheter som kräver både lager, verkstad och kontor.</p>
+                <p className="text-[14px] sm:text-[15px] text-gray-600 mt-2 leading-relaxed">Flexibla lokaler på 215 kvm fördelat på två plan med egen port. Idealisk lösning för verksamheter som kräver både lager, verkstad och kontor.</p>
               </div>
             </div>
           </div>
@@ -225,10 +225,10 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
               </div>
               <div className="flex-1 text-left">
                 <div className="flex items-center justify-between pb-1">
-                  <h3 className="text-[15px] font-bold text-[#0B2C24]">Verkstad &amp; Lager</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-[#0B2C24]">Verkstad &amp; Lager</h3>
                   <ArrowRight className="w-4 h-4 text-[#0B2C24] group-hover:text-[#B68F52] transition-colors" />
                 </div>
-                <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">Rymliga verkstads- och lagerlokaler i Stockholm på ca 215 kvm med smidiga rullportar och ordentlig takhöjd.</p>
+                <p className="text-[14px] sm:text-[15px] text-gray-600 mt-2 leading-relaxed">Rymliga verkstads- och lagerlokaler i Stockholm på ca 215 kvm med smidiga rullportar och ordentlig takhöjd.</p>
               </div>
             </div>
           </div>
@@ -245,10 +245,10 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
               </div>
               <div className="flex-1 text-left">
                 <div className="flex items-center justify-between pb-1">
-                  <h3 className="text-[15px] font-bold text-[#0B2C24]">Våra Verksamheter</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-[#0B2C24]">Våra Verksamheter</h3>
                   <ArrowRight className="w-4 h-4 text-[#0B2C24] group-hover:text-[#B68F52] transition-colors" />
                 </div>
-                <p className="text-[11px] text-gray-500 mt-1 leading-relaxed">Möt våra 30 hyresgäster verksamma inom bilförsäljning, däckbyten, liftuthyrning, transport, systemelektronik och konsulttjänster.</p>
+                <p className="text-[14px] sm:text-[15px] text-gray-600 mt-2 leading-relaxed">Möt våra 30 hyresgäster verksamma inom bilförsäljning, däckbyten, liftuthyrning, transport, systemelektronik och konsulttjänster.</p>
               </div>
             </div>
           </div>
@@ -266,7 +266,7 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
         <div className="max-w-7xl mx-auto space-y-6">
           <div className="flex items-center justify-between border-b border-gray-100 pb-3">
             <div className="space-y-1">
-              <span className="font-cursive text-xl text-[#B68F52]">Anslagstavlan</span>
+              <span className="font-cursive text-2xl sm:text-[28px] text-[#B68F52]">Anslagstavlan</span>
               <h3 className="font-bold text-[#0B2C24] text-lg tracking-tight">Senaste nytt från föreningen</h3>
             </div>
           </div>
@@ -288,17 +288,17 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
                       onSelectNotice(notice.id);
                     }
                   }}
-                  className="flex gap-4 items-start bg-slate-50 p-5 rounded-2xl border border-slate-100 hover:bg-[#F9FAF9] transition-all hover:shadow-sm cursor-pointer group"
+                  className="flex gap-4 items-start bg-slate-50 p-6 rounded-2xl border border-slate-100 hover:bg-[#F9FAF9] transition-all hover:shadow-sm cursor-pointer group"
                 >
-                  <div className="bg-[#0B2C24] text-white px-2.5 py-1.5 flex flex-col items-center justify-center shrink-0 min-w-[55px] rounded-lg shadow-sm">
-                    <span className="text-base font-bold font-mono tracking-tight leading-none text-white">{day}</span>
-                    <span className="text-[8px] uppercase font-bold tracking-wider text-white/85 mt-1">{month}</span>
+                  <div className="bg-[#0B2C24] text-white px-3 py-2.5 flex flex-col items-center justify-center shrink-0 min-w-[65px] rounded-xl shadow-sm">
+                    <span className="text-lg sm:text-xl font-black font-mono tracking-tight leading-none text-white">{day}</span>
+                    <span className="text-[10px] sm:text-xs uppercase font-extrabold tracking-widest text-white/90 mt-1.5">{month}</span>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h5 className="font-bold text-[#0B2C24] text-xs group-hover:text-[#B68F52] group-hover:underline leading-snug truncate">
+                    <h5 className="font-bold text-[#0B2C24] text-base sm:text-[17px] group-hover:text-[#B68F52] group-hover:underline leading-snug truncate">
                       {notice.title}
                     </h5>
-                    <p className="text-gray-500 text-[11px] leading-relaxed mt-2 line-clamp-3">
+                    <p className="text-gray-600 text-[13.5px] sm:text-sm leading-relaxed mt-2 line-clamp-3">
                       {cleanExcerpt}
                     </p>
                   </div>

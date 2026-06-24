@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from "react";
 import { dbService } from "../lib/db";
 import { Users, FileText, Bell, Plus, ArrowUp, ArrowDown, Edit2, Trash2, CheckCircle2, AlertTriangle, ShieldCheck, Building2, Sparkles, Image, Upload, Copy } from "lucide-react";
-import { UserProfile, UserRole, NoticePost, FileItem, VacantSpace, FileCategory } from "../types";
+import { UserProfile, UserRole, NoticePost, FileItem, VacantSpace, FileCategory, NoticeboardCategory, NOTICEBOARD_CATEGORIES } from "../types";
 
 // @ts-ignore
 import technicalManualText from "../../docs/technical_manual.md?raw";
@@ -25,7 +25,11 @@ interface AdminViewProps {
   onDeleteFile: (id: string, name: string, category: FileCategory) => void;
   onAddSpace: (space: Omit<VacantSpace, "id" | "createdAt">) => void;
   onDeleteSpace: (id: string) => void;
+  onUpdateNotice: (notice: NoticePost) => void;
+  onUpdateSpace: (id: string, space: Partial<VacantSpace>) => void;
   activeProfileName?: string;
+  initialSubTab?: AdminSubTab;
+  initialEditingSpace?: VacantSpace | null;
 }
 
 type AdminSubTab = "användare" | "filer" | "anslagstavla" | "lediga_lokaler" | "ai_support" | "galleri";
@@ -44,9 +48,25 @@ export default function AdminView({
   onDeleteFile,
   onAddSpace,
   onDeleteSpace,
+  onUpdateNotice,
+  onUpdateSpace,
   activeProfileName = "Admin",
+  initialSubTab = "användare",
+  initialEditingSpace = null,
 }: AdminViewProps) {
-  const [subTab, setSubTab] = useState<AdminSubTab>("användare");
+  const [subTab, setSubTab] = useState<AdminSubTab>(initialSubTab);
+
+  useEffect(() => {
+    if (initialSubTab) {
+      setSubTab(initialSubTab);
+    }
+  }, [initialSubTab]);
+
+  useEffect(() => {
+    if (initialEditingSpace) {
+      startEditingSpace(initialEditingSpace);
+    }
+  }, [initialEditingSpace]);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [showAddSpaceModal, setShowAddSpaceModal] = useState(false);
   // Sorting state for profiles
@@ -76,6 +96,40 @@ export default function AdminView({
   const [editPassword, setEditPassword] = useState("");
   const [editRepeatPassword, setEditRepeatPassword] = useState("");
   const [isUpdatingUser, setIsUpdatingUser] = useState(false);
+
+  // Editing space states
+  const [editingSpace, setEditingSpace] = useState<VacantSpace | null>(null);
+
+  const startEditingSpace = (space: VacantSpace) => {
+    setEditingSpace(space);
+    setSpaceTitle(space.title);
+    setSpaceLocation(space.location);
+    setSpaceDescription(space.description);
+    setSpaceSuitableForRaw(space.suitableFor ? space.suitableFor.join("\n") : "");
+    setSpaceTotalArea(space.totalArea);
+    setSpaceDetailsLower(space.detailsLowerLevel);
+    setSpaceDetailsUpper(space.detailsUpperLevel);
+    setSpaceSecurityInfo(space.securityInfo);
+    setSelectedGallerySpaceImageUrls(space.imgUrls || [space.imgUrl].filter(Boolean));
+    setShowAddSpaceModal(true);
+  };
+
+  // Editing notice states
+  const [editingNotice, setEditingNotice] = useState<NoticePost | null>(null);
+  const [editNoticeTitle, setEditNoticeTitle] = useState("");
+  const [editNoticeCategory, setEditNoticeCategory] = useState<NoticeboardCategory>("Information från Föreningsstyrelse");
+  const [editNoticeContent, setEditNoticeContent] = useState("");
+  const [editNoticeIsPinned, setEditNoticeIsPinned] = useState(false);
+  const [editNoticeDate, setEditNoticeDate] = useState("");
+
+  const startEditingNotice = (notice: NoticePost) => {
+    setEditingNotice(notice);
+    setEditNoticeTitle(notice.title);
+    setEditNoticeCategory(notice.category);
+    setEditNoticeContent(notice.content);
+    setEditNoticeIsPinned(notice.isPinned);
+    setEditNoticeDate(notice.date);
+  };
 
   // Form states for new available space
   const [spaceTitle, setSpaceTitle] = useState("");
@@ -368,7 +422,7 @@ export default function AdminView({
       ? selectedGallerySpaceImageUrls 
       : [spaceImgUrl || "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800"];
 
-    onAddSpace({
+    const spacePayload = {
       title: spaceTitle,
       location: spaceLocation,
       description: spaceDescription,
@@ -379,7 +433,13 @@ export default function AdminView({
       securityInfo: spaceSecurityInfo || "Stäket företagscenter har 24h övervakningssystem",
       imgUrl: finalImgUrls[0],
       imgUrls: finalImgUrls
-    });
+    };
+
+    if (editingSpace) {
+      onUpdateSpace(editingSpace.id, spacePayload);
+    } else {
+      onAddSpace(spacePayload);
+    }
 
     // Reset Form
     setSpaceTitle("");
@@ -392,7 +452,24 @@ export default function AdminView({
     setSpaceSecurityInfo("Stäket företagscenter har 24h övervakningssystem och eget hemsidan");
     setSpaceImgUrl("");
     setSelectedGallerySpaceImageUrls([]);
+    setEditingSpace(null);
     setShowAddSpaceModal(false);
+  };
+
+  const handleEditNoticeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingNotice || !editNoticeTitle || !editNoticeContent) return;
+
+    onUpdateNotice({
+      ...editingNotice,
+      title: editNoticeTitle,
+      category: editNoticeCategory,
+      content: editNoticeContent,
+      isPinned: editNoticeIsPinned,
+      date: editNoticeDate,
+    });
+
+    setEditingNotice(null);
   };
 
   // Filter profiles by roleFilter, then sort based on field
@@ -729,17 +806,26 @@ export default function AdminView({
                   </div>
 
                   {activeUserRole === "Administrator" && (
-                    <button
-                      onClick={() => {
-                        if (window.confirm(`Är du säker på att du vill radera anslaget "${post.title}"?`)) {
-                          onDeleteNotice(post.id);
-                        }
-                      }}
-                      className="p-2 ml-auto text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
-                      title="Radera anslag"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    <div className="flex items-center gap-1 ml-auto shrink-0 animate-fade-in">
+                      <button
+                        onClick={() => startEditingNotice(post)}
+                        className="p-2 text-slate-400 hover:text-emerald-500 hover:bg-emerald-50 rounded-xl transition-all cursor-pointer"
+                        title="Redigera anslag"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Är du säker på att du vill radera anslaget "${post.title}"?`)) {
+                            onDeleteNotice(post.id);
+                          }
+                        }}
+                        className="p-2 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
+                        title="Radera anslag"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
                   )}
                 </div>
               ))}
@@ -789,18 +875,28 @@ export default function AdminView({
                     </div>
 
                     {activeUserRole === "Administrator" && (
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Är du säker på att du vill radera annonsen "${space.title}"?`)) {
-                            onDeleteSpace(space.id);
-                          }
-                        }}
-                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1 text-xs font-bold"
-                        title="Radera annons"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        <span>Ta bort</span>
-                      </button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => startEditingSpace(space)}
+                          className="p-1.5 text-slate-400 hover:text-emerald-550 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1 text-xs font-bold"
+                          title="Redigera annons"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                          <span>Ändra</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Är du säker på att du vill radera annonsen "${space.title}"?`)) {
+                              onDeleteSpace(space.id);
+                            }
+                          }}
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1 text-xs font-bold"
+                          title="Radera annons"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Ta bort</span>
+                        </button>
+                      </div>
                     )}
                   </div>
                 ))}
@@ -1498,11 +1594,24 @@ export default function AdminView({
           <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-xl overflow-hidden animate-scale-up">
             <div className="flex items-center justify-between p-5 bg-slate-900 text-white">
               <div className="space-y-0.5">
-                <h3 className="font-bold text-base">Skapa ny annons för ledig lokal</h3>
+                <h3 className="font-bold text-base">{editingSpace ? "Redigera annons för ledig lokal" : "Skapa ny annons för ledig lokal"}</h3>
                 <p className="text-[10px] text-slate-300">Annonsen kommer att synas direkt under sektionen "Lediga Lokaler Järfälla".</p>
               </div>
               <button
-                onClick={() => setShowAddSpaceModal(false)}
+                type="button"
+                onClick={() => {
+                  setEditingSpace(null);
+                  setSpaceTitle("");
+                  setSpaceLocation("Skarprättarvägen 7, Järfälla");
+                  setSpaceDescription("");
+                  setSpaceSuitableForRaw("");
+                  setSpaceTotalArea("");
+                  setSpaceDetailsLower("");
+                  setSpaceDetailsUpper("");
+                  setSpaceSecurityInfo("Stäket företagscenter har 24h övervakningssystem och eget hemsidan");
+                  setSelectedGallerySpaceImageUrls([]);
+                  setShowAddSpaceModal(false);
+                }}
                 className="text-slate-400 hover:text-white text-xs font-semibold px-2 py-1 bg-slate-800 rounded-lg cursor-pointer"
               >
                 Stäng
@@ -1642,10 +1751,114 @@ export default function AdminView({
 
               <div className="pt-2">
                 <button
-                  type="submit"
-                  className="w-full px-5 py-3 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-950 cursor-pointer shadow-md rounded uppercase tracking-wider"
+                   type="submit"
+                   className="w-full px-5 py-3 text-xs font-bold text-white bg-slate-900 hover:bg-slate-800 border border-slate-950 cursor-pointer shadow-md rounded uppercase tracking-wider"
                 >
-                  Publicera Annons
+                  {editingSpace ? "Spara ändringar" : "Publicera Annons"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Notice Modal */}
+      {editingNotice && (
+        <div className="fixed inset-0 bg-slate-950/45 flex items-center justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-xl overflow-hidden animate-scale-up">
+            <div className="flex items-center justify-between p-5 bg-slate-900 text-white">
+              <div className="space-y-0.5">
+                <h3 className="font-bold text-base">Redigera anslag</h3>
+                <p className="text-[10px] text-slate-300">Ändringarna uppdateras direkt på anslagstavlan.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingNotice(null)}
+                className="text-slate-400 hover:text-white text-xs font-semibold px-2 py-1 bg-slate-800 rounded-lg cursor-pointer"
+              >
+                Stäng
+              </button>
+            </div>
+
+            <form onSubmit={handleEditNoticeSubmit} className="p-6 space-y-4 text-xs">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Rubrik / Titel *</label>
+                <input
+                  type="text"
+                  required
+                  value={editNoticeTitle}
+                  onChange={(e) => setEditNoticeTitle(e.target.value)}
+                  placeholder="Skriv en informativ rubrik"
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs bg-white text-slate-800"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Kategori *</label>
+                  <select
+                    value={editNoticeCategory}
+                    onChange={(e) => setEditNoticeCategory(e.target.value as NoticeboardCategory)}
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-md text-sm font-semibold uppercase bg-white text-slate-800 cursor-pointer"
+                  >
+                    {NOTICEBOARD_CATEGORIES.map((cat, idx) => (
+                      <option key={idx} value={cat}>
+                        {cat.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase">Publiceringsdatum *</label>
+                  <input
+                    type="date"
+                    required
+                    value={editNoticeDate}
+                    onChange={(e) => setEditNoticeDate(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs bg-white text-slate-800"
+                  />
+                </div>
+
+                <div className="flex items-center gap-2 pt-5">
+                  <input
+                    type="checkbox"
+                    id="edit-notice-pin"
+                    checked={editNoticeIsPinned}
+                    onChange={(e) => setEditNoticeIsPinned(e.target.checked)}
+                    className="w-4 h-4 text-emerald-500 accent-emerald-500 cursor-pointer"
+                  />
+                  <label htmlFor="edit-notice-pin" className="text-[11px] font-semibold text-slate-700 cursor-pointer select-none">
+                    📌 Nåla fast
+                  </label>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-slate-500 uppercase">Innehåll / Beskrivning *</label>
+                <textarea
+                  required
+                  rows={5}
+                  value={editNoticeContent}
+                  onChange={(e) => setEditNoticeContent(e.target.value)}
+                  placeholder="Beskriv anslaget utförligt..."
+                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs resize-none bg-white text-slate-800"
+                />
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingNotice(null)}
+                  className="px-4 py-2 text-xs font-medium text-slate-650 hover:bg-slate-50 rounded-lg bg-white border border-slate-200 cursor-pointer"
+                >
+                  Avbryt
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 text-xs font-bold text-slate-950 bg-emerald-400 hover:bg-emerald-300 rounded-lg border border-emerald-500 cursor-pointer shadow-2xs uppercase tracking-wider"
+                >
+                  Spara ändringar
                 </button>
               </div>
             </form>

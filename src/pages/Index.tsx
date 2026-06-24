@@ -148,6 +148,16 @@ export default function Index() {
   const [highlightedNoticeId, setHighlightedNoticeId] = useState<string | null>(null);
   const [selectedNoticeboardCategory, setSelectedNoticeboardCategory] = useState<NoticeboardCategory | "Alla">("Alla");
 
+  // Subtab navigation & editing triggers for Admin panel
+  const [adminInitialSubTab, setAdminInitialSubTab] = useState<"användare" | "filer" | "anslagstavla" | "lediga_lokaler" | "ai_support" | "galleri">("användare");
+  const [initialEditingSpace, setInitialEditingSpace] = useState<VacantSpace | null>(null);
+
+  const handleEditSpaceClick = (space: VacantSpace) => {
+    setAdminInitialSubTab("lediga_lokaler");
+    setInitialEditingSpace(space);
+    setActiveTab("administration");
+  };
+
   // Floating Chatbot State
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "ai"; text: string }>>([]);
@@ -1049,6 +1059,28 @@ ${query}`;
     }
   };
 
+  const handleUpdateSpace = async (id: string, updatedFields: Partial<VacantSpace>) => {
+    const originalSpaces = [...spaces];
+    // 1. Optimistic Update
+    const optimisticList = spaces.map((s) => (s.id === id ? { ...s, ...updatedFields } : s));
+    setSpaces(optimisticList);
+    saveSpaces(optimisticList);
+
+    try {
+      const dbSpace = await dbService.updateSpace(id, updatedFields);
+      setSpaces((prev) => {
+        const next = prev.map((s) => (s.id === id ? dbSpace : s));
+        saveSpaces(next);
+        return next;
+      });
+    } catch (e) {
+      console.error("Failed to update vacant space in Supabase, reverting:", e);
+      setSpaces(originalSpaces);
+      saveSpaces(originalSpaces);
+      alert("Kunde inte uppdatera lokalannonsen på servern.");
+    }
+  };
+
   // Guard routing if tabs are restricted by selected role.
   const handleTabClick = (tabId: string) => {
     const isMemberTab = ["anslagstavlan", "filer", "kontaktboken"].includes(tabId);
@@ -1466,6 +1498,7 @@ ${query}`;
                   spaces={spaces}
                   role={role}
                   onDeleteSpace={handleDeleteSpace}
+                  onEditSpace={handleEditSpaceClick}
                 />
               )}
 
@@ -1520,7 +1553,11 @@ ${query}`;
                   onDeleteFile={handleDeleteFile}
                   onAddSpace={handleAddSpace}
                   onDeleteSpace={handleDeleteSpace}
+                  onUpdateNotice={handleUpdateNotice}
+                  onUpdateSpace={handleUpdateSpace}
                   activeProfileName={currentUserProfile?.name}
+                  initialSubTab={adminInitialSubTab}
+                  initialEditingSpace={initialEditingSpace}
                 />
               )}
             </main>
@@ -1678,7 +1715,7 @@ ${query}`;
                             disabled={isAiLoading || !chatInput.trim()}
                             className="px-4 py-2 bg-slate-950 text-white hover:bg-slate-900 font-bold rounded-xl text-xs disabled:opacity-50 transition-colors cursor-pointer"
                           >
-                            Skicka
+                            SKICKA
                           </button>
                         </form>
                       </div>
@@ -1871,9 +1908,9 @@ ${query}`;
                             setSelectedNoticeboardCategory(cat);
                             handleTabClick("anslagstavlan");
                           }}
-                          className="w-full text-left px-4 py-2 text-xs text-gray-600 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-semibold border-b border-gray-50 last:border-0"
+                          className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-bold uppercase border-b border-gray-50 last:border-0"
                         >
-                          {cat}
+                          {cat.toUpperCase()}
                         </button>
                       ))}
                     </div>
@@ -2141,34 +2178,34 @@ ${query}`;
           <footer className="bg-[#F9FAF9] text-[#0B2C24] py-12 px-4 md:px-8 border-t border-gray-200/60 flex-shrink-0 font-sans">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-8 pb-8">
               <div className="space-y-3 max-w-md">
-                <h3 className="font-bold text-[#0B2C24] text-base">Stäket Företagscenter</h3>
-                <p className="text-gray-600 text-xs leading-relaxed">
+                <h3 className="font-bold text-[#0B2C24] text-lg">Stäket Företagscenter</h3>
+                <p className="text-gray-700 text-base leading-relaxed">
                   Företagstjänster - Konsultationer - Service. Ett komplett företagscenter i Järfälla med 30 aktiva bolag.
                 </p>
               </div>
 
-              <div className="flex flex-wrap md:flex-nowrap gap-x-12 gap-y-6 text-xs text-gray-600">
+              <div className="flex flex-wrap md:flex-nowrap gap-x-12 gap-y-6 text-base text-gray-700">
                 <div className="space-y-1">
-                  <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">ADRESS:</div>
-                  <p className="font-semibold text-slate-800">Skarprättarvägen 7</p>
-                  <p className="font-semibold text-slate-800">176 77 Järfälla</p>
+                  <div className="text-[13px] sm:text-[14px] uppercase font-bold text-gray-400 tracking-wider">ADRESS:</div>
+                  <p className="font-bold text-slate-800">Skarprättarvägen 7</p>
+                  <p className="font-bold text-slate-800">176 77 Järfälla</p>
                 </div>
                 
                 <div className="space-y-1">
-                  <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">TELEFON:</div>
-                  <p className="font-semibold text-slate-800">070 777 2111</p>
+                  <div className="text-[13px] sm:text-[14px] uppercase font-bold text-gray-400 tracking-wider">TELEFON:</div>
+                  <p className="font-bold text-slate-800">070 777 2111</p>
                 </div>
                 
                 <div className="space-y-1">
-                  <div className="text-[10px] uppercase font-bold text-gray-400 tracking-wider">EMAIL:</div>
-                  <a href="mailto:brfsfc@gmail.com" className="font-semibold text-slate-800 hover:underline">
+                  <div className="text-[13px] sm:text-[14px] uppercase font-bold text-gray-400 tracking-wider">EMAIL:</div>
+                  <a href="mailto:brfsfc@gmail.com" className="font-bold text-slate-800 hover:underline">
                     brfsfc@gmail.com
                   </a>
                 </div>
               </div>
             </div>
 
-            <div className="max-w-7xl mx-auto pt-6 border-t border-gray-200/50 flex flex-col sm:flex-row items-center justify-between text-[11px] text-gray-500 gap-4">
+            <div className="max-w-7xl mx-auto pt-6 border-t border-gray-200/50 flex flex-col sm:flex-row items-center justify-between text-sm sm:text-base text-gray-700 font-semibold gap-4">
               <div>© 2026 Brf. Stäkets Företagscenter. Alla rättigheter förbehållna.</div>
               <div className="flex gap-4">
                 <a href="#" className="hover:text-[#B68F52] transition-colors">Integritetspolicy</a>

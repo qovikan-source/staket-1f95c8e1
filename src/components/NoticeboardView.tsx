@@ -196,12 +196,12 @@ export default function NoticeboardView({
             id="select-notice-filter"
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value as any)}
-            className="w-full md:w-64 px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:bg-white focus:outline-emerald-500 transition-colors cursor-pointer"
+            className="w-full md:w-64 px-3 py-2.5 rounded-xl border border-slate-200 text-sm bg-slate-50 focus:bg-white focus:outline-emerald-500 font-bold uppercase transition-colors cursor-pointer text-slate-700"
           >
-            <option value="Alla">Alla ämnen / Kategorier ({notices.length})</option>
+            <option value="Alla">ALLA ÄMNEN / KATEGORIER ({notices.length})</option>
             {NOTICEBOARD_CATEGORIES.map((cat, i) => (
               <option key={i} value={cat}>
-                {cat} ({getCategoryCount(cat)})
+                {cat.toUpperCase()} ({getCategoryCount(cat)})
               </option>
             ))}
           </select>
@@ -210,17 +210,17 @@ export default function NoticeboardView({
 
       {/* Categories Horizontal Scroll Chips for visual elegance on desktop */}
       <div className="space-y-2">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Filtrera snabbt</h3>
+        <h3 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">FILTRERA SNABBT</h3>
         <div className="flex flex-wrap gap-2 pb-2">
           <button
             onClick={() => setSelectedCategory("Alla")}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-all border ${
+            className={`px-4 py-2 rounded-full text-sm font-bold cursor-pointer transition-all border ${
               selectedCategory === "Alla"
                 ? "bg-slate-900 text-white border-slate-950 shadow-2xs"
                 : "bg-white text-slate-600 border-slate-100 hover:bg-slate-50 hover:text-slate-900"
             }`}
           >
-            Alla ({notices.length})
+            ALLA ({notices.length})
           </button>
           {NOTICEBOARD_CATEGORIES.map((cat, idx) => {
             const count = getCategoryCount(cat);
@@ -228,14 +228,14 @@ export default function NoticeboardView({
               <button
                 key={idx}
                 onClick={() => setSelectedCategory(cat)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-all border flex items-center gap-1.5 ${
+                className={`px-4 py-2 rounded-full text-sm font-bold cursor-pointer transition-all border flex items-center gap-2 ${
                   selectedCategory === cat
-                    ? "bg-emerald-500 text-slate-950 border-emerald-500 font-semibold shadow-2xs"
+                    ? "bg-emerald-500 text-slate-950 border-emerald-500 shadow-2xs"
                     : "bg-white text-slate-600 border-slate-100 hover:bg-slate-50 hover:text-slate-900"
                 }`}
               >
-                <span>{cat}</span>
-                <span className={`text-[10px] rounded-full px-1.5 py-0.2 font-bold ${selectedCategory === cat ? 'bg-emerald-600 text-emerald-50' : 'bg-slate-100 text-slate-500'}`}>{count}</span>
+                <span>{cat.toUpperCase()}</span>
+                <span className={`text-[11px] rounded-full px-2 py-0.5 font-extrabold ${selectedCategory === cat ? 'bg-emerald-600 text-emerald-50' : 'bg-slate-100 text-slate-500'}`}>{count}</span>
               </button>
             );
           })}
@@ -451,11 +451,11 @@ export default function NoticeboardView({
                     id="form-category"
                     value={newCategory}
                     onChange={(e) => setNewCategory(e.target.value as NoticeboardCategory)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold uppercase bg-white text-slate-800 cursor-pointer"
                   >
                     {NOTICEBOARD_CATEGORIES.map((cat, idx) => (
                       <option key={idx} value={cat}>
-                        {cat}
+                        {cat.toUpperCase()}
                       </option>
                     ))}
                   </select>
@@ -559,11 +559,11 @@ export default function NoticeboardView({
                     id="edit-form-category"
                     value={editCategory}
                     onChange={(e) => setEditCategory(e.target.value as NoticeboardCategory)}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs"
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-lg text-sm font-semibold uppercase bg-white text-slate-800 cursor-pointer"
                   >
                     {NOTICEBOARD_CATEGORIES.map((cat, idx) => (
                       <option key={idx} value={cat}>
-                        {cat}
+                        {cat.toUpperCase()}
                       </option>
                     ))}
                   </select>

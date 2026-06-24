@@ -38,15 +38,15 @@ export default function AboutUsView() {
       
       {/* Intro section aligning with old-content.md */}
       <div className="space-y-4">
-        <span className="text-[11px] font-black uppercase tracking-widest text-[#B68F52] hover:text-[#A37E3A] transition-colors">
-          Vilka vi är
+        <span className="text-[13px] sm:text-xs font-black uppercase tracking-widest text-[#B68F52] hover:text-[#A37E3A] transition-colors">
+          VILKA VI ÄR
         </span>
         <h1 className="text-3xl font-sans font-bold tracking-tight text-slate-900">
-          Brf Stäkets Företagscenter i Järfälla
+          BRF STÄKETS FÖRETAGSCENTER I JÄRFÄLLA
         </h1>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 pt-2">
-          <div className="lg:col-span-8 text-slate-600 gap-y-4 flex flex-col text-sm leading-relaxed">
-            <p className="font-semibold text-slate-800 text-base">
+          <div className="lg:col-span-8 text-slate-600 gap-y-4 flex flex-col text-[15px] sm:text-base leading-relaxed">
+            <p className="font-semibold text-slate-800 text-base sm:text-lg">
               Välkommen till ett levande och väletablerat företagscenter i nordvästra Stockholm.
             </p>
             <p>
@@ -60,8 +60,8 @@ export default function AboutUsView() {
             </p>
           </div>
           <div className="lg:col-span-4 bg-slate-50 border border-slate-100 p-6 rounded-2xl flex flex-col justify-between">
-            <h4 className="font-bold text-slate-800 text-xs uppercase tracking-wider mb-3">Besöksadress & NAP</h4>
-            <div className="space-y-3 text-xs text-slate-600">
+            <h4 className="font-extrabold text-slate-800 text-sm uppercase tracking-wider mb-4 border-b border-slate-200/60 pb-2">BESÖKSADRESS &amp; NAP</h4>
+            <div className="space-y-3.5 text-sm text-slate-700">
               <p>
                 <strong className="text-slate-800 block">Namn:</strong>
                 Stäket Företagscenter (Brf SFC)
@@ -85,44 +85,44 @@ export default function AboutUsView() {
 
       {/* Grid of commercial parameters */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs">
           <div className="w-10 h-10 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center mb-4">
             <Map className="w-5 h-5" />
           </div>
-          <h3 className="font-bold text-slate-800 text-sm">Strategiskt Läge</h3>
-          <p className="text-xs text-slate-500 mt-1">Placerat direkt vid E18 i Stäket, Järfälla. Enkelt att nå för kunder och frakt.</p>
+          <h3 className="font-bold text-slate-800 text-base">Strategiskt Läge</h3>
+          <p className="text-[13.5px] sm:text-sm text-slate-600 mt-1.5 leading-relaxed">Placerat direkt vid E18 i Stäket, Järfälla. Enkelt att nå för kunder och frakt.</p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs">
           <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4">
             <Clock className="w-5 h-5" />
           </div>
-          <h3 className="font-bold text-slate-800 text-sm">30 Aktiva Lokaler</h3>
-          <p className="text-xs text-slate-500 mt-1">Brett kontaktnät med kontor, tunga verkstäder och logistiklager på området.</p>
+          <h3 className="font-bold text-slate-800 text-base">30 Aktiva Lokaler</h3>
+          <p className="text-[13.5px] sm:text-sm text-slate-600 mt-1.5 leading-relaxed">Brett kontaktnät med kontor, tunga verkstäder och logistiklager på området.</p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs">
           <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
             <ShieldCheck className="w-5 h-5" />
           </div>
-          <h3 className="font-bold text-slate-800 text-sm">Ekonomisk Förening</h3>
-          <p className="text-xs text-slate-500 mt-1">Ombildades 2004 för ökat lokalt medinflytande och professionell fastighetsservice.</p>
+          <h3 className="font-bold text-slate-800 text-base">Ekonomisk Förening</h3>
+          <p className="text-[13.5px] sm:text-sm text-slate-600 mt-1.5 leading-relaxed">Ombildades 2004 för ökat lokalt medinflytande och professionell fastighetsservice.</p>
         </div>
 
-        <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs">
           <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center mb-4">
             <FileText className="w-5 h-5" />
           </div>
-          <h3 className="font-bold text-slate-800 text-sm">Organisationsnummer</h3>
-          <p className="text-xs text-slate-500 mt-1">769618-5000 (Bostadsrättsföreningen Stäkets Företagscenter)</p>
+          <h3 className="font-bold text-slate-800 text-base">Organisationsnummer</h3>
+          <p className="text-[13.5px] sm:text-sm text-slate-600 mt-1.5 leading-relaxed">769618-5000 (Bostadsrättsföreningen Stäkets Företagscenter)</p>
         </div>
       </div>
 
       {/* Embedded Map Section - Crucial for local SEO (Phase 1) */}
       <div className="space-y-4">
-        <div className="space-y-1.5">
-          <h2 className="text-xl font-bold text-slate-800">Hitta Till Stäket Företagscenter</h2>
-          <p className="text-xs text-slate-500">Karta och vägbeskrivning till Skarprättarvägen 7 i Järfälla, Stockholm.</p>
+        <div className="space-y-2">
+          <h2 className="text-xl font-bold text-slate-800">HITTA TILL STÄKET FÖRETAGSCENTER</h2>
+          <p className="text-sm sm:text-base text-slate-600 font-medium">Karta och vägbeskrivning till Skarprättarvägen 7 i Järfälla, Stockholm.</p>
         </div>
         <div className="overflow-hidden rounded-2xl border border-slate-100 shadow-xs">
           <iframe 
@@ -143,18 +143,18 @@ export default function AboutUsView() {
       <div className="space-y-6">
         <div className="flex items-center gap-2">
           <HelpCircle className="w-5 h-5 text-emerald-600" />
-          <h2 className="text-xl font-bold text-slate-800">Frågor och svar om Stäket Företagscenter</h2>
+          <h2 className="text-xl font-bold text-slate-800">FRÅGOR OCH SVAR OM STÄKET FÖRETAGSCENTER</h2>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {faqItems.map((faq, index) => (
             <div key={index} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-2xs space-y-2 flex flex-col justify-between">
               <div>
-                <h3 className="font-bold text-[#0B2C24] text-xs uppercase tracking-wide flex items-start gap-2 mb-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                <h3 className="font-extrabold text-[#0B2C24] text-sm uppercase tracking-wide flex items-start gap-2 mb-3.5 border-b border-slate-100 pb-2">
+                  <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 shrink-0 mt-0.5" />
                   <span>{faq.q}</span>
                 </h3>
-                <p className="text-xs text-slate-500 leading-relaxed pl-6">{faq.a}</p>
+                <p className="text-sm sm:text-[14.5px] text-slate-600 leading-relaxed pl-6">{faq.a}</p>
               </div>
             </div>
           ))}
