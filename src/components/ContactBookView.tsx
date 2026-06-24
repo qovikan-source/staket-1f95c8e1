@@ -156,6 +156,7 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
           <input
             id="input-contact-search"
             type="text"
+            aria-label="Sök på namn, lokal eller företag"
             placeholder="Sök på Namn, Lokal (t.ex. '22'), Företag..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
