@@ -182,6 +182,7 @@ export default function NoticeboardView({
           <input
             id="input-notice-search"
             type="text"
+            aria-label="Sök bland anslag"
             placeholder="Sök bland anslag..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -210,7 +211,7 @@ export default function NoticeboardView({
 
       {/* Categories Horizontal Scroll Chips for visual elegance on desktop */}
       <div className="space-y-2">
-        <h3 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">FILTRERA SNABBT</h3>
+        <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">FILTRERA SNABBT</h2>
         <div className="flex flex-wrap gap-2 pb-2">
           <button
             onClick={() => setSelectedCategory("Alla")}

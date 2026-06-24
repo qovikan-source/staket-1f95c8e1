@@ -61,6 +61,10 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
             src={heroImage} 
             alt="Välkommen till Stäket Företagscenter i Järfälla — din plats för produktivt arbete och möten" 
             className="w-full h-full object-cover"
+            width={1920}
+            height={650}
+            fetchPriority="high"
+            decoding="async"
           />
           {/* Dark gradient overlay left to right */}
           <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/55 to-transparent"></div>
@@ -118,7 +122,7 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
               <Building2 className="w-5 h-5 text-[#0B2C24]" />
             </div>
             <div>
-              <h3 className="font-bold text-[#0B2C24] text-base sm:text-lg">Kombilokaler</h3>
+              <h2 className="font-bold text-[#0B2C24] text-base sm:text-lg">Kombilokaler</h2>
               <p className="text-gray-600 text-[13.5px] sm:text-sm leading-snug mt-1 max-w-[245px]">Lager, verkstad &amp; kontor i två plan</p>
             </div>
           </div>
@@ -131,7 +135,7 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
               <Calendar className="w-5 h-5 text-[#0B2C24]" />
             </div>
             <div>
-              <h3 className="font-bold text-[#0B2C24] text-base sm:text-lg">Verkstad &amp; Lager</h3>
+              <h2 className="font-bold text-[#0B2C24] text-base sm:text-lg">Verkstad &amp; Lager</h2>
               <p className="text-gray-600 text-[13.5px] sm:text-sm leading-snug mt-1 max-w-[245px]">Lokaler med portar på ca 215 kvm</p>
             </div>
           </div>
@@ -144,7 +148,7 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
               <Users className="w-5 h-5 text-[#0B2C24]" />
             </div>
             <div>
-              <h3 className="font-bold text-[#0B2C24] text-base sm:text-lg">30 Aktiva Företag</h3>
+              <h2 className="font-bold text-[#0B2C24] text-base sm:text-lg">30 Aktiva Företag</h2>
               <p className="text-gray-600 text-[13.5px] sm:text-sm leading-snug mt-1 max-w-[245px]">Fordonsservice, transport, hantverk och teknik</p>
             </div>
           </div>
