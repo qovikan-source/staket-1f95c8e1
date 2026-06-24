@@ -13,7 +13,7 @@ export default function PolicyView() {
         </div>
         <div className="relative z-10 space-y-3">
           <span className="text-xs font-bold uppercase tracking-widest text-[#B68F52]">Säkerhet &amp; Efterlevnad</span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">Integritet &amp; Dataskydd (GDPR)</h2>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight">Integritet &amp; Dataskydd (GDPR)</h1>
           <p className="text-sm sm:text-base text-slate-350 max-w-2xl leading-relaxed">
             Vi värnar om din personliga integritet. Här beskriver vi i detalj hur Brf. Stäkets Företagscenter behandlar dina personuppgifter i enlighet med dataskyddsförordningen (GDPR) och svensk lagstiftning.
           </p>
