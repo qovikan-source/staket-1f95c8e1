@@ -331,40 +331,40 @@ export default function AvailableSpacesView({
                 <h2 className="text-xl font-bold text-slate-900 border-l-4 border-blue-600 pl-3">
                   Verkstäds- &amp; Lagerlokaler i Järfälla — Tekniska specifikationer
                 </h2>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-sm sm:text-base text-slate-650 leading-relaxed">
                   Söker ni en funktionell <strong className="text-slate-800 font-semibold">verkstad eller lagerlokal i Järfälla</strong>? Våra kombilokaler erbjuder en totalyta om ca 215 kvm fördelat lika på två plan med tillhörande egen parkering, rymlig vikport och mycket goda tekniska standarder.
                 </p>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-sm sm:text-base text-slate-650 leading-relaxed">
                   Här har ni ett fantastiskt kommunikationsläge nära tunga leder som E18 samt Rotebro/Stäketleden och E4:an vilket underlättar logistiken för hantverkare, verkstäder och entreprenadfirmor.
                 </p>
               </div>
 
               {/* Specs Table */}
               <div className="border border-slate-100 rounded-2xl overflow-hidden shadow-3xs bg-white">
-                <div className="bg-slate-50 px-5 py-3 font-bold text-slate-800 text-xs border-b border-slate-100">
+                <div className="bg-slate-50 px-5 py-3 font-bold text-slate-800 text-sm border-b border-slate-100">
                   Bekräftade tekniska specifikationer:
                 </div>
-                <table className="w-full text-xs text-left text-slate-600">
+                <table className="w-full text-sm text-left text-slate-600">
                   <tbody className="divide-y divide-slate-100">
                     <tr>
-                      <td className="px-5 py-3 font-semibold text-slate-800 w-1/3">Vikportsmått</td>
-                      <td className="px-5 py-3">Hög manuell vikport med måtten 4x4,5 meter för smidig inlastning.</td>
+                      <td className="px-5 py-3.5 font-semibold text-slate-800 w-1/3">Vikportsmått</td>
+                      <td className="px-5 py-3.5">Hög manuell vikport med måtten 4x4,5 meter för smidig inlastning.</td>
                     </tr>
                     <tr>
-                      <td className="px-5 py-3 font-semibold text-slate-800">Takhöjd (Nedre plan)</td>
-                      <td className="px-5 py-3">Ca 5 meter takhöjd på det nedre planet.</td>
+                      <td className="px-5 py-3.5 font-semibold text-slate-800">Takhöjd (Nedre plan)</td>
+                      <td className="px-5 py-3.5">Ca 5 meter takhöjd på det nedre planet.</td>
                     </tr>
                     <tr>
-                      <td className="px-5 py-3 font-semibold text-slate-800">Golv &amp; Avlopp</td>
-                      <td className="px-5 py-3">God bärighet samt inbyggd golvbrunn med tillhörande oljeavskiljare.</td>
+                      <td className="px-5 py-3.5 font-semibold text-slate-800">Golv &amp; Avlopp</td>
+                      <td className="px-5 py-3.5">God bärighet samt inbyggd golvbrunn med tillhörande oljeavskiljare.</td>
                     </tr>
                     <tr>
-                      <td className="px-5 py-3 font-semibold text-slate-800">Värme</td>
-                      <td className="px-5 py-3">Nedre planet är utrustat med golvvärme.</td>
+                      <td className="px-5 py-3.5 font-semibold text-slate-800">Värme</td>
+                      <td className="px-5 py-3.5">Nedre planet är utrustat med golvvärme.</td>
                     </tr>
                     <tr>
-                      <td className="px-5 py-3 font-semibold text-slate-800">Säkerhet</td>
-                      <td className="px-5 py-3">Bevakat företagscenter utrustat med rullgrindar och 24h övervakningssystem.</td>
+                      <td className="px-5 py-3.5 font-semibold text-slate-800">Säkerhet</td>
+                      <td className="px-5 py-3.5">Bevakat företagscenter utrustat med rullgrindar och 24h övervakningssystem.</td>
                     </tr>
                   </tbody>
                 </table>
@@ -386,28 +386,28 @@ export default function AvailableSpacesView({
                     className="w-full h-full object-cover" 
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 to-transparent flex items-end p-4">
-                    <p className="text-xs font-bold text-white">Stäket, Järfälla — Strategiskt placerat intill E18 &amp; E4:an</p>
+                    <p className="text-sm font-bold text-white">Stäket, Järfälla — Strategiskt placerat intill E18 &amp; E4:an</p>
                   </div>
                 </div>
-                <p className="text-xs text-slate-650 leading-relaxed">
+                <p className="text-sm sm:text-base text-slate-650 leading-relaxed">
                   Området <strong className="text-slate-800 font-semibold">Stäket i Järfälla</strong> (nordvästra Stockholm) har ett fantastiskt läge i köpstarkt område intill E18 samt Rotebro/Stäketleden och E4:an. Med välkända grannar som K-Rauta, Bilprovningen, Scania, Hemköp och McDonalds har området ständigt högt flöde av kunder och tung fordonstrafik.
                 </p>
-                <p className="text-xs text-slate-650 leading-relaxed">
+                <p className="text-sm sm:text-base text-slate-650 leading-relaxed">
                   Detta gör geografin helt ovärderlig för hantverkare, bilhandlare, transportfirmor och lokala utlämningsställen som värdesätter smidig och omedelbar logistikkoppling till hela Storstockholmsregionen.
                 </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
                 <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl space-y-2">
-                  <h4 className="font-bold text-slate-800 text-sm">Transportleder</h4>
-                  <p className="text-[13px] sm:text-sm text-slate-600 leading-relaxed">
+                  <h4 className="font-bold text-slate-800 text-sm sm:text-base">Transportleder</h4>
+                  <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
                     Direkt anslutning till E18 och Rotebro/Stäketleden. Det tar ca 20 minuter med bil till centrala Stockholm och ca 25 minuter till Arlanda.
                   </p>
                 </div>
 
                 <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl space-y-2">
-                  <h4 className="font-bold text-slate-800 text-sm">Leverantörstäthet</h4>
-                  <p className="text-[13px] sm:text-sm text-slate-600 leading-relaxed">
+                  <h4 className="font-bold text-slate-800 text-sm sm:text-base">Leverantörstäthet</h4>
+                  <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
                     Direkt tillgång till tunga fastighetspartners, byggmaterialleverantörer, bilprovningsstationer och fackmässig verkstadskompetens på samma gator.
                   </p>
                 </div>
@@ -420,7 +420,7 @@ export default function AvailableSpacesView({
         <div className="lg:col-span-4 bg-slate-900 border border-slate-800 text-slate-100 p-6 rounded-2xl shadow-lg space-y-5 sticky top-20">
           <div className="space-y-1.5">
             <h3 className="font-bold text-base text-slate-100">INTRESSEANMÄLAN LOKALER</h3>
-            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+            <p className="text-sm text-slate-400 leading-relaxed">
               Lämna era krav och uppgifter, så kontaktar styrelsen eller berörda fastighetsägare er med förslag på passande lokaler.
             </p>
           </div>
@@ -428,14 +428,14 @@ export default function AvailableSpacesView({
           {isSubmitted ? (
             <div className="bg-emerald-950/40 border border-emerald-500/20 p-5 rounded-xl text-center space-y-2">
               <span className="text-emerald-400 font-bold block text-sm">Anmälan Mottagen!</span>
-              <p className="text-xs text-slate-350 leading-relaxed">
+              <p className="text-sm text-slate-350 leading-relaxed">
                 Tack för ert intresse. Vi har tagit emot er intresseanmälan och återkommer så snart som möjligt.
               </p>
             </div>
           ) : (
             <form onSubmit={handleContactSubmit} className="space-y-4 text-sm">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-350">Namn *</label>
+                <label className="text-sm font-bold text-slate-350">Namn *</label>
                 <input
                   type="text"
                   required
@@ -447,7 +447,7 @@ export default function AvailableSpacesView({
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-350">E-postadress *</label>
+                <label className="text-sm font-bold text-slate-350">E-postadress *</label>
                 <input
                   type="email"
                   required
@@ -459,7 +459,7 @@ export default function AvailableSpacesView({
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-350">Önskad lokal</label>
+                <label className="text-sm font-bold text-slate-350">Önskad lokal</label>
                 {spaces.length > 0 ? (
                   <select
                     value={contactProduct}
@@ -486,7 +486,7 @@ export default function AvailableSpacesView({
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-350">Övriga lokalkrav (t.ex. takhöjd, el, portar)</label>
+                <label className="text-sm font-bold text-slate-350">Övriga lokalkrav (t.ex. takhöjd, el, portar)</label>
                 <textarea
                   rows={3}
                   value={contactMsg}
@@ -511,7 +511,7 @@ export default function AvailableSpacesView({
           )}
 
           {/* Quick contact detail blocks */}
-          <div className="pt-4 border-t border-slate-800 space-y-3.5 text-xs sm:text-[13px] text-slate-400">
+          <div className="pt-4 border-t border-slate-800 space-y-3.5 text-sm text-slate-400">
             <div className="flex items-center gap-2">
               <MapPin className="w-3.5 h-3.5 text-amber-500 shrink-0" />
               <span>Skarprättarvägen 7, Järfälla</span>
