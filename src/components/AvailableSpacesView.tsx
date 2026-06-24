@@ -198,7 +198,7 @@ export default function AvailableSpacesView({
                                   <MapPin className="w-3.5 h-3.5 text-amber-500" />
                                   {space.location} (Stäket Järfälla)
                                 </span>
-                                <span className="text-xs font-semibold text-slate-400 bg-slate-50 border border-slate-100 rounded px-2 py-0.5">
+                                <span className="text-xs font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded px-2 py-0.5 shadow-3xs">
                                   Inlagd: {space.createdAt}
                                 </span>
                               </div>
@@ -248,9 +248,9 @@ export default function AvailableSpacesView({
                         </div>
 
                         {/* Footer Details */}
-                        <div className="flex items-center justify-between gap-4 pt-3 border-t border-slate-100 text-xs text-slate-500 bg-slate-50/40 px-4 py-2.5 rounded-xl">
-                          <span className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold truncate leading-none">
-                            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <div className="flex items-center justify-between gap-4 pt-3 border-t border-slate-100 text-sm text-slate-650 bg-slate-50/40 px-4 py-2.5 rounded-xl">
+                          <span className="flex items-center gap-1.5 text-sm text-slate-700 font-bold truncate leading-none">
+                            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
                             {space.securityInfo}
                           </span>
 

@@ -160,34 +160,34 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
             och <span className="font-cursive text-[#0B2C24] font-normal px-1 tracking-normal inline-block">utvecklas</span>
           </h2>
           
-          <p className="text-[#0B2C24]/85 text-[15px] sm:text-base leading-relaxed max-w-xl mx-auto pb-2 font-semibold italic border-l-4 border-[#B68F52] pl-4 text-left">
+          <p className="text-[#0B2C24]/85 text-[15px] sm:text-base leading-relaxed max-w-xl mx-auto pb-4 pt-2 mt-8 font-normal italic border-l-4 border-[#B68F52] pl-4 text-left">
             "Behöver du tjänster, konsultationer eller bara byta däck eller serva bilen är du alltid välkommen över på en kopp kaffe till vårt trevliga företagscenter, vi tar gärna hand om dig."
           </p>
 
-          <div className="max-w-[620px] mx-auto grid grid-cols-2 gap-4 pb-4">
+          <div className="max-w-[620px] mx-auto grid grid-cols-2 gap-x-4 gap-y-5 pb-4 mt-8">
             <div className="flex items-center gap-2.5 justify-start">
               <div className="w-5.5 h-5.5 rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
                 <Check className="w-3.5 h-3.5 stroke-[3]" />
               </div>
-              <span className="text-[15.5px] sm:text-[17px] font-extrabold text-[#0B2C24] text-left">Kombilokaler (ca 215 m²)</span>
+              <span className="text-[15.5px] sm:text-[17px] font-normal text-[#0B2C24] text-left">Kombilokaler (ca 215 m²)</span>
             </div>
             <div className="flex items-center gap-2.5 justify-start">
               <div className="w-5.5 h-5.5 rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
                 <Check className="w-3.5 h-3.5 stroke-[3]" />
               </div>
-              <span className="text-[15.5px] sm:text-[17px] font-extrabold text-[#0B2C24] text-left">Strategiskt intill E18</span>
+              <span className="text-[15.5px] sm:text-[17px] font-normal text-[#0B2C24] text-left">Strategiskt intill E18</span>
             </div>
             <div className="flex items-center gap-2.5 justify-start">
               <div className="w-5.5 h-5.5 rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
                 <Check className="w-3.5 h-3.5 stroke-[3]" />
               </div>
-              <span className="text-[15.5px] sm:text-[17px] font-extrabold text-[#0B2C24] text-left">Mångsidig branschbredd</span>
+              <span className="text-[15.5px] sm:text-[17px] font-normal text-[#0B2C24] text-left">Mångsidig branschbredd</span>
             </div>
             <div className="flex items-center gap-2.5 justify-start">
               <div className="w-5.5 h-5.5 rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
                 <Check className="w-3.5 h-3.5 stroke-[3]" />
               </div>
-              <span className="text-[15.5px] sm:text-[17px] font-extrabold text-[#0B2C24] text-left">Fria parkeringsplatser</span>
+              <span className="text-[15.5px] sm:text-[17px] font-normal text-[#0B2C24] text-left">Fria parkeringsplatser</span>
             </div>
           </div>
         </div>

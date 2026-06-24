@@ -57,6 +57,8 @@ import ContactBookView from "../components/ContactBookView";
 import AdminView from "../components/AdminView";
 import LoginView from "../components/LoginView";
 import StyrelseDriftView from "../components/StyrelseDriftView";
+import PolicyView from "../components/PolicyView";
+import CookieConsent from "../components/CookieConsent";
 
 const sortedCategories = [...NOTICEBOARD_CATEGORIES].sort((a, b) => a.localeCompare(b, "sv"));
 
@@ -1097,6 +1099,14 @@ ${query}`;
 
     setActiveTab(tabId);
     setMobileMenuOpen(false);
+    
+    // Smooth scroll container back to top
+    setTimeout(() => {
+      const scrollContainer = document.getElementById("ordinary-page-root") || document.querySelector("main");
+      if (scrollContainer) {
+        scrollContainer.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }, 50);
   };
 
   const handleSelectNotice = (id: string) => {
@@ -1453,6 +1463,7 @@ ${query}`;
                   {activeTab === "kontaktboken" && "Medlemskontaktboken"}
                   {activeTab === "styrelse_drift" && "Styrelse & Drift"}
                   {activeTab === "administration" && "System- & Styrelseadministration"}
+                  {activeTab === "integritetspolicy" && "Integritetspolicy & GDPR"}
                 </h1>
               </div>
 
@@ -1560,6 +1571,8 @@ ${query}`;
                   initialEditingSpace={initialEditingSpace}
                 />
               )}
+
+              {activeTab === "integritetspolicy" && <PolicyView />}
             </main>
 
             {/* High Density Dark Footer */}
@@ -1832,7 +1845,7 @@ ${query}`;
                 </button>
               ) : (
                 <div className="hidden lg:flex items-center gap-4">
-                  <span className="text-[11px] text-[#0B2C24] font-medium">
+                  <span className="text-sm text-[#0B2C24] font-semibold">
                     Inloggad som <strong className="font-bold">{getCurrentUserName()}</strong> ({role === "Hyresgäst" ? "Hyresgäst" : role === "Medlem" ? "Medlem" : role === "Styrelse" ? "Styrelse" : "Admin"})
                   </span>
                   <button 
@@ -1946,7 +1959,7 @@ ${query}`;
 
                 {/* Right spacer matching main header logged in state width */}
                 <div className="hidden lg:flex items-center gap-4 opacity-0 pointer-events-none select-none">
-                  <span className="text-[11px] text-[#0B2C24] font-medium">
+                  <span className="text-sm text-[#0B2C24] font-semibold">
                     Inloggad som <strong className="font-bold">{getCurrentUserName()}</strong> ({role === "Hyresgäst" ? "Hyresgäst" : role === "Medlem" ? "Medlem" : role === "Styrelse" ? "Styrelse" : "Admin"})
                   </span>
                   <button 
@@ -2096,7 +2109,7 @@ ${query}`;
                 </button>
               ) : (
                 <div className="pt-2 flex flex-col gap-2">
-                  <span className="text-[10px] text-gray-500 font-medium">
+                  <span className="text-xs text-gray-500 font-semibold">
                     Inloggad som {getCurrentUserName()} ({role})
                   </span>
                   <button 
@@ -2169,6 +2182,7 @@ ${query}`;
                   {activeTab === "styrelse_drift" && (
                     <StyrelseDriftView profiles={profiles} />
                   )}
+                  {activeTab === "integritetspolicy" && <PolicyView />}
                 </div>
               </div>
             )}
@@ -2187,18 +2201,20 @@ ${query}`;
               <div className="flex flex-wrap md:flex-nowrap gap-x-12 gap-y-6 text-base text-gray-700">
                 <div className="space-y-1">
                   <div className="text-[13px] sm:text-[14px] uppercase font-bold text-gray-400 tracking-wider">ADRESS:</div>
-                  <p className="font-bold text-slate-800">Skarprättarvägen 7</p>
-                  <p className="font-bold text-slate-800">176 77 Järfälla</p>
+                  <p className="text-slate-800">Skarprättarvägen 7</p>
+                  <p className="text-slate-800">176 77 Järfälla</p>
                 </div>
                 
                 <div className="space-y-1">
                   <div className="text-[13px] sm:text-[14px] uppercase font-bold text-gray-400 tracking-wider">TELEFON:</div>
-                  <p className="font-bold text-slate-800">070 777 2111</p>
+                  <p className="text-slate-800">
+                    <a href="tel:0707772111" className="hover:underline text-slate-800">070 777 2111</a>
+                  </p>
                 </div>
                 
                 <div className="space-y-1">
                   <div className="text-[13px] sm:text-[14px] uppercase font-bold text-gray-400 tracking-wider">EMAIL:</div>
-                  <a href="mailto:brfsfc@gmail.com" className="font-bold text-slate-800 hover:underline">
+                  <a href="mailto:brfsfc@gmail.com" className="text-slate-800 hover:underline">
                     brfsfc@gmail.com
                   </a>
                 </div>
@@ -2208,14 +2224,27 @@ ${query}`;
             <div className="max-w-7xl mx-auto pt-6 border-t border-gray-200/50 flex flex-col sm:flex-row items-center justify-between text-sm sm:text-base text-gray-700 font-semibold gap-4">
               <div>© 2026 Brf. Stäkets Företagscenter. Alla rättigheter förbehållna.</div>
               <div className="flex gap-4">
-                <a href="#" className="hover:text-[#B68F52] transition-colors">Integritetspolicy</a>
+                <button 
+                  onClick={() => handleTabClick("integritetspolicy")} 
+                  className="hover:text-[#B68F52] transition-colors cursor-pointer"
+                >
+                  Integritetspolicy
+                </button>
                 <span className="text-gray-300">|</span>
-                <a href="#" className="hover:text-[#B68F52] transition-colors">Cookies</a>
+                <button 
+                  onClick={() => handleTabClick("integritetspolicy")} 
+                  className="hover:text-[#B68F52] transition-colors cursor-pointer"
+                >
+                  Cookies
+                </button>
               </div>
             </div>
           </footer>
         </div>
       )}
+      
+      {/* Persistent GDPR Cookie Consent & Preferences Manager */}
+      <CookieConsent onViewPolicy={() => handleTabClick("integritetspolicy")} />
     </div>
   );
 }
