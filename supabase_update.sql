@@ -296,15 +296,35 @@ ON storage.objects FOR SELECT
 TO public
 USING (bucket_id = 'logos');
 
-CREATE POLICY "logos: authenticated write"
+-- Members can upload their own logo (filename must be prefixed with their user id, e.g. "<uid>-...")
+CREATE POLICY "logos: owner write"
 ON storage.objects FOR INSERT
 TO authenticated
-WITH CHECK (bucket_id = 'logos');
+WITH CHECK (
+  bucket_id = 'logos'
+  AND (
+    name LIKE auth.uid()::text || '-%'
+    OR EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('Styrelse', 'Administrator')
+    )
+  )
+);
 
-CREATE POLICY "logos: authenticated delete"
+-- Only the uploading owner (filename prefix) or Styrelse/Administrator may delete a logo
+CREATE POLICY "logos: owner or admin delete"
 ON storage.objects FOR DELETE
 TO authenticated
-USING (bucket_id = 'logos');
+USING (
+  bucket_id = 'logos'
+  AND (
+    name LIKE auth.uid()::text || '-%'
+    OR EXISTS (
+      SELECT 1 FROM public.profiles
+      WHERE id = auth.uid() AND role IN ('Styrelse', 'Administrator')
+    )
+  )
+);
 
 -- NOTE: After running this, any previously-shared public links to
 -- `documents/...` objects (including the `url` column in public.files) will
@@ -365,9 +385,11 @@ BEGIN
         RAISE EXCEPTION 'En användare med e-posten % finns redan i auth.users.', email_val;
       END IF;
 
-      -- Set default password if none is provided
+      -- A password MUST be supplied by the caller. Self-healing never assigns
+      -- a known default credential; instead we generate a strong random one
+      -- that the operator must reset out-of-band (e.g. via password reset email).
       IF new_password IS NULL OR new_password = '' THEN
-        new_password := 'Staket2026!';
+        new_password := encode(gen_random_bytes(24), 'base64');
       END IF;
 
       encrypted_pw := crypt(new_password, gen_salt('bf', 10));
@@ -520,21 +542,48 @@ ON CONFLICT (id) DO UPDATE SET public = true;
 DROP POLICY IF EXISTS "spaces: public read" ON storage.objects;
 DROP POLICY IF EXISTS "spaces: authenticated write" ON storage.objects;
 DROP POLICY IF EXISTS "spaces: authenticated delete" ON storage.objects;
+DROP POLICY IF EXISTS "spaces: board write" ON storage.objects;
+DROP POLICY IF EXISTS "spaces: board update" ON storage.objects;
+DROP POLICY IF EXISTS "spaces: board delete" ON storage.objects;
 
 CREATE POLICY "spaces: public read"
 ON storage.objects FOR SELECT
 TO public
 USING (bucket_id = 'spaces');
 
-CREATE POLICY "spaces: authenticated write"
+-- Only Styrelse / Administrator may upload/update/delete vacant-space images
+CREATE POLICY "spaces: board write"
 ON storage.objects FOR INSERT
 TO authenticated
-WITH CHECK (bucket_id = 'spaces');
+WITH CHECK (
+  bucket_id = 'spaces'
+  AND EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role IN ('Styrelse', 'Administrator')
+  )
+);
 
-CREATE POLICY "spaces: authenticated delete"
+CREATE POLICY "spaces: board update"
+ON storage.objects FOR UPDATE
+TO authenticated
+USING (
+  bucket_id = 'spaces'
+  AND EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role IN ('Styrelse', 'Administrator')
+  )
+);
+
+CREATE POLICY "spaces: board delete"
 ON storage.objects FOR DELETE
 TO authenticated
-USING (bucket_id = 'spaces');
+USING (
+  bucket_id = 'spaces'
+  AND EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = auth.uid() AND role IN ('Styrelse', 'Administrator')
+  )
+);
 
 -- 3. Modify vacant_spaces table to support array of image URLs
 DO $$

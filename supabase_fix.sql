@@ -85,8 +85,10 @@ DECLARE
   r RECORD;
   encrypted_pw text;
 BEGIN
-  -- Default password for newly created auth records is 'Staket2026!'
-  encrypted_pw := crypt('Staket2026!', gen_salt('bf', 10));
+  -- Self-healed accounts get a strong random password. Operators MUST trigger
+  -- a password reset (Supabase Dashboard → Authentication → Users) so users
+  -- can set their own credential. No known default password is ever assigned.
+  encrypted_pw := crypt(encode(gen_random_bytes(24), 'base64'), gen_salt('bf', 10));
 
   FOR r IN 
     SELECT p.id, p.email, p.name 
@@ -361,9 +363,10 @@ BEGIN
         RAISE EXCEPTION 'En användare med e-posten % finns redan i auth.users.', email_val;
       END IF;
 
-      -- Set default password if none is provided
+      -- If the caller did not supply a password, generate a strong random
+      -- one. The operator must trigger a password reset for the user.
       IF new_password IS NULL OR new_password = '' THEN
-        new_password := 'Staket2026!';
+        new_password := encode(gen_random_bytes(24), 'base64');
       END IF;
 
       encrypted_pw := crypt(new_password, gen_salt('bf', 10));
