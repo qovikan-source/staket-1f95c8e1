@@ -317,60 +317,34 @@ Instruktioner för svar:
 Användarens fråga:
 ${query}`;
 
-    const models = [
-      "gemini-3.1-flash-lite",
-      "gemini-2.5-flash-lite",
-      "gemini-2.0-flash-lite",
-      "gemini-3.5-flash",
-      "gemini-3-flash",
-      "gemini-2.5-flash",
-      "gemini-2.0-flash",
-      "gemini-3.1-flash-live-preview",
-      "gemini-2.5-flash-live",
-      "gemini-2.5-pro",
-      "gemini-3.1-pro-preview"
-    ];
-
     let success = false;
     let aiResponse = "";
 
-    for (const model of models) {
-      if (success) break;
-      try {
-        console.log(`Försöker anropa Gemini med modell: ${model}`);
-        const response = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${chatbotApiKey}`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    {
-                      text: promptText
-                    }
-                  ]
-                }
-              ],
-              generationConfig: {
-                temperature: 0.2
-              }
-            })
-          }
-        );
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        throw new Error("Du måste vara inloggad för att använda AI-assistenten.");
+      }
+      const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string) || "";
+      const response = await fetch(`${supabaseUrl}/functions/v1/gemini-proxy`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ prompt: promptText }),
+      });
 
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData?.error?.message || `HTTP fel ${response.status}`);
-        }
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData?.error || `HTTP fel ${response.status}`);
+      }
 
-        const data = await response.json();
-        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (rawText) {
-          let text = rawText;
+      const data = await response.json();
+      const rawText: string | undefined = data?.text;
+      if (rawText) {
+        let text = rawText;
           const lowerQuery = query.toLowerCase();
 
           // Programmatic fallback to ensure the tag is ALWAYS appended if we explain a tour procedure but forgot the tag
@@ -403,14 +377,11 @@ ${query}`;
             text = text.replace(/sirin/gi, "Sirin på sirin@post.com");
           }
 
-          aiResponse = text;
-          success = true;
-          console.log(`Lyckades med modell: ${model}`);
-          break;
-        }
-      } catch (err) {
-        console.warn(`Modell ${model} misslyckades:`, err);
+        aiResponse = text;
+        success = true;
       }
+    } catch (err) {
+      console.warn("Gemini proxy misslyckades:", err);
     }
 
     setIsAiLoading(false);
@@ -422,7 +393,7 @@ ${query}`;
         ...prev,
         {
           sender: "ai",
-          text: "Kunde inte generera svar. Kontrollera din Gemini API-nyckel eller kontakta skaparen 'Sirin' för hjälp."
+          text: "Kunde inte generera svar just nu. Kontrollera att gemini-proxy edge-funktionen är driftsatt och att du är inloggad som Administrator, eller kontakta skaparen Sirin på sirin@post.com."
         }
       ]);
     }
@@ -1630,36 +1601,7 @@ ${query}`;
                       </div>
                     </div>
 
-                    {!chatbotApiKey ? (
-                      <div className="flex-1 p-5 bg-slate-50 flex flex-col justify-center gap-4 text-xs">
-                        <div className="space-y-2">
-                          <p className="font-semibold text-slate-700">Aktivera AI Kundtjänst med Gemini API-nyckel</p>
-                          <p className="text-slate-500">
-                            Ingen Gemini API-nyckel hittades i din miljö (<code>VITE_GEMINI_API_KEY</code>). Ange din nyckel nedan för att starta assistenten. Nyckeln sparas i din webbläsares localStorage.
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <input
-                            type="password"
-                            placeholder="Ange Gemini API-nyckel..."
-                            value={tempApiKeyInput}
-                            onChange={(e) => setTempApiKeyInput(e.target.value)}
-                            className="px-3 py-2 border border-slate-200 rounded-xl text-xs bg-white focus:outline-amber-500"
-                          />
-                          <button
-                            onClick={() => {
-                              if (tempApiKeyInput.trim()) {
-                                localStorage.setItem("staket_gemini_api_key", tempApiKeyInput.trim());
-                                setChatbotApiKey(tempApiKeyInput.trim());
-                              }
-                            }}
-                            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold rounded-xl text-xs transition-colors cursor-pointer text-center"
-                          >
-                            Spara nyckel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
+                    {(
                       <div className="flex-1 flex flex-col bg-slate-50/30 overflow-hidden">
                         {/* Messages Area */}
                         <div className="flex-1 p-4 overflow-y-auto space-y-4 text-xs">
