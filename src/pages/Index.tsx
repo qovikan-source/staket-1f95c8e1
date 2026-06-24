@@ -165,10 +165,10 @@ export default function Index() {
   const [chatMessages, setChatMessages] = useState<Array<{ sender: "user" | "ai"; text: string }>>([]);
   const [chatInput, setChatInput] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
-  const [chatbotApiKey, setChatbotApiKey] = useState(() => {
-    return (import.meta.env.VITE_GEMINI_API_KEY as string) || localStorage.getItem("staket_gemini_api_key") || "";
-  });
-  const [tempApiKeyInput, setTempApiKeyInput] = useState("");
+  // Note: the Gemini API key lives ONLY in the `gemini-proxy` Supabase edge
+  // function (server-side secret `GEMINI_API_KEY`). It is never read by, or
+  // stored in, the browser. The chatbot is gated on being signed in as an
+  // Administrator; the edge function re-verifies that on every call.
 
   // Tour walkthrough state
   const [activeTour, setActiveTour] = useState<string | null>(null);
