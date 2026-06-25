@@ -47,6 +47,7 @@ export default function OurCompaniesView({ profiles }: OurCompaniesViewProps) {
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input
             type="text"
+            aria-label="Sök efter företag"
             placeholder="Sök efter företag..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
