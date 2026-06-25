@@ -2134,28 +2134,28 @@ ${query}`;
           <footer className="bg-[#F9FAF9] text-[#0B2C24] py-12 px-4 md:px-8 border-t border-gray-200/60 flex-shrink-0 font-sans">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between gap-8 pb-8">
               <div className="space-y-3 max-w-md">
-                <h3 className="font-bold text-[#0B2C24] text-lg">Stäket Företagscenter</h3>
-                <p className="text-gray-700 text-base leading-relaxed">
+                <h3 className="font-bold text-[#0B2C24] text-base">Stäket Företagscenter</h3>
+                <p className="text-gray-700 text-sm leading-relaxed">
                   Företagstjänster - Konsultationer - Service. Ett komplett företagscenter i Järfälla med 30 aktiva bolag.
                 </p>
               </div>
 
-              <div className="flex flex-wrap md:flex-nowrap gap-x-12 gap-y-6 text-base text-gray-700">
+              <div className="flex flex-wrap md:flex-nowrap gap-x-12 gap-y-6 text-sm text-gray-700">
                 <div className="space-y-1">
-                  <div className="text-[13px] sm:text-[14px] uppercase font-bold text-gray-400 tracking-wider">ADRESS:</div>
+                  <div className="text-[12px] sm:text-[13px] uppercase font-bold text-gray-400 tracking-wider">ADRESS:</div>
                   <p className="text-slate-800">Skarprättarvägen 7</p>
                   <p className="text-slate-800">176 77 Järfälla</p>
                 </div>
                 
                 <div className="space-y-1">
-                  <div className="text-[13px] sm:text-[14px] uppercase font-bold text-gray-400 tracking-wider">TELEFON:</div>
+                  <div className="text-[12px] sm:text-[13px] uppercase font-bold text-gray-400 tracking-wider">TELEFON:</div>
                   <p className="text-slate-800">
                     <a href="tel:0707772111" className="hover:underline text-slate-800">070 777 2111</a>
                   </p>
                 </div>
                 
                 <div className="space-y-1">
-                  <div className="text-[13px] sm:text-[14px] uppercase font-bold text-gray-400 tracking-wider">EMAIL:</div>
+                  <div className="text-[12px] sm:text-[13px] uppercase font-bold text-gray-400 tracking-wider">EMAIL:</div>
                   <a href="mailto:brfsfc@gmail.com" className="text-slate-800 hover:underline">
                     brfsfc@gmail.com
                   </a>
@@ -2163,7 +2163,7 @@ ${query}`;
               </div>
             </div>
 
-            <div className="max-w-7xl mx-auto pt-6 border-t border-gray-200/50 flex flex-col sm:flex-row items-center justify-between text-sm sm:text-base text-gray-700 font-semibold gap-4">
+            <div className="max-w-7xl mx-auto pt-6 border-t border-gray-200/50 flex flex-col sm:flex-row items-center justify-between text-xs sm:text-sm text-gray-700 font-semibold gap-4">
               <div>© 2026 Brf. Stäkets Företagscenter. Alla rättigheter förbehållna.</div>
               <div className="flex gap-4">
                 <button 

@@ -16,7 +16,10 @@ import {
   Trash2, 
   Edit2,
   Sparkles, 
-  ShieldCheck 
+  ShieldCheck,
+  X,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { VacantSpace, UserRole } from "../types";
 import bildImage from "../../images/bild.jpg";
@@ -45,6 +48,37 @@ export default function AvailableSpacesView({
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeImageIndexes, setActiveImageIndexes] = useState<Record<string, number>>({});
+  
+  // Lightbox state for enlarge image viewing
+  const [lightboxSpace, setLightboxSpace] = useState<VacantSpace | null>(null);
+  const [lightboxImageIdx, setLightboxImageIdx] = useState<number>(0);
+
+  const openLightbox = (space: VacantSpace, index: number) => {
+    setLightboxSpace(space);
+    setLightboxImageIdx(index);
+  };
+
+  const closeLightbox = () => {
+    setLightboxSpace(null);
+  };
+
+  const showNextLightboxImage = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!lightboxSpace) return;
+    const imageUrls = lightboxSpace.imgUrls && lightboxSpace.imgUrls.length > 0
+      ? lightboxSpace.imgUrls
+      : [lightboxSpace.imgUrl || "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800"];
+    setLightboxImageIdx((prev) => (prev + 1) % imageUrls.length);
+  };
+
+  const showPrevLightboxImage = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    if (!lightboxSpace) return;
+    const imageUrls = lightboxSpace.imgUrls && lightboxSpace.imgUrls.length > 0
+      ? lightboxSpace.imgUrls
+      : [lightboxSpace.imgUrl || "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800"];
+    setLightboxImageIdx((prev) => (prev - 1 + imageUrls.length) % imageUrls.length);
+  };
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,11 +94,13 @@ export default function AvailableSpacesView({
         },
         body: JSON.stringify({
           access_key: "46a212f8-5873-4817-8c8f-08246c2b61b5",
-          name: contactName,
-          email: contactEmail,
-          subject: contactProduct ? `Intresseanmälan: ${contactProduct}` : "Generell intresseanmälan",
-          message: contactMsg,
-          from_name: "Intresseanmälan SF"
+          subject: contactProduct ? `[Intresseanmälan] ${contactProduct} från ${contactName}` : `[Intresseanmälan] Generell förfrågan från ${contactName}`,
+          from_name: "Intresseanmälan SF",
+          replyto: contactEmail,
+          "Intressent Namn": contactName,
+          "E-postadress": contactEmail,
+          "Sökt Objekt / Lokal": contactProduct || "Generell intresseanmälan",
+          "Meddelande / Krav": contactMsg || "Inget meddelande angivet"
         })
       });
 
@@ -152,7 +188,11 @@ export default function AvailableSpacesView({
                       >
                         <div className="flex flex-col md:flex-row gap-6">
                           {/* Left Panel Image with Size Overlays */}
-                          <div className="w-full md:w-56 h-40 rounded-xl overflow-hidden shrink-0 bg-slate-50 border border-slate-100 relative group">
+                          <div 
+                            onClick={() => openLightbox(space, activeImageIndexes[space.id] || 0)}
+                            className="w-full md:w-56 h-40 rounded-xl overflow-hidden shrink-0 bg-slate-50 border border-slate-100 relative group cursor-zoom-in"
+                            title="Klicka för att se större bild"
+                          >
                             {(() => {
                               const activeIdx = activeImageIndexes[space.id] || 0;
                               const imageUrls = space.imgUrls && space.imgUrls.length > 0
@@ -527,6 +567,85 @@ export default function AvailableSpacesView({
           </div>
         </div>
       </div>
+      
+      {/* Lightbox Modal */}
+      {lightboxSpace && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 select-none animate-fade-in"
+          onClick={closeLightbox}
+        >
+          {/* Close button */}
+          <button 
+            onClick={closeLightbox}
+            className="absolute top-6 right-6 text-white/80 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors cursor-pointer focus:outline-none"
+            title="Stäng"
+          >
+            <X className="w-8 h-8" />
+          </button>
+
+          {/* Previous Button */}
+          {(() => {
+            const imageUrls = lightboxSpace.imgUrls && lightboxSpace.imgUrls.length > 0
+              ? lightboxSpace.imgUrls
+              : [lightboxSpace.imgUrl || "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800"];
+            
+            return imageUrls.length > 1 ? (
+              <button 
+                onClick={showPrevLightboxImage}
+                className="absolute left-4 md:left-6 text-white/80 hover:text-white p-3 rounded-full hover:bg-white/10 transition-colors cursor-pointer z-10 focus:outline-none"
+                title="Föregående bild"
+              >
+                <ChevronLeft className="w-10 h-10" />
+              </button>
+            ) : null;
+          })()}
+
+          {/* Image Display */}
+          <div 
+            className="relative max-w-5xl max-h-[85vh] flex flex-col items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {(() => {
+              const imageUrls = lightboxSpace.imgUrls && lightboxSpace.imgUrls.length > 0
+                ? lightboxSpace.imgUrls
+                : [lightboxSpace.imgUrl || "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800"];
+              const currentImg = imageUrls[lightboxImageIdx] || imageUrls[0];
+              
+              return (
+                <>
+                  <img 
+                    src={currentImg} 
+                    alt={lightboxSpace.title} 
+                    className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl animate-scale-up" 
+                  />
+                  
+                  {/* Indicator / Status */}
+                  <div className="absolute bottom-4 bg-black/60 backdrop-blur-xs text-white text-xs font-bold px-3 py-1.5 rounded-full">
+                    Bild {lightboxImageIdx + 1} av {imageUrls.length}
+                  </div>
+                </>
+              );
+            })()}
+          </div>
+
+          {/* Next Button */}
+          {(() => {
+            const imageUrls = lightboxSpace.imgUrls && lightboxSpace.imgUrls.length > 0
+              ? lightboxSpace.imgUrls
+              : [lightboxSpace.imgUrl || "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=800"];
+            
+            return imageUrls.length > 1 ? (
+              <button 
+                onClick={showNextLightboxImage}
+                className="absolute right-4 md:right-6 text-white/80 hover:text-white p-3 rounded-full hover:bg-white/10 transition-colors cursor-pointer z-10 focus:outline-none"
+                title="Nästa bild"
+              >
+                <ChevronRight className="w-10 h-10" />
+              </button>
+            ) : null;
+          })()}
+        </div>
+      )}
 
     </div>
   );

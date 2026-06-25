@@ -33,7 +33,7 @@ export type NoticeboardCategory =
   | "Sophantering"
   | "Parkeringsplatser"
   | "Larm & Övervakning"
-  | "Årsmöten & Föreningens Styrelse"
+  | "Årsmöten"
   | "Ekonomi"
   | "Skadegörelse & Inbrott"
   | "Övrigt"
@@ -49,7 +49,7 @@ export const NOTICEBOARD_CATEGORIES: NoticeboardCategory[] = [
   "Sophantering",
   "Parkeringsplatser",
   "Larm & Övervakning",
-  "Årsmöten & Föreningens Styrelse",
+  "Årsmöten",
   "Ekonomi",
   "Skadegörelse & Inbrott",
   "Information från Föreningsstyrelse",

@@ -123,7 +123,7 @@ export const initialNotices: NoticePost[] = [
   {
     id: "n1",
     title: "ÅRSMÖTE 2026-05-27",
-    category: "Årsmöten & Föreningens Styrelse",
+    category: "Årsmöten",
     content: "Härmed kallas medlemmarna i Brf. Stäkets Företagscenter till ordinarie föreningsstämma. Dagordning och stämmomaterial har skickats till samtliga medlemmar och finns tillgängligt i dokumentarkivet.",
     date: "2026-04-27",
     isPinned: true,
@@ -132,7 +132,7 @@ export const initialNotices: NoticePost[] = [
   {
     id: "n2",
     title: "ÅRSMÖTE 2025-05-27",
-    category: "Årsmöten & Föreningens Styrelse",
+    category: "Årsmöten",
     content: "Kallelse till ordinarie föreningsstämma i Brf. Stäkets Företagscenter. Fullmaktsblanketter och årsberättelse finns under 'FILER' -> 'Medlemsfiler'.",
     date: "2025-05-06",
     isPinned: false,
@@ -141,7 +141,7 @@ export const initialNotices: NoticePost[] = [
   {
     id: "n3",
     title: "ÅRSMÖTE 2024-06-18",
-    category: "Årsmöten & Föreningens Styrelse",
+    category: "Årsmöten",
     content: "Kallelse till ordinarie föreningsstämma i Brf. Stäkets Företagscenter. Vi ses i det gemensamma konferensrummet kl 18.00.",
     date: "2024-05-10",
     isPinned: false,

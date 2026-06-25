@@ -29,12 +29,14 @@ export default function ContactPublicView() {
         },
         body: JSON.stringify({
           access_key: "46a212f8-5873-4817-8c8f-08246c2b61b5",
-          name,
-          email,
-          phone,
-          subject,
-          message,
-          from_name: "Kontaktformulär SF"
+          subject: `[Kontaktformulär] ${subject} från ${name}`,
+          from_name: "Kontaktformulär SF",
+          replyto: email,
+          "Avsändare Namn": name,
+          "E-postadress": email,
+          "Telefonnummer": phone || "Ej angivet",
+          "Ärendetyp": subject,
+          "Meddelande": message
         })
       });
 
