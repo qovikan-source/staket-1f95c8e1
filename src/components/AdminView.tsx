@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from "react";
 import { dbService } from "../lib/db";
-import { Users, FileText, Bell, Plus, ArrowUp, ArrowDown, Edit2, Trash2, CheckCircle2, AlertTriangle, ShieldCheck, Building2, Sparkles, Image, Upload, Copy } from "lucide-react";
+import { Users, FileText, Bell, Plus, ArrowUp, ArrowDown, Edit2, Trash2, CheckCircle2, AlertTriangle, ShieldCheck, Building2, Sparkles, Image, Upload, Copy, Eye, EyeOff } from "lucide-react";
 import { UserProfile, UserRole, NoticePost, FileItem, VacantSpace, FileCategory, NoticeboardCategory, NOTICEBOARD_CATEGORIES } from "../types";
 
 // @ts-ignore
@@ -180,6 +180,63 @@ export default function AdminView({
   const [selectedGallerySpaceImageUrls, setSelectedGallerySpaceImageUrls] = useState<string[]>([]);
   const [showSpaceGalleryPickerModal, setShowSpaceGalleryPickerModal] = useState<boolean>(false);
 
+  // Password visibility states for inputs
+  const [showPassword, setShowPassword] = useState(false);
+  const [showRepeatPassword, setShowRepeatPassword] = useState(false);
+  const [showEditPassword, setShowEditPassword] = useState(false);
+  const [showEditRepeatPassword, setShowEditRepeatPassword] = useState(false);
+
+  // Cached passwords in LocalStorage for admin visibility
+  const [cachedPasswords, setCachedPasswords] = useState<Record<string, string>>({});
+  const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const saved = localStorage.getItem("profile_passwords");
+    const passwords = saved ? JSON.parse(saved) : {};
+    
+    // Seed default passwords for initial users if not already set
+    const defaultSeed: Record<string, string> = {
+      "alexander.karasar@foreningen.se": "alexander123",
+      "murat.kizil@fastighet.se": "murat123",
+      "robar.halandal@foreningen.se": "robar123",
+      "lotta.odbratt@foreningen.se": "lotta123",
+      "thomas.b@berglundscatering.se": "thomas123",
+      "karin@nilssonsbageri.se": "karin123",
+      "jonas@sjoberg-it.se": "jonas123",
+      "lars.holm@holmsjuridik.se": "lars123",
+      "brfsfc@gmail.com": "staket2026"
+    };
+
+    let updated = false;
+    for (const [email, pwd] of Object.entries(defaultSeed)) {
+      const lowerEmail = email.trim().toLowerCase();
+      if (!passwords[lowerEmail]) {
+        passwords[lowerEmail] = pwd;
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      localStorage.setItem("profile_passwords", JSON.stringify(passwords));
+    }
+    setCachedPasswords(passwords);
+  }, []);
+
+  const savePasswordLocally = (email: string, passwordVal: string) => {
+    const saved = localStorage.getItem("profile_passwords");
+    const passwords = saved ? JSON.parse(saved) : {};
+    passwords[email.trim().toLowerCase()] = passwordVal;
+    localStorage.setItem("profile_passwords", JSON.stringify(passwords));
+    setCachedPasswords(passwords);
+  };
+
+  const togglePasswordVisibility = (profileId: string) => {
+    setVisiblePasswords((prev) => ({
+      ...prev,
+      [profileId]: !prev[profileId],
+    }));
+  };
+
   const fetchGalleryLogos = async () => {
     setIsLoadingGallery(true);
     try {
@@ -283,6 +340,10 @@ export default function AdminView({
       }
     }
 
+    if (password) {
+      savePasswordLocally(email, password);
+    }
+
     onAddProfile({
       name,
       role,
@@ -307,6 +368,8 @@ export default function AdminView({
     setEmail("");
     setPassword("");
     setRepeatPassword("");
+    setShowPassword(false);
+    setShowRepeatPassword(false);
     setPhone("");
     setCompany("");
     setOrgNr("");
@@ -343,6 +406,8 @@ export default function AdminView({
     setEditLogoFile(null);
     setEditPassword("");
     setEditRepeatPassword("");
+    setShowEditPassword(false);
+    setShowEditRepeatPassword(false);
   };
 
   const handleEditUserSubmit = async (e: React.FormEvent) => {
@@ -382,6 +447,27 @@ export default function AdminView({
       }
     }
 
+    const finalEmail = (editEmail || editingProfile.email).trim().toLowerCase();
+    const oldEmail = (editingProfile.email || "").trim().toLowerCase();
+    
+    if (editPassword || oldEmail !== finalEmail) {
+      const saved = localStorage.getItem("profile_passwords");
+      const passwords = saved ? JSON.parse(saved) : {};
+      
+      if (editPassword) {
+        passwords[finalEmail] = editPassword;
+      } else if (passwords[oldEmail]) {
+        passwords[finalEmail] = passwords[oldEmail];
+      }
+      
+      if (oldEmail !== finalEmail) {
+        delete passwords[oldEmail];
+      }
+      
+      localStorage.setItem("profile_passwords", JSON.stringify(passwords));
+      setCachedPasswords(passwords);
+    }
+
     onUpdateProfile(editingProfile.id, {
       name: editName,
       role: editRole,
@@ -403,6 +489,8 @@ export default function AdminView({
     setEditingProfile(null);
     setEditSelectedGalleryLogoUrl("");
     setEditLogoFileName("");
+    setShowEditPassword(false);
+    setShowEditRepeatPassword(false);
     setIsUpdatingUser(false);
   };
 
@@ -681,6 +769,11 @@ export default function AdminView({
                         Roll {sortField === "role" && (sortDirection === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />)}
                       </div>
                     </th>
+                    {activeUserRole === "Administrator" && (
+                      <th className="px-5 py-3.5">
+                        Lösenord
+                      </th>
+                    )}
                     {activeUserRole === "Administrator" && <th className="px-5 py-3.5 text-right">Åtgärder</th>}
                   </tr>
                 </thead>
@@ -708,6 +801,29 @@ export default function AdminView({
                           <option value="Hyresgäst">Hyresgäst</option>
                         </select>
                       </td>
+                      {activeUserRole === "Administrator" && (
+                        <td className="px-5 py-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">
+                          {(() => {
+                            const pwd = cachedPasswords[(p.email || "").trim().toLowerCase()] || "staket123";
+                            const isVisible = visiblePasswords[p.id];
+                            return (
+                              <div className="flex items-center gap-2">
+                                <span className="font-semibold text-slate-700 bg-slate-100/80 px-2 py-1 rounded-md text-[10px] tracking-wide">
+                                  {isVisible ? pwd : "••••••••"}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => togglePasswordVisibility(p.id)}
+                                  className="text-slate-400 hover:text-slate-600 focus:outline-hidden cursor-pointer"
+                                  title={isVisible ? "Dölj lösenord" : "Visa lösenord"}
+                                >
+                                  {isVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                </button>
+                              </div>
+                            );
+                          })()}
+                        </td>
+                      )}
                       {activeUserRole === "Administrator" && (
                         <td className="px-5 py-4 text-right whitespace-nowrap space-x-1">
                           <button
@@ -1108,26 +1224,44 @@ export default function AdminView({
 
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 uppercase">Lösenord *</label>
-                <input
-                  id="user-password"
-                  type="password"
-                  placeholder="••••••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md bg-blue-50/50 text-xs text-blue-900"
-                />
+                <div className="relative">
+                  <input
+                    id="user-password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-md bg-blue-50/50 text-xs text-blue-900 focus:outline-hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 uppercase">Upprepa Lösenord *</label>
-                <input
-                  id="user-repeat-password"
-                  type="password"
-                  placeholder="Upprepa Lösenord"
-                  value={repeatPassword}
-                  onChange={(e) => setRepeatPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                />
+                <div className="relative">
+                  <input
+                    id="user-repeat-password"
+                    type={showRepeatPassword ? "text" : "password"}
+                    placeholder="Upprepa Lösenord"
+                    value={repeatPassword}
+                    onChange={(e) => setRepeatPassword(e.target.value)}
+                    className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-md text-xs focus:outline-hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRepeatPassword(!showRepeatPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showRepeatPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="pt-4 pb-2 border-t border-slate-100 flex items-center justify-center">
@@ -1380,24 +1514,42 @@ export default function AdminView({
 
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 uppercase">Lösenord (Lämna tomt för att behålla nuvarande)</label>
-                <input
-                  type="password"
-                  placeholder="••••••••••••"
-                  value={editPassword}
-                  onChange={(e) => setEditPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                />
+                <div className="relative">
+                  <input
+                    type={showEditPassword ? "text" : "password"}
+                    placeholder="••••••••••••"
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-md text-xs focus:outline-hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditPassword(!showEditPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showEditPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-slate-500 uppercase">Upprepa Lösenord</label>
-                <input
-                  type="password"
-                  placeholder="Upprepa Lösenord"
-                  value={editRepeatPassword}
-                  onChange={(e) => setEditRepeatPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-md text-xs"
-                />
+                <div className="relative">
+                  <input
+                    type={showEditRepeatPassword ? "text" : "password"}
+                    placeholder="Upprepa Lösenord"
+                    value={editRepeatPassword}
+                    onChange={(e) => setEditRepeatPassword(e.target.value)}
+                    className="w-full pl-3 pr-10 py-2 border border-slate-200 rounded-md text-xs focus:outline-hidden"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowEditRepeatPassword(!showEditRepeatPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    {showEditRepeatPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <div className="pt-4 pb-2 border-t border-slate-100 flex items-center justify-center">

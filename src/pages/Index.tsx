@@ -2142,20 +2142,20 @@ ${query}`;
 
               <div className="flex flex-wrap md:flex-nowrap gap-x-12 gap-y-6 text-sm text-gray-700">
                 <div className="space-y-1">
-                  <div className="text-[12px] sm:text-[13px] uppercase font-bold text-gray-400 tracking-wider">ADRESS:</div>
+                  <div className="text-[12px] sm:text-[13px] uppercase font-bold text-black tracking-wider">ADRESS:</div>
                   <p className="text-slate-800">Skarprättarvägen 7</p>
                   <p className="text-slate-800">176 77 Järfälla</p>
                 </div>
                 
                 <div className="space-y-1">
-                  <div className="text-[12px] sm:text-[13px] uppercase font-bold text-gray-400 tracking-wider">TELEFON:</div>
+                  <div className="text-[12px] sm:text-[13px] uppercase font-bold text-black tracking-wider">TELEFON:</div>
                   <p className="text-slate-800">
                     <a href="tel:0707772111" className="hover:underline text-slate-800">070 777 2111</a>
                   </p>
                 </div>
                 
                 <div className="space-y-1">
-                  <div className="text-[12px] sm:text-[13px] uppercase font-bold text-gray-400 tracking-wider">EMAIL:</div>
+                  <div className="text-[12px] sm:text-[13px] uppercase font-bold text-black tracking-wider">EMAIL:</div>
                   <a href="mailto:brfsfc@gmail.com" className="text-slate-800 hover:underline">
                     brfsfc@gmail.com
                   </a>

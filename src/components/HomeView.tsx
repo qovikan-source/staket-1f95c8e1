@@ -95,7 +95,7 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
             <div className="flex flex-wrap items-center gap-x-6 gap-y-2.5 pt-2.5 text-sm sm:text-base font-bold tracking-wide">
               <div className="flex items-center gap-2 drop-shadow-sm">
                 <div className="bg-[#8CA899] rounded-full p-0.5"><Check className="w-4 h-4 text-white stroke-[3]" /></div>
-                <span>Kombilokaler (ca 215 m²)</span>
+                <span>Kombilokaler</span>
               </div>
               <div className="flex items-center gap-2 drop-shadow-sm">
                 <div className="bg-[#8CA899] rounded-full p-0.5"><Check className="w-4 h-4 text-white stroke-[3]" /></div>
@@ -173,7 +173,7 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
               <div className="w-5.5 h-5.5 rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">
                 <Check className="w-3.5 h-3.5 stroke-[3]" />
               </div>
-              <span className="text-[15.5px] sm:text-[17px] font-normal text-[#0B2C24] text-left">Kombilokaler (ca 215 m²)</span>
+              <span className="text-[15.5px] sm:text-[17px] font-normal text-[#0B2C24] text-left">Kombilokaler</span>
             </div>
             <div className="flex items-center gap-2.5 justify-start">
               <div className="w-5.5 h-5.5 rounded-full bg-[#0B2C24] text-white flex items-center justify-center shrink-0">

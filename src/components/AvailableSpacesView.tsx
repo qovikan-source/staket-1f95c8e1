@@ -509,7 +509,7 @@ export default function AvailableSpacesView({
                     <option value="">-- Välj ledig lokal --</option>
                     {spaces.map((space) => (
                       <option key={space.id} value={space.title}>
-                        {space.title} ({space.totalArea.replace("ca ", "")})
+                        {space.title}
                       </option>
                     ))}
                     <option value="Generell anmälan">Generell intresseanmälan (Kölista)</option>
@@ -526,7 +526,7 @@ export default function AvailableSpacesView({
               </div>
 
               <div className="space-y-1">
-                <label className="text-sm font-bold text-slate-350">Övriga lokalkrav (t.ex. takhöjd, el, portar)</label>
+                <label className="text-sm font-bold text-slate-350">Övriga lokalkrav</label>
                 <textarea
                   rows={3}
                   value={contactMsg}
