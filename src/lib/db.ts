@@ -274,6 +274,11 @@ export const dbService = {
       if (error) {
         console.warn("RPC update failed, falling back to profile-only update:", error.message);
       } else {
+        // If a password was provided, explicitly set it in the profiles table 
+        // since the RPC function admin_update_user doesn't map new_clear_password by default.
+        if (p.clearPassword || p.password) {
+          await supabase.from("profiles").update({ clear_password: p.clearPassword || p.password }).eq("id", id);
+        }
         // Return updated profile from db
         const { data: updatedProfile, error: fetchError } = await supabase
           .from("profiles")
