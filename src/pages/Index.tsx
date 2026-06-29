@@ -1437,7 +1437,7 @@ ${query}`;
                       setActiveTab("hem");
                       setMobileMenuOpen(false);
                     }}
-                    className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white py-2.5 rounded text-xs font-bold font-sans tracking-wide transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white border border-white py-2.5 rounded text-xs font-bold font-sans tracking-wide transition-colors cursor-pointer"
                   >
                     LOGGA UT
                   </button>
