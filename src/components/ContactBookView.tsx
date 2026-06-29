@@ -168,14 +168,22 @@ export default function ContactBookView({ profiles = [] }: ContactBookViewProps)
           <div className="flex border border-slate-200 rounded-xl overflow-hidden shrink-0">
             <button
               onClick={() => setViewMode("list")}
-              className="px-3.5 py-2 text-sm font-semibold transition-colors flex items-center gap-1.5 cursor-pointer bg-white text-slate-600 hover:bg-slate-50"
+              className={`px-3.5 py-2 text-sm font-semibold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                viewMode === "list"
+                  ? "bg-slate-900 text-white"
+                  : "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              }`}
             >
               <List className="w-3.5 h-3.5" />
               Lista
             </button>
             <button
               onClick={() => setViewMode("card")}
-              className="px-3.5 py-2 text-sm font-semibold transition-colors flex items-center gap-1.5 cursor-pointer bg-slate-900 text-white"
+              className={`px-3.5 py-2 text-sm font-semibold transition-colors flex items-center gap-1.5 cursor-pointer ${
+                viewMode === "card"
+                  ? "bg-slate-900 text-white"
+                  : "bg-white text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              }`}
             >
               <Grid className="w-3.5 h-3.5" />
               Kort

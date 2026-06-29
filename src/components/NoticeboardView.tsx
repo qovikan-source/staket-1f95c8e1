@@ -30,12 +30,17 @@ export default function NoticeboardView({
 }: NoticeboardViewProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<NoticeboardCategory | "Alla">(initialCategory);
+  const [currentPage, setCurrentPage] = useState(1);
   
   React.useEffect(() => {
     if (initialCategory) {
       setSelectedCategory(initialCategory);
     }
   }, [initialCategory]);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, searchQuery]);
 
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -150,6 +155,13 @@ export default function NoticeboardView({
   // Divide into Pinned & Unpinned
   const pinnedNotices = filteredNotices.filter((n) => n.isPinned);
   const regularNotices = filteredNotices.filter((n) => !n.isPinned);
+
+  const ITEMS_PER_PAGE = 5;
+  const totalPages = Math.ceil(regularNotices.length / ITEMS_PER_PAGE);
+  const paginatedRegularNotices = regularNotices.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="space-y-8 animate-fade-in" id="noticeboard-view">
@@ -341,74 +353,109 @@ export default function NoticeboardView({
               <p className="text-xs text-slate-400">Ändra filterkategori eller skriv ett annat sökord.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
-              {regularNotices.map((post) => {
-                const isHighlighted = post.id === highlightedNoticeId;
-                return (
-                  <div
-                    key={post.id}
-                    id={`notice-card-${post.id}`}
-                    onClick={() => setSelectedNoticeForDetail(post)}
-                    className={`p-5 rounded-2xl border transition-all flex flex-col justify-between hover:shadow-xs cursor-pointer group/card ${
-                      isHighlighted
-                        ? "bg-white border-[#B68F52] ring-4 ring-[#B68F52]/40 scale-[1.01]"
-                        : "bg-white border-slate-100 hover:border-slate-200 shadow-2xs"
-                    }`}
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
+                {paginatedRegularNotices.map((post) => {
+                  const isHighlighted = post.id === highlightedNoticeId;
+                  return (
+                    <div
+                      key={post.id}
+                      id={`notice-card-${post.id}`}
+                      onClick={() => setSelectedNoticeForDetail(post)}
+                      className={`p-5 rounded-2xl border transition-all flex flex-col justify-between hover:shadow-xs cursor-pointer group/card ${
+                        isHighlighted
+                          ? "bg-white border-[#B68F52] ring-4 ring-[#B68F52]/40 scale-[1.01]"
+                          : "bg-white border-slate-100 hover:border-slate-200 shadow-2xs"
+                      }`}
+                    >
+                    <div className="space-y-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="inline-block px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-slate-600 bg-slate-50 border border-slate-100 rounded-md uppercase">
+                          {post.category}
+                        </span>
+                        {role === "Administrator" && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingNotice(post);
+                              }}
+                              title="Redigera anslag"
+                              className="p-1 rounded-md text-slate-400 hover:text-blue-550 hover:bg-blue-50 transition-colors cursor-pointer"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (window.confirm(`Är du säker på att du vill radera anslaget "${post.title}"?`)) {
+                                  onDeleteNotice(post.id);
+                                }
+                              }}
+                              title="Radera anslag"
+                              className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <h4 className="font-bold text-slate-800 text-sm leading-snug group-hover/card:text-[#B68F52] transition-colors">{post.title}</h4>
+                        <p className="text-xs text-slate-500 whitespace-pre-wrap leading-relaxed line-clamp-6">
+                          {post.content}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-50 mt-5 flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                          <User className="w-3 h-3" /> {post.author}
+                        </span>
+                        <span className="text-[10px] text-slate-400 flex items-center gap-1">
+                          <Calendar className="w-3 h-3" /> {post.date}
+                        </span>
+                      </div>
+                    </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-6 border-t border-slate-100 mt-8">
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer text-slate-700"
                   >
-                  <div className="space-y-4">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="inline-block px-2.5 py-0.5 text-[9px] font-bold tracking-wider text-slate-600 bg-slate-50 border border-slate-100 rounded-md uppercase">
-                        {post.category}
-                      </span>
-                      {role === "Administrator" && (
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setEditingNotice(post);
-                            }}
-                            title="Redigera anslag"
-                            className="p-1 rounded-md text-slate-400 hover:text-blue-550 hover:bg-blue-50 transition-colors cursor-pointer"
-                          >
-                            <Pencil className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (window.confirm(`Är du säker på att du vill radera anslaget "${post.title}"?`)) {
-                                onDeleteNotice(post.id);
-                              }
-                            }}
-                            title="Radera anslag"
-                            className="p-1 rounded-md text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <h4 className="font-bold text-slate-800 text-sm leading-snug group-hover/card:text-[#B68F52] transition-colors">{post.title}</h4>
-                      <p className="text-xs text-slate-500 whitespace-pre-wrap leading-relaxed line-clamp-6">
-                        {post.content}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="pt-4 border-t border-slate-50 mt-5 flex items-center justify-between">
-                    <div className="space-y-0.5">
-                      <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                        <User className="w-3 h-3" /> {post.author}
-                      </span>
-                      <span className="text-[10px] text-slate-400 flex items-center gap-1">
-                        <Calendar className="w-3 h-3" /> {post.date}
-                      </span>
-                    </div>
-                  </div>
-                  </div>
-                );
-              })}
+                    Föregående
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        currentPage === page
+                          ? "bg-slate-900 text-white shadow-2xs"
+                          : "bg-white text-slate-600 border border-slate-150 hover:bg-slate-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer text-slate-700"
+                  >
+                    Nästa
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

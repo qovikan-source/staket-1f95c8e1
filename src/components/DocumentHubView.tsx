@@ -96,6 +96,8 @@ export default function DocumentHubView({
   const [selectedMainFolders, setSelectedMainFolders] = useState<BoardFolder[]>([]);
   const [selectedYearFolders, setSelectedYearFolders] = useState<number[]>([]);
 
+  const [currentPage, setCurrentPage] = useState(1);
+
   // Reset selections when directory/search changes
   useEffect(() => {
     setSelectedFileIds([]);
@@ -103,6 +105,11 @@ export default function DocumentHubView({
     setSelectedMainFolders([]);
     setSelectedYearFolders([]);
   }, [activeCategory, selectedFolder, searchQuery]);
+
+  // Reset pagination when directory/search/arkivYear changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory, selectedFolder, searchQuery, selectedArkivYear]);
 
   const handleToggleSelectFile = (id: string) => {
     setSelectedFileIds((prev) =>
@@ -112,9 +119,11 @@ export default function DocumentHubView({
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
-      setSelectedFileIds(filteredFiles.map((f) => f.id));
+      const currentPageIds = paginatedFiles.map((f) => f.id);
+      setSelectedFileIds((prev) => Array.from(new Set([...prev, ...currentPageIds])));
     } else {
-      setSelectedFileIds([]);
+      const currentPageIds = paginatedFiles.map((f) => f.id);
+      setSelectedFileIds((prev) => prev.filter((id) => !currentPageIds.includes(id)));
     }
   };
 
@@ -470,8 +479,15 @@ export default function DocumentHubView({
     return matchesSearch;
   });
 
-  const allFilteredSelected = filteredFiles.length > 0 && filteredFiles.every((f) => selectedFileIds.includes(f.id));
-  const someFilteredSelected = filteredFiles.length > 0 && filteredFiles.some((f) => selectedFileIds.includes(f.id)) && !allFilteredSelected;
+  const ITEMS_PER_PAGE = 5;
+  const totalPages = Math.ceil(filteredFiles.length / ITEMS_PER_PAGE);
+  const paginatedFiles = filteredFiles.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const allFilteredSelected = paginatedFiles.length > 0 && paginatedFiles.every((f) => selectedFileIds.includes(f.id));
+  const someFilteredSelected = paginatedFiles.length > 0 && paginatedFiles.some((f) => selectedFileIds.includes(f.id)) && !allFilteredSelected;
 
   return (
     <div className="space-y-8 animate-fade-in" id="document-hub">
@@ -705,7 +721,7 @@ export default function DocumentHubView({
                 <span className="font-semibold text-slate-700">
                   {selectedFileIds.length > 0 
                     ? `${selectedFileIds.length} markerade` 
-                    : `Markera alla på den här sidan (${filteredFiles.length}st)`
+                    : `Markera alla på den här sidan (${paginatedFiles.length}st)`
                   }
                 </span>
               </div>
@@ -893,123 +909,161 @@ export default function DocumentHubView({
               <p className="text-sm text-slate-400">Försök med ett annat sökord.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredFiles.map((file) => (
-                <div
-                  key={file.id}
-                  className={`bg-white p-4 rounded-2xl border transition-all flex items-center justify-between gap-4 group hover:border-slate-200 ${
-                    selectedFileIds.includes(file.id) 
-                      ? "border-emerald-500 bg-emerald-50/10 shadow-xs" 
-                      : "border-slate-100 shadow-2xs hover:shadow-xs"
-                  } ${file.isOptimistic ? "border-dashed border-emerald-300 bg-slate-50/50" : ""}`}
-                >
-                  <div className="flex items-center gap-3 truncate flex-1 min-w-0">
-                    {/* Checkbox for Admin */}
-                    {role === "Administrator" && (
-                      <input
-                        type="checkbox"
-                        disabled={file.isOptimistic}
-                        checked={selectedFileIds.includes(file.id)}
-                        onChange={() => handleToggleSelectFile(file.id)}
-                        className="w-4 h-4 text-emerald-500 border-slate-350 rounded-md focus:ring-emerald-400 cursor-pointer shrink-0 z-10 disabled:opacity-40 disabled:cursor-not-allowed"
-                      />
-                    )}
-                    
-                    <div 
-                      onClick={async () => {
-                        if (file.isOptimistic) return;
-                        try {
-                          const signedUrl = await dbService.getSignedFileUrl(file, 60);
-                          window.open(signedUrl, "_blank", "noopener,noreferrer");
-                        } catch (err) {
-                          console.error("Failed to open document:", err);
-                        }
-                      }}
-                      className={`flex items-center gap-3 truncate flex-1 min-w-0 ${file.isOptimistic ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
-                      title={file.isOptimistic ? "Laddar upp..." : "Klicka för att öppna dokumentet i en ny flik"}
-                    >
-                      <div className={`w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center shrink-0 border border-slate-100 transition-all ${!file.isOptimistic ? "group-hover:bg-emerald-50 group-hover:text-emerald-500 group-hover:border-emerald-100" : ""}`}>
-                        <FileText className={`w-5 h-5 font-bold ${file.isOptimistic ? "animate-pulse text-emerald-500" : ""}`} />
-                      </div>
-                      <div className="truncate space-y-0.5 min-w-0 flex-1">
-                        <h4 className={`font-bold text-slate-800 text-sm truncate transition-colors ${!file.isOptimistic ? "group-hover:text-emerald-700 group-hover:underline" : ""}`}>
-                          {file.name}
-                        </h4>
-                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-400">
-                          {file.isOptimistic ? (
-                            <span className="text-emerald-600 font-semibold animate-pulse">Laddar upp till Supabase...</span>
-                          ) : (
-                            <>
-                              <span>{file.fileSize}</span>
-                              <span>•</span>
-                              <span>Uppladdad: {file.uploadedAt}</span>
-                            </>
-                          )}
-                          {file.folder && (
-                            <>
-                              <span>•</span>
-                              <span className="font-semibold text-emerald-600 flex items-center gap-0.5">
-                                <Folder className="w-2.5 h-2.5" /> {file.folder}
-                              </span>
-                            </>
-                          )}
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {paginatedFiles.map((file) => (
+                  <div
+                    key={file.id}
+                    className={`bg-white p-4 rounded-2xl border transition-all flex items-center justify-between gap-4 group hover:border-slate-200 ${
+                      selectedFileIds.includes(file.id) 
+                        ? "border-emerald-500 bg-emerald-50/10 shadow-xs" 
+                        : "border-slate-100 shadow-2xs hover:shadow-xs"
+                    } ${file.isOptimistic ? "border-dashed border-emerald-300 bg-slate-50/50" : ""}`}
+                  >
+                    <div className="flex items-center gap-3 truncate flex-1 min-w-0">
+                      {/* Checkbox for Admin */}
+                      {role === "Administrator" && (
+                        <input
+                          type="checkbox"
+                          disabled={file.isOptimistic}
+                          checked={selectedFileIds.includes(file.id)}
+                          onChange={() => handleToggleSelectFile(file.id)}
+                          className="w-4 h-4 text-emerald-500 border-slate-350 rounded-md focus:ring-emerald-400 cursor-pointer shrink-0 z-10 disabled:opacity-40 disabled:cursor-not-allowed"
+                        />
+                      )}
+                      
+                      <div 
+                        onClick={async () => {
+                          if (file.isOptimistic) return;
+                          try {
+                            const signedUrl = await dbService.getSignedFileUrl(file, 60);
+                            window.open(signedUrl, "_blank", "noopener,noreferrer");
+                          } catch (err) {
+                            console.error("Failed to open document:", err);
+                          }
+                        }}
+                        className={`flex items-center gap-3 truncate flex-1 min-w-0 ${file.isOptimistic ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+                        title={file.isOptimistic ? "Laddar upp..." : "Klicka för att öppna dokumentet i en ny flik"}
+                      >
+                        <div className={`w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center shrink-0 border border-slate-100 transition-all ${!file.isOptimistic ? "group-hover:bg-emerald-50 group-hover:text-emerald-500 group-hover:border-emerald-100" : ""}`}>
+                          <FileText className={`w-5 h-5 font-bold ${file.isOptimistic ? "animate-pulse text-emerald-500" : ""}`} />
+                        </div>
+                        <div className="truncate space-y-0.5 min-w-0 flex-1">
+                          <h4 className={`font-bold text-slate-800 text-sm truncate transition-colors ${!file.isOptimistic ? "group-hover:text-emerald-700 group-hover:underline" : ""}`}>
+                            {file.name}
+                          </h4>
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-400">
+                            {file.isOptimistic ? (
+                              <span className="text-emerald-600 font-semibold animate-pulse">Laddar upp till Supabase...</span>
+                            ) : (
+                              <>
+                                <span>{file.fileSize}</span>
+                                <span>•</span>
+                                <span>Uppladdad: {file.uploadedAt}</span>
+                              </>
+                            )}
+                            {file.folder && (
+                              <>
+                                <span>•</span>
+                                <span className="font-semibold text-emerald-600 flex items-center gap-0.5">
+                                  <Folder className="w-2.5 h-2.5" /> {file.folder}
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
-                    {file.isOptimistic ? (
-                      <span className="flex h-5 w-5 relative mr-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-450 opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-5 w-5 bg-emerald-500"></span>
-                      </span>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => handleDownload(file)}
-                          disabled={downloadingFileId === file.id}
-                          className="p-2 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
-                          title="Ladda ner PDF"
-                        >
-                          {downloadingFileId === file.id ? (
-                            <span className="flex h-4 w-4 relative">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500"></span>
-                            </span>
-                          ) : (
-                            <Download className="w-4 h-4" />
+                    <div className="flex items-center gap-1 shrink-0">
+                      {file.isOptimistic ? (
+                        <span className="flex h-5 w-5 relative mr-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-450 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-5 w-5 bg-emerald-500"></span>
+                        </span>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => handleDownload(file)}
+                            disabled={downloadingFileId === file.id}
+                            className="p-2 rounded-xl text-slate-500 hover:text-emerald-600 hover:bg-emerald-50 transition-colors cursor-pointer"
+                            title="Ladda ner PDF"
+                          >
+                            {downloadingFileId === file.id ? (
+                              <span className="flex h-4 w-4 relative">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500"></span>
+                              </span>
+                            ) : (
+                              <Download className="w-4 h-4" />
+                            )}
+                          </button>
+
+                          {role === "Administrator" && (
+                            <>
+                              <button
+                                onClick={() => handleOpenEditModal(file)}
+                                className="p-2 rounded-xl text-slate-450 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
+                                title="Redigera dokument"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+
+                              <button
+                                onClick={() => {
+                                  if (window.confirm(`Är du säker på att du vill radera filen "${file.name}" permanent?`)) {
+                                    onDeleteFile(file.id, file.name, file.category, file.folder);
+                                  }
+                                }}
+                                className="p-2 rounded-xl text-slate-350 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                                title="Radera fil"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
                           )}
-                        </button>
-
-                        {role === "Administrator" && (
-                          <>
-                            <button
-                              onClick={() => handleOpenEditModal(file)}
-                              className="p-2 rounded-xl text-slate-450 hover:text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
-                              title="Redigera dokument"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-
-                            <button
-                              onClick={() => {
-                                if (window.confirm(`Är du säker på att du vill radera filen "${file.name}" permanent?`)) {
-                                  onDeleteFile(file.id, file.name, file.category, file.folder);
-                                }
-                              }}
-                              className="p-2 rounded-xl text-slate-350 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-                              title="Radera fil"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </>
-                        )}
-                      </>
-                    )}
+                        </>
+                      )}
+                    </div>
                   </div>
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 pt-6 border-t border-slate-100 mt-8">
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer text-slate-700"
+                  >
+                    Föregående
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      type="button"
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        currentPage === page
+                          ? "bg-slate-900 text-white shadow-2xs"
+                          : "bg-white text-slate-600 border border-slate-150 hover:bg-slate-50"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                    disabled={currentPage === totalPages}
+                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer text-slate-700"
+                  >
+                    Nästa
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>

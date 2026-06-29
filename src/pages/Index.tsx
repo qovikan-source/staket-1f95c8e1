@@ -1128,7 +1128,7 @@ ${query}`;
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-[#f0f2f5] font-sans text-slate-800 flex flex-col" id="applet-root">
+    <div className={`${role === "Administrator" ? "lg:h-screen lg:overflow-hidden" : ""} min-h-screen bg-[#f0f2f5] font-sans text-slate-800 flex flex-col`} id="applet-root">
 
       {activeTab === "login" ? (
         <div className="flex-1 overflow-y-auto bg-slate-50 flex flex-col min-h-0">
@@ -1224,87 +1224,87 @@ ${query}`;
               {/* Public Section */}
               <div>
                 {!isCurrentlyCollapsed && (
-                  <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2">Offentlig info</div>
+                  <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-2 px-2">Offentlig info</div>
                 )}
                 <div className="space-y-0.5">
                   <button
                     onClick={() => handleTabClick("hem")}
-                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center rounded-md text-sm sm:text-base font-semibold transition-all cursor-pointer ${
                       isCurrentlyCollapsed 
                         ? "justify-center py-2.5" 
-                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                        : "justify-start gap-2.5 px-3.5 py-2.5 text-left"
                     } ${
                       activeTab === "hem"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-3")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
                     title={isCurrentlyCollapsed ? "Hem" : undefined}
                   >
-                    <Home className="w-3.5 h-3.5 shrink-0" />
+                    <Home className="w-4 h-4 shrink-0" />
                     {!isCurrentlyCollapsed && <span>Hem</span>}
                   </button>
                   <button
                     onClick={() => handleTabClick("vara_foretag")}
-                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center rounded-md text-sm sm:text-base font-semibold transition-all cursor-pointer ${
                       isCurrentlyCollapsed 
                         ? "justify-center py-2.5" 
-                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                        : "justify-start gap-2.5 px-3.5 py-2.5 text-left"
                     } ${
                       activeTab === "vara_foretag"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-3")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
                     title={isCurrentlyCollapsed ? "Företag" : undefined}
                   >
-                    <Briefcase className="w-3.5 h-3.5 shrink-0" />
+                    <Briefcase className="w-4 h-4 shrink-0" />
                     {!isCurrentlyCollapsed && <span>Företag</span>}
                   </button>
                   <button
                     onClick={() => handleTabClick("lediga_lokaler")}
-                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center rounded-md text-sm sm:text-base font-semibold transition-all cursor-pointer ${
                       isCurrentlyCollapsed 
                         ? "justify-center py-2.5" 
-                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                        : "justify-start gap-2.5 px-3.5 py-2.5 text-left"
                     } ${
                       activeTab === "lediga_lokaler"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-3")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
                     title={isCurrentlyCollapsed ? "Lediga Lokaler" : undefined}
                   >
-                    <Building2 className="w-3.5 h-3.5 shrink-0" />
+                    <Building2 className="w-4 h-4 shrink-0" />
                     {!isCurrentlyCollapsed && <span>Lediga Lokaler</span>}
                   </button>
                   <button
                     onClick={() => handleTabClick("om_oss")}
-                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center rounded-md text-sm sm:text-base font-semibold transition-all cursor-pointer ${
                       isCurrentlyCollapsed 
                         ? "justify-center py-2.5" 
-                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                        : "justify-start gap-2.5 px-3.5 py-2.5 text-left"
                     } ${
                       activeTab === "om_oss"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-3")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
                     title={isCurrentlyCollapsed ? "Om Oss" : undefined}
                   >
-                    <Info className="w-3.5 h-3.5 shrink-0" />
+                    <Info className="w-4 h-4 shrink-0" />
                     {!isCurrentlyCollapsed && <span>Om Oss</span>}
                   </button>
                   <button
                     onClick={() => handleTabClick("kontakt")}
-                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center rounded-md text-sm sm:text-base font-semibold transition-all cursor-pointer ${
                       isCurrentlyCollapsed 
                         ? "justify-center py-2.5" 
-                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                        : "justify-start gap-2.5 px-3.5 py-2.5 text-left"
                     } ${
                       activeTab === "kontakt"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-3")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
                     title={isCurrentlyCollapsed ? "Kontakt" : undefined}
                   >
-                    <Mail className="w-3.5 h-3.5 shrink-0" />
+                    <Mail className="w-4 h-4 shrink-0" />
                     {!isCurrentlyCollapsed && <span>Kontakt</span>}
                   </button>
                 </div>
@@ -1313,7 +1313,7 @@ ${query}`;
               {/* Members Section */}
               <div>
                 {!isCurrentlyCollapsed && (
-                  <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2 flex items-center justify-between">
+                  <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-2 px-2 flex items-center justify-between">
                     <span>Medlemsportal</span>
                   </div>
                 )}
@@ -1321,69 +1321,69 @@ ${query}`;
                   <button
                     id="tab-anslagstavlan"
                     onClick={() => handleTabClick("anslagstavlan")}
-                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center rounded-md text-sm sm:text-base font-semibold transition-all cursor-pointer ${
                       isCurrentlyCollapsed 
                         ? "justify-center py-2.5" 
-                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                        : "justify-start gap-2.5 px-3.5 py-2.5 text-left"
                     } ${
                       activeTab === "anslagstavlan"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-3")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
                     title={isCurrentlyCollapsed ? "Anslagstavlan" : undefined}
                   >
-                    <Bell className="w-3.5 h-3.5 shrink-0" />
+                    <Bell className="w-4 h-4 shrink-0" />
                     {!isCurrentlyCollapsed && <span>Anslagstavlan</span>}
                   </button>
                   <button
                     id="tab-filer"
                     onClick={() => handleTabClick("filer")}
-                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center rounded-md text-sm sm:text-base font-semibold transition-all cursor-pointer ${
                       isCurrentlyCollapsed 
                         ? "justify-center py-2.5" 
-                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                        : "justify-start gap-2.5 px-3.5 py-2.5 text-left"
                     } ${
                       activeTab === "filer"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-3")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
                     title={isCurrentlyCollapsed ? "Filer" : undefined}
                   >
-                    <FileText className="w-3.5 h-3.5 shrink-0" />
+                    <FileText className="w-4 h-4 shrink-0" />
                     {!isCurrentlyCollapsed && <span>Filer</span>}
                   </button>
                   <button
                     id="tab-kontaktboken"
                     onClick={() => handleTabClick("kontaktboken")}
-                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center rounded-md text-sm sm:text-base font-semibold transition-all cursor-pointer ${
                       isCurrentlyCollapsed 
                         ? "justify-center py-2.5" 
-                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                        : "justify-start gap-2.5 px-3.5 py-2.5 text-left"
                     } ${
                       activeTab === "kontaktboken"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-3")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
                     title={isCurrentlyCollapsed ? "Kontaktboken" : undefined}
                   >
-                    <Users className="w-3.5 h-3.5 shrink-0" />
+                    <Users className="w-4 h-4 shrink-0" />
                     {!isCurrentlyCollapsed && <span>Kontaktboken</span>}
                   </button>
                   <button
                     id="tab-styrelse-drift"
                     onClick={() => handleTabClick("styrelse_drift")}
-                    className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                    className={`w-full flex items-center rounded-md text-sm sm:text-base font-semibold transition-all cursor-pointer ${
                       isCurrentlyCollapsed 
                         ? "justify-center py-2.5" 
-                        : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                        : "justify-start gap-2.5 px-3.5 py-2.5 text-left"
                     } ${
                       activeTab === "styrelse_drift"
-                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
+                        ? "bg-blue-600/15 text-blue-400 border-l-2 border-blue-500" + (isCurrentlyCollapsed ? "" : " pl-3")
                         : "text-slate-400 hover:bg-slate-800"
                     }`}
                     title={isCurrentlyCollapsed ? "Styrelse & Drift" : undefined}
                   >
-                    <Shield className="w-3.5 h-3.5 shrink-0" />
+                    <Shield className="w-4 h-4 shrink-0" />
                     {!isCurrentlyCollapsed && <span>Styrelse &amp; Drift</span>}
                   </button>
                 </div>
@@ -1392,37 +1392,55 @@ ${query}`;
               {/* Administration Section */}
               <div>
                 {!isCurrentlyCollapsed && (
-                  <div className="text-slate-500 text-[9px] font-bold uppercase tracking-wider mb-2 px-2">Administration</div>
+                  <div className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-2 px-2">Administration</div>
                 )}
                 <button
                   id="tab-administration"
                   onClick={() => handleTabClick("administration")}
-                  className={`w-full flex items-center rounded-md text-xs font-semibold transition-all cursor-pointer ${
+                  className={`w-full flex items-center rounded-md text-sm sm:text-base font-semibold transition-all cursor-pointer ${
                     isCurrentlyCollapsed 
                       ? "justify-center py-2.5" 
-                      : "justify-start gap-2.5 px-3 py-1.5 text-left"
+                      : "justify-start gap-2.5 px-3.5 py-2.5 text-left"
                   } ${
                     activeTab === "administration"
-                      ? "bg-violet-600/20 text-violet-400 border-l-2 border-violet-500" + (isCurrentlyCollapsed ? "" : " pl-2.5")
+                      ? "bg-violet-600/20 text-violet-400 border-l-2 border-violet-500" + (isCurrentlyCollapsed ? "" : " pl-3")
                       : "text-slate-400 hover:bg-slate-800"
                   }`}
                   title={isCurrentlyCollapsed ? "Alla användare" : undefined}
                 >
-                  <Shield className="w-3.5 h-3.5 shrink-0" />
+                  <Shield className="w-4 h-4 shrink-0" />
                   {!isCurrentlyCollapsed && <span>Alla användare</span>}
                 </button>
               </div>
             </nav>
 
             {/* Profile Status Box at the bottom */}
-            <div className={`p-4 border-t border-slate-700/50 mt-auto bg-slate-900/60 flex ${isCurrentlyCollapsed ? "justify-center" : "items-center gap-3"}`}>
-              <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-white font-bold text-xs shrink-0 uppercase" title={`${getCurrentUserName()} (${role})`}>
-                {getCurrentUserName().charAt(0)}
+            <div className="mt-auto flex flex-col border-t border-slate-700/50">
+              <div className={`p-4 bg-slate-900/60 flex ${isCurrentlyCollapsed ? "justify-center" : "items-center gap-3"}`}>
+                <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-white font-bold text-xs shrink-0 uppercase" title={`${getCurrentUserName()} (${role})`}>
+                  {getCurrentUserName().charAt(0)}
+                </div>
+                {!isCurrentlyCollapsed && (
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs text-white font-semibold truncate">{getCurrentUserName()}</div>
+                    <div className="text-[10px] text-slate-400 truncate mt-0.5 leading-none bg-slate-800 px-1.5 py-0.5 rounded w-fit">Rättighet: {role}</div>
+                  </div>
+                )}
               </div>
               {!isCurrentlyCollapsed && (
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs text-white font-semibold truncate">{getCurrentUserName()}</div>
-                  <div className="text-[10px] text-slate-400 truncate mt-0.5 leading-none bg-slate-800 px-1.5 py-0.5 rounded w-fit">Rättighet: {role}</div>
+                <div className="p-3 bg-[#131d2e] border-t border-slate-800/80">
+                  <button
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                      setRole("Besökare");
+                      setCurrentUserProfile(null);
+                      setActiveTab("hem");
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white py-2.5 rounded text-xs font-bold font-sans tracking-wide transition-colors cursor-pointer"
+                  >
+                    LOGGA UT
+                  </button>
                 </div>
               )}
             </div>
@@ -1484,7 +1502,7 @@ ${query}`;
             </header>
 
             {/* Core Applet Content Stage */}
-            <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+            <main className="flex-1 p-4 sm:p-6 lg:p-8 lg:overflow-y-auto">
               {activeTab === "hem" && (
                 <HomeView
                   notices={notices}
@@ -1596,7 +1614,7 @@ ${query}`;
 
                 {/* Chat Widget Window */}
                 {chatOpen && (
-                  <div className="fixed bottom-24 sm:bottom-28 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 h-[450px] sm:h-[500px] max-h-[75vh] z-50 bg-white shadow-2xl rounded-2xl border border-slate-100 flex flex-col overflow-hidden animate-scale-up">
+                  <div className="fixed bottom-20 sm:bottom-28 right-2 sm:right-6 left-2 sm:left-auto w-auto sm:w-96 h-[400px] sm:h-[500px] max-h-[65vh] sm:max-h-[75vh] z-50 bg-white shadow-2xl rounded-2xl border border-slate-100 flex flex-col overflow-hidden animate-scale-up">
                     {/* Header */}
                     <div className="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
                       <div className="flex items-center gap-2">
@@ -1746,7 +1764,7 @@ ${query}`;
           </div>
         </div>
       ) : (
-        <div className="flex-1 overflow-y-auto bg-[#F9FAF9] flex flex-col min-h-0 relative" id="ordinary-page-root">
+        <div className="flex-1 bg-[#F9FAF9] flex flex-col relative" id="ordinary-page-root">
           {/* TOP NAVIGATION HEADER */}
           <header className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm h-20 flex items-center flex-shrink-0">
             <div className="max-w-7xl w-full mx-auto px-4 md:px-8 flex items-center justify-between">
@@ -1839,7 +1857,7 @@ ${query}`;
 
             {/* MOBILE MENU DROPDOWN DRAWER */}
             {mobileMenuOpen && (
-              <div id="mobile-menu-drawer" className="lg:hidden bg-white border-b border-gray-100 shadow-lg px-6 pt-4 pb-16 space-y-3 flex flex-col font-bold tracking-wider text-[13px] text-[#0B2C24] animate-fade-in absolute top-20 left-0 w-full z-50 max-h-[calc(100dvh-5.5rem)] overflow-y-auto">
+              <div id="mobile-menu-drawer" className="lg:hidden bg-white border-b border-gray-100 shadow-lg px-6 pt-4 pb-28 space-y-3 flex flex-col font-bold tracking-wider text-[13px] text-[#0B2C24] animate-fade-in absolute top-20 left-0 w-full z-50 max-h-[calc(100dvh-5.5rem)] overflow-y-auto">
                 <button
                   onClick={() => {
                     handleTabClick("hem");
@@ -1898,16 +1916,16 @@ ${query}`;
 
                 {role !== "Besökare" && (
                   <>
-                    <div className="border-b border-slate-100 py-1">
-                      <div className="text-[13px] text-gray-500 font-extrabold uppercase tracking-widest pb-1.5">ANSLAGSTAVLAN</div>
-                      <div className="pl-3 py-1 flex flex-col gap-2">
+                    <div className="border-b border-slate-100 py-2">
+                      <div className="text-[16px] text-gray-650 font-extrabold uppercase tracking-wider pb-2">ANSLAGSTAVLAN</div>
+                      <div className="pl-4 py-1.5 flex flex-col gap-2.5">
                         <button
                           onClick={() => {
                             setSelectedNoticeboardCategory("Alla");
                             handleTabClick("anslagstavlan");
                             setMobileMenuOpen(false);
                           }}
-                          className="text-left text-[14px] font-semibold text-gray-700 hover:text-[#B68F52]"
+                          className="text-left text-[16px] font-bold text-gray-700 hover:text-[#B68F52]"
                         >
                           Alla Kategorier
                         </button>
@@ -1919,7 +1937,7 @@ ${query}`;
                               handleTabClick("anslagstavlan");
                               setMobileMenuOpen(false);
                             }}
-                            className="text-left text-[14px] font-medium text-gray-500 hover:text-[#B68F52]"
+                            className="text-left text-[16px] font-semibold text-gray-500 hover:text-[#B68F52]"
                           >
                             {cat}
                           </button>
