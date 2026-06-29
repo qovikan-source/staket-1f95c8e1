@@ -1502,7 +1502,7 @@ ${query}`;
             </header>
 
             {/* Core Applet Content Stage */}
-            <main className="flex-1 p-4 sm:p-6 lg:p-8 lg:overflow-y-auto">
+            <main className="flex-1 p-4 pb-28 sm:p-6 sm:pb-12 lg:p-8 lg:overflow-y-auto">
               {activeTab === "hem" && (
                 <HomeView
                   notices={notices}
@@ -1589,8 +1589,8 @@ ${query}`;
             </main>
 
             {/* High Density Dark Footer */}
-            <footer className="h-8 bg-slate-900 border-t border-slate-800 flex items-center justify-between px-6 text-[10px] text-slate-400 flex-shrink-0">
-              <div>Föreningsportal v2.0.2 • Fastighetsbeteckning: Smeden 14, Stockholm</div>
+            <footer className="h-auto min-h-8 py-2.5 md:py-0 md:h-8 bg-slate-900 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between px-6 text-[10px] text-slate-400 flex-shrink-0 gap-2 md:gap-0">
+              <div className="text-center md:text-left">Föreningsportal v2.0.2 • Fastighetsbeteckning: Smeden 14, Stockholm</div>
               <div className="flex gap-4">
                 <span className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></span> 
