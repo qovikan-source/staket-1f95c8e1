@@ -222,7 +222,7 @@ export default function NoticeboardView({
       </div>
 
       {/* Categories Horizontal Scroll Chips for visual elegance on desktop */}
-      <div className="space-y-2">
+      <div className="space-y-2 hidden md:block">
         <h2 className="text-sm font-extrabold text-slate-400 uppercase tracking-wider">FILTRERA SNABBT</h2>
         <div className="flex flex-wrap gap-2 pb-2">
           <button
@@ -430,15 +430,22 @@ export default function NoticeboardView({
                   <button
                     onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
                     disabled={currentPage === 1}
-                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer text-slate-700"
+                    className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold bg-white hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer text-slate-700"
                   >
                     Föregående
                   </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter(page => {
+                      if (totalPages <= 3) return true;
+                      if (currentPage === 1) return page <= 3;
+                      if (currentPage === totalPages) return page >= totalPages - 2;
+                      return page >= currentPage - 1 && page <= currentPage + 1;
+                    })
+                    .map((page) => (
                     <button
                       key={page}
                       onClick={() => setCurrentPage(page)}
-                      className={`w-9 h-9 flex items-center justify-center rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      className={`w-10 h-10 sm:w-11 sm:h-11 flex items-center justify-center rounded-xl text-sm sm:text-base font-bold transition-all cursor-pointer ${
                         currentPage === page
                           ? "bg-slate-900 text-white shadow-2xs"
                           : "bg-white text-slate-600 border border-slate-150 hover:bg-slate-50"
@@ -450,7 +457,7 @@ export default function NoticeboardView({
                   <button
                     onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
                     disabled={currentPage === totalPages}
-                    className="px-3.5 py-2 rounded-xl border border-slate-200 text-xs font-semibold bg-white hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer text-slate-700"
+                    className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold bg-white hover:bg-slate-50 disabled:opacity-50 disabled:pointer-events-none transition-colors cursor-pointer text-slate-700"
                   >
                     Nästa
                   </button>
