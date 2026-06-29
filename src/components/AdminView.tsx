@@ -807,7 +807,7 @@ export default function AdminView({
                       {activeUserRole === "Administrator" && (
                         <td className="px-5 py-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">
                           {(() => {
-                            const pwd = cachedPasswords[(p.email || "").trim().toLowerCase()] || "staket123";
+                            const pwd = cachedPasswords[(p.email || "").trim().toLowerCase()] || "(Dolt av säkerhetsskäl)";
                             const isVisible = visiblePasswords[p.id];
                             return (
                               <div className="flex items-center gap-2">
@@ -861,7 +861,7 @@ export default function AdminView({
           {/* Mobile Cards view for Users */}
           <div className="grid grid-cols-1 gap-4 md:hidden">
             {sortedProfiles.map((p) => {
-              const pwd = cachedPasswords[(p.email || "").trim().toLowerCase()] || "staket123";
+              const pwd = cachedPasswords[(p.email || "").trim().toLowerCase()] || "(Dolt av säkerhetsskäl)";
               const isVisible = visiblePasswords[p.id];
               return (
                 <div key={p.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-2xs space-y-3">
