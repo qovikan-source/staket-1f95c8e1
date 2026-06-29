@@ -21,6 +21,7 @@ export interface UserProfile {
   boardTitle?: string;
   hideInContactBook?: boolean;
   hideInCompanyPage?: boolean;
+  clearPassword?: string;
 }
 
 export type NoticeboardCategory =

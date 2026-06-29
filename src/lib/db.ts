@@ -22,6 +22,7 @@ function mapProfileToFrontend(db: any): UserProfile {
     boardTitle: db.board_title || "",
     hideInContactBook: db.hide_in_contact_book || false,
     hideInCompanyPage: db.hide_in_company_page || false,
+    clearPassword: db.clear_password || "",
   };
 }
 
@@ -41,6 +42,7 @@ function mapProfileToDb(p: Partial<UserProfile>) {
     board_title: p.boardTitle,
     hide_in_contact_book: p.hideInContactBook,
     hide_in_company_page: p.hideInCompanyPage,
+    clear_password: p.clearPassword,
   };
 }
 
@@ -192,6 +194,11 @@ export const dbService = {
         if (error) {
           console.warn("RPC registration failed, falling back to profile-only insertion:", error.message);
         } else if (data) {
+          // If a password was provided, explicitly set it in the profiles table 
+          // since the RPC function create_new_user doesn't map new_clear_password by default.
+          if (p.clearPassword || p.password) {
+            await supabase.from("profiles").update({ clear_password: p.clearPassword || p.password }).eq("id", data.id);
+          }
           return {
             id: data.id,
             name: p.name,
@@ -207,6 +214,7 @@ export const dbService = {
             logo: p.logo || "",
             hideInContactBook: p.hideInContactBook || false,
             hideInCompanyPage: p.hideInCompanyPage || false,
+            clearPassword: p.clearPassword || p.password || "",
           };
         }
       } catch (err) {

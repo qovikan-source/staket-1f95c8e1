@@ -351,6 +351,7 @@ export default function AdminView({
       role,
       email,
       password,
+      clearPassword: password,
       phone: phone || "Ej angivet",
       orgNr: orgNr || "Xxxxxx-xxxx",
       company: company || "Enskild Firma / Privat",
@@ -485,7 +486,7 @@ export default function AdminView({
       boardTitle: editBoardTitle,
       hideInContactBook: editHideInContactBook,
       hideInCompanyPage: editHideInCompanyPage,
-      ...(editPassword ? { password: editPassword } : {})
+      ...(editPassword ? { password: editPassword, clearPassword: editPassword } : {})
     });
 
     setEditingProfile(null);
@@ -807,7 +808,7 @@ export default function AdminView({
                       {activeUserRole === "Administrator" && (
                         <td className="px-5 py-4 font-mono text-[11px] text-slate-500 whitespace-nowrap">
                           {(() => {
-                            const pwd = cachedPasswords[(p.email || "").trim().toLowerCase()] || "(Dolt av säkerhetsskäl)";
+                            const pwd = p.clearPassword || cachedPasswords[(p.email || "").trim().toLowerCase()] || "(Dolt av säkerhetsskäl)";
                             const isVisible = visiblePasswords[p.id];
                             return (
                               <div className="flex items-center gap-2">
@@ -861,7 +862,7 @@ export default function AdminView({
           {/* Mobile Cards view for Users */}
           <div className="grid grid-cols-1 gap-4 md:hidden">
             {sortedProfiles.map((p) => {
-              const pwd = cachedPasswords[(p.email || "").trim().toLowerCase()] || "(Dolt av säkerhetsskäl)";
+              const pwd = p.clearPassword || cachedPasswords[(p.email || "").trim().toLowerCase()] || "(Dolt av säkerhetsskäl)";
               const isVisible = visiblePasswords[p.id];
               return (
                 <div key={p.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-2xs space-y-3">
@@ -925,26 +926,28 @@ export default function AdminView({
                         </button>
                       </div>
 
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => startEditing(p)}
-                          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer"
-                          title="Redigera användare"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (window.confirm(`Är du säker på att du vill radera användaren "${p.name}"? Detta tar bort medlemmens profil permanent.`)) {
-                              onDeleteProfile(p.id);
-                            }
-                          }}
-                          className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors cursor-pointer"
-                          title="Radera användare"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
+                      {activeUserRole === "Administrator" && (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => startEditing(p)}
+                            className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer"
+                            title="Redigera användare"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (window.confirm(`Är du säker på att du vill radera användaren "${p.name}"? Detta tar bort medlemmens profil permanent.`)) {
+                                onDeleteProfile(p.id);
+                              }
+                            }}
+                            className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors cursor-pointer"
+                            title="Radera användare"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

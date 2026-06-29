@@ -1476,7 +1476,7 @@ ${query}`;
                     setCurrentUserProfile(null);
                     setActiveTab("hem");
                   }}
-                  className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-[11px] font-bold px-3 py-1.5 rounded-md transition cursor-pointer"
+                  className="bg-slate-800 hover:bg-slate-900 text-white text-[11px] font-bold px-3 py-1.5 rounded-md transition cursor-pointer"
                 >
                   LOGGA UT
                 </button>
@@ -1588,7 +1588,7 @@ ${query}`;
                 {/* Chat Trigger Button */}
                 <button
                   onClick={() => setChatOpen(!chatOpen)}
-                  className="fixed bottom-12 right-6 z-50 p-3.5 bg-slate-900 hover:bg-slate-800 text-amber-400 hover:text-amber-300 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer flex items-center justify-center border border-slate-950"
+                  className="fixed bottom-8 sm:bottom-12 right-4 sm:right-6 z-50 p-3.5 bg-slate-900 hover:bg-slate-800 text-amber-400 hover:text-amber-300 rounded-full shadow-lg hover:shadow-xl transition-all cursor-pointer flex items-center justify-center border border-slate-950"
                   title="AI Supportassistent"
                 >
                   {chatOpen ? <X className="w-6 h-6" /> : <MessageSquare className="w-6 h-6" />}
@@ -1596,7 +1596,7 @@ ${query}`;
 
                 {/* Chat Widget Window */}
                 {chatOpen && (
-                  <div className="fixed bottom-28 right-6 w-96 h-[500px] z-50 bg-white shadow-2xl rounded-2xl border border-slate-100 flex flex-col overflow-hidden animate-scale-up">
+                  <div className="fixed bottom-24 sm:bottom-28 right-4 sm:right-6 w-[calc(100vw-2rem)] sm:w-96 h-[450px] sm:h-[500px] max-h-[75vh] z-50 bg-white shadow-2xl rounded-2xl border border-slate-100 flex flex-col overflow-hidden animate-scale-up">
                     {/* Header */}
                     <div className="bg-slate-900 text-white p-4 flex justify-between items-center shrink-0">
                       <div className="flex items-center gap-2">
@@ -1839,7 +1839,7 @@ ${query}`;
 
             {/* MOBILE MENU DROPDOWN DRAWER */}
             {mobileMenuOpen && (
-              <div id="mobile-menu-drawer" className="lg:hidden bg-white border-b border-gray-100 shadow-lg px-6 py-4 space-y-3 flex flex-col font-bold tracking-wider text-[13px] text-[#0B2C24] animate-fade-in absolute top-20 left-0 w-full z-50 max-h-[80vh] overflow-y-auto">
+              <div id="mobile-menu-drawer" className="lg:hidden bg-white border-b border-gray-100 shadow-lg px-6 pt-4 pb-16 space-y-3 flex flex-col font-bold tracking-wider text-[13px] text-[#0B2C24] animate-fade-in absolute top-20 left-0 w-full z-50 max-h-[calc(100dvh-5.5rem)] overflow-y-auto">
                 <button
                   onClick={() => {
                     handleTabClick("hem");
@@ -1899,7 +1899,7 @@ ${query}`;
                 {role !== "Besökare" && (
                   <>
                     <div className="border-b border-slate-100 py-1">
-                      <div className="text-[11px] text-gray-400 font-bold uppercase tracking-widest pb-1">ANSLAGSTAVLAN</div>
+                      <div className="text-[13px] text-gray-500 font-extrabold uppercase tracking-widest pb-1.5">ANSLAGSTAVLAN</div>
                       <div className="pl-3 py-1 flex flex-col gap-2">
                         <button
                           onClick={() => {
@@ -1907,7 +1907,7 @@ ${query}`;
                             handleTabClick("anslagstavlan");
                             setMobileMenuOpen(false);
                           }}
-                          className="text-left text-xs font-semibold text-gray-700 hover:text-[#B68F52]"
+                          className="text-left text-[14px] font-semibold text-gray-700 hover:text-[#B68F52]"
                         >
                           Alla Kategorier
                         </button>
@@ -1919,7 +1919,7 @@ ${query}`;
                               handleTabClick("anslagstavlan");
                               setMobileMenuOpen(false);
                             }}
-                            className="text-left text-xs font-medium text-gray-500 hover:text-[#B68F52]"
+                            className="text-left text-[14px] font-medium text-gray-500 hover:text-[#B68F52]"
                           >
                             {cat}
                           </button>
@@ -1959,6 +1959,19 @@ ${query}`;
                     >
                       STYRELSE &amp; DRIFT
                     </button>
+                    {role === "Styrelse" && (
+                      <button
+                        onClick={() => {
+                          handleTabClick("administration");
+                          setMobileMenuOpen(false);
+                        }}
+                        className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                          activeTab === "administration" ? "text-[#B68F52]" : ""
+                        }`}
+                      >
+                        ADMINISTRATION
+                      </button>
+                    )}
                   </>
                 )}
 
@@ -2074,7 +2087,7 @@ ${query}`;
                   </div>
 
                   {/* Second row on mobile: Styrelse & Drift */}
-                  <div className="flex items-center justify-center w-full lg:w-auto pb-1 lg:pb-0">
+                  <div className="flex items-center justify-center w-full lg:w-auto pb-1 lg:pb-0 gap-4 sm:gap-6 flex-wrap">
                     <button
                       onClick={() => handleTabClick("styrelse_drift")}
                       className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
@@ -2083,6 +2096,16 @@ ${query}`;
                     >
                       STYRELSE &amp; DRIFT
                     </button>
+                    {role === "Styrelse" && (
+                      <button
+                        onClick={() => handleTabClick("administration")}
+                        className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
+                          activeTab === "administration" ? "text-[#B68F52]" : ""
+                        }`}
+                      >
+                        ADMINISTRATION
+                      </button>
+                    )}
                   </div>
                 </nav>
 
