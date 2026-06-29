@@ -115,7 +115,7 @@ export default function HomeView({ notices = [], role, onNavigate, profiles, onS
       </section>
 
       {/* QUICK FEATURE PILL BAR */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-20 -mt-16 mb-16 lg:mb-20">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-20 -mt-6 mb-16 lg:mb-20">
         <div className="bg-white rounded-[32px] shadow-xl border border-gray-100 flex flex-col md:flex-row items-center p-3 lg:p-1">
           <div className="flex-1 flex items-center gap-4 p-4 lg:p-6 w-full lg:w-auto hover:bg-gray-50 transition-colors rounded-l-[32px] cursor-pointer" onClick={() => onNavigate("lediga_lokaler")}>
             <div className="w-12 h-12 rounded-full border border-gray-200 flex items-center justify-center shrink-0">

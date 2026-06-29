@@ -72,3 +72,38 @@ Denna fil dokumenterar de utmaningar vi stötte på under utvecklingen, databasm
 ## 8. RPC-uppdateringar med Supabase GoTrue
 *   **Utmaning:** Att uppdatera användarprofiler via en admin-RPC-funktion krävde synkronisering mellan `auth.users` (för lösenord och e-post) och `public.profiles` (för övriga fält). Om man inte angav lösenord eller roll i frontend skickades tomma strängar som kunde skriva över fälten med felaktiga eller tomma värden.
 *   **Lösning:** Vi modifierade RPC-funktionerna (`admin_update_user` och `create_new_user`) till att ta emot valfria (optional) parametrar med standardvärde `NULL` och använda `COALESCE` för att behålla de gamla värdena om inga nya skickas in. Vi uppdaterade även frontend-koden för att endast skicka parametrar som faktiskt har ändrats.
+
+---
+
+## 9. Aggressiv caching av index-dokument i Microsoft Edge (Vercel-caching)
+*   **Utmaning:** När administratörer försökte ändra lösenord i Microsoft Edge, verkade ändringen misslyckas fastän bekräftelsemeddelandet visades. Om de däremot laddade sidan med `/?0` (cache-buster), fungerade det. Detta berodde på att Microsoft Edge sparade en gammal cache av static frontend-filerna där lösenords-kodens logik var föråldrad.
+*   **Lösning:** Vi skapade en `vercel.json`-konfigurationsfil i rotkatalogen. Denna fil instruerar Vercel att skicka strikta cache-kontrollhuvuden (`Cache-Control: no-store, no-cache...`) för alla server-resurser till klientens webbläsare, vilket tvingar Microsoft Edge (och andra webbläsare) att alltid hämta det allra senaste frontend-bygget direkt från servern vid sidladdning.
+
+---
+
+## 10. Bekräftelse- och felmeddelanden i administrationspanelen
+*   **Utmaning:** Tidigare saknades tydliga bekräftelser för administratörer när ändringar sparades framgångsrikt (t.ex. registrering av nya användare, profilredigeringar, anslag, uppladdade filer eller lokalannonser). Det var svårt att veta om en åtgärd lyckades utan att manuellt kontrollera eller uppdatera listorna.
+*   **Lösning:** Vi har lagt till explicita, användarvänliga bekräftelsemeddelanden (`alert`) på svenska för alla lyckade administrationsåtgärder. Detta omfattar:
+    *   Registrering av ny användare.
+    *   Uppdatering av befintlig användarprofil (inkl. ändring av lösenord, telefonnummer, roll, etc.).
+    *   Radering av användarprofiler.
+    *   Skapande, uppdatering och radering av lokalannonser ("Lediga lokaler").
+    *   Skapande, uppdatering och radering av inlägg på anslagstavlan ("Nyheter").
+    *   Uppladdning, uppdatering och radering av filer/dokument samt radering av bilder/logotyper i galleriet.
+    *   Tillsammans med befintliga valideringsmeddelanden garanteras nu en komplett och sömlös feedbackloop.
+
+---
+
+## 11. Mobilvänlighet och Layoutoptimeringar (Responsivitet)
+*   **Utmaning:** Sajten led av flera problem på mindre skärmar (mobiler och surfplattor):
+    1.  Sidan kunde glida och flytta sig i sidled (horisontellt jitter/scroll) på grund av element som överskred skärmbredden.
+    2.  Under-menyn (sub-header) för inloggade medlemmar blev avklippt på mobil, och valet "Styrelse & Drift" hamnade helt utanför skärmen.
+    3.  Administrationspanelens medlemsmatrikel (en bred tabell med många kolumner) blev helt oläslig och rörig på mobila webbläsare.
+    4.  White-card-sektionen i Home-vyns hero-sektion överlappade herobilden för mycket på mobiler.
+    5.  När man öppnade den mobila navigationsmenyn hamnade fokus ibland felaktigt längst ner så att man såg botten av länkarna istället för toppen.
+*   **Lösning:**
+    1.  **Horisontell scrollspärr:** Lade till en global CSS-regel för `html` och `body` med `max-w-100%` och `overflow-x-hidden` i `index.css` för att helt eliminera sidledes glidning.
+    2.  **Responsiv Under-meny:** Strukturerade om sub-headern i `Index.tsx` så att den på mobil grupperar de allmänna medlemslänkarna på en rad och placerar "Styrelse & Drift" på en snyggt centrerad rad direkt under, medan allt visas på en enda rad på desktop.
+    3.  **Mobilanpassad Medlemslista:** Skapade en helt ny mobilvy för medlemsregistret i `AdminView.tsx`. Tabellen döljs på skärmar mindre än `md` och ersätts av ett rutnät med responsiva medlemskort som tydligt visar namn, lokal, företag, kontaktuppgifter, rolländring samt lösenordsvisning och åtgärdsknappar.
+    4.  **Hero-kort Justering:** Minskat negativt marginalvärde från `-mt-16` till `-mt-6` i `HomeView.tsx` för att trycka ner överlappande element och frilägga mer av herobilden.
+    5.  **Scroll-återställning:** Lade till en `useEffect`-lyssnare i `Index.tsx` som automatiskt nollställer rullningspositionen (`scrollTop = 0`) för den mobila navigationslådan varje gång den öppnas, vilket garanterar att länkarna alltid visas uppifrån och ned.

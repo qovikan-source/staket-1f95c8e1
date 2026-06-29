@@ -192,6 +192,7 @@ export default function DocumentHubView({
 
       await onUpdateFile(updatedItem);
       setEditingFile(null);
+      alert("Filen har sparats framgångsrikt!");
     } catch (err) {
       console.error("Failed to save file edit:", err);
       alert("Fel vid uppdatering av fil.");

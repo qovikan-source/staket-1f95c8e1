@@ -266,6 +266,7 @@ export default function AdminView({
     try {
       await dbService.deleteCompanyLogo(name);
       fetchGalleryLogos();
+      alert("Logotypen har raderats permanent!");
     } catch (err) {
       alert("Kunde inte radera logotypen.");
     }
@@ -276,6 +277,7 @@ export default function AdminView({
     try {
       await dbService.deleteSpaceImage(name);
       fetchSpaceImages();
+      alert("Bilden har raderats permanent!");
     } catch (err) {
       alert("Kunde inte radera bilden.");
     }
@@ -729,7 +731,8 @@ export default function AdminView({
             ))}
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-2xs">
+          {/* Desktop Table View */}
+          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden shadow-2xs hidden md:block">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -853,6 +856,100 @@ export default function AdminView({
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile Cards view for Users */}
+          <div className="grid grid-cols-1 gap-4 md:hidden">
+            {sortedProfiles.map((p) => {
+              const pwd = cachedPasswords[(p.email || "").trim().toLowerCase()] || "staket123";
+              const isVisible = visiblePasswords[p.id];
+              return (
+                <div key={p.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-2xs space-y-3">
+                  <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block">Lokal</span>
+                      <span className="font-bold text-slate-800 text-sm">{p.unit || "Ej angivet"}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase block text-right">Roll</span>
+                      <select
+                        value={p.role}
+                        onChange={(e) => onUpdateRole(p.id, e.target.value as UserRole)}
+                        disabled={activeUserRole !== "Administrator"}
+                        className="px-2 py-0.5 rounded-md border border-slate-200 text-[11px] font-semibold bg-white cursor-pointer"
+                      >
+                        <option value="Administrator">Administrator</option>
+                        <option value="Styrelse">Styrelse</option>
+                        <option value="Medlem">Medlem</option>
+                        <option value="Hyresgäst">Hyresgäst</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-[9px] text-slate-400 font-bold uppercase block">Namn</span>
+                      <span className="font-semibold text-slate-700">{p.name}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 font-bold uppercase block">Företag</span>
+                      <span className="text-slate-600 truncate block">{p.company || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 font-bold uppercase block">Org.nr</span>
+                      <span className="text-slate-600 font-mono">{p.orgNr || "—"}</span>
+                    </div>
+                    <div>
+                      <span className="text-[9px] text-slate-400 font-bold uppercase block">Telefon</span>
+                      <span className="text-slate-600 whitespace-nowrap">{p.phone || "—"}</span>
+                    </div>
+                    <div className="col-span-2">
+                      <span className="text-[9px] text-slate-400 font-bold uppercase block">E-post</span>
+                      <span className="text-slate-600 font-mono break-all">{p.email}</span>
+                    </div>
+                  </div>
+
+                  {activeUserRole === "Administrator" && (
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-50 gap-2">
+                      <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg text-slate-700 max-w-[170px] overflow-hidden">
+                        <span className="text-[10px] font-mono select-all truncate">
+                          {isVisible ? pwd : "••••••••"}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => togglePasswordVisibility(p.id)}
+                          className="text-slate-400 hover:text-slate-600 focus:outline-hidden cursor-pointer"
+                          title={isVisible ? "Dölj lösenord" : "Visa lösenord"}
+                        >
+                          {isVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => startEditing(p)}
+                          className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg transition-colors cursor-pointer"
+                          title="Redigera användare"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (window.confirm(`Är du säker på att du vill radera användaren "${p.name}"? Detta tar bort medlemmens profil permanent.`)) {
+                              onDeleteProfile(p.id);
+                            }
+                          }}
+                          className="p-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-lg transition-colors cursor-pointer"
+                          title="Radera användare"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}

@@ -413,6 +413,16 @@ ${query}`;
     }
   }, [role, activeTab]);
 
+  // Scroll mobile menu back to top when opened
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      const menu = document.getElementById("mobile-menu-drawer");
+      if (menu) {
+        menu.scrollTop = 0;
+      }
+    }
+  }, [mobileMenuOpen]);
+
   // Load database on mount and sanitize URL hash if present
   useEffect(() => {
     // 1. Initial fast load from localStorage cache
@@ -708,6 +718,7 @@ ${query}`;
         saveNotices(next);
         return next;
       });
+      alert("Inlägget har skapats och publicerats framgångsrikt!");
     } catch (e) {
       console.error("Failed to add notice to Supabase, reverting:", e);
       // Revert state
@@ -729,6 +740,7 @@ ${query}`;
 
     try {
       await dbService.deleteNotice(id);
+      alert("Inlägget har raderats framgångsrikt!");
     } catch (e) {
       console.error("Failed to delete notice from Supabase, reverting:", e);
       setNotices(originalNotices);
@@ -751,6 +763,7 @@ ${query}`;
         saveNotices(next);
         return next;
       });
+      alert("Inlägget har uppdaterats framgångsrikt!");
     } catch (e) {
       console.error("Failed to update notice in Supabase, reverting:", e);
       setNotices(originalNotices);
@@ -808,6 +821,7 @@ ${query}`;
         saveFiles(next);
         return next;
       });
+      alert("Dokumentet har laddats upp framgångsrikt!");
     } catch (e) {
       console.error("Failed to upload/add file to Supabase, reverting:", e);
       // Revert state
@@ -830,6 +844,7 @@ ${query}`;
 
     try {
       await dbService.deleteFile(id, name, category, folder);
+      alert("Dokumentet har raderats framgångsrikt!");
     } catch (e) {
       console.error("Failed to delete file from Supabase, reverting:", e);
       setFiles(originalFiles);
@@ -851,6 +866,7 @@ ${query}`;
       await Promise.all(
         filesToDelete.map((f) => dbService.deleteFile(f.id, f.name, f.category, f.folder))
       );
+      alert("De markerade dokumenten har raderats framgångsrikt!");
     } catch (e) {
       console.error("Failed to bulk delete files from Supabase, reverting:", e);
       setFiles(originalFiles);
@@ -879,6 +895,7 @@ ${query}`;
         .update(dbRecord)
         .eq("id", updatedFile.id);
       if (error) throw error;
+      alert("Dokumentets uppgifter har sparats framgångsrikt!");
     } catch (e) {
       console.error("Failed to update file in Supabase, reverting:", e);
       setFiles(originalFiles);
@@ -909,6 +926,7 @@ ${query}`;
         saveProfiles(next);
         return next;
       });
+      alert("Användaren har registrerats och sparats framgångsrikt!");
     } catch (e) {
       console.error("Failed to add profile to Supabase, reverting:", e);
       // Revert state
@@ -931,6 +949,7 @@ ${query}`;
 
     try {
       await dbService.updateProfile(id, { role: newRole });
+      alert("Behörighetsrollen har uppdaterats framgångsrikt!");
     } catch (e) {
       console.error("Failed to update role in Supabase, reverting:", e);
       setProfiles(originalProfiles);
@@ -956,6 +975,7 @@ ${query}`;
 
     try {
       await dbService.updateProfile(id, updatedFields);
+      alert("Ändringarna har sparats framgångsrikt!");
     } catch (e) {
       console.error("Failed to update profile in Supabase, reverting:", e);
       setProfiles(originalProfiles);
@@ -974,6 +994,7 @@ ${query}`;
 
     try {
       await dbService.deleteProfile(id);
+      alert("Användaren har raderats framgångsrikt!");
     } catch (e) {
       console.error("Failed to delete profile from Supabase, reverting:", e);
       setProfiles(originalProfiles);
@@ -1003,6 +1024,7 @@ ${query}`;
         saveSpaces(next);
         return next;
       });
+      alert("Lokalannonsen har skapats och publicerats framgångsrikt!");
     } catch (e) {
       console.error("Failed to add vacant space to Supabase, reverting:", e);
       // Revert state
@@ -1024,6 +1046,7 @@ ${query}`;
 
     try {
       await dbService.deleteSpace(id);
+      alert("Lokalannonsen har raderats framgångsrikt!");
     } catch (e) {
       console.error("Failed to delete space from Supabase, reverting:", e);
       setSpaces(originalSpaces);
@@ -1046,6 +1069,7 @@ ${query}`;
         saveSpaces(next);
         return next;
       });
+      alert("Lokalannonsens ändringar har sparats framgångsrikt!");
     } catch (e) {
       console.error("Failed to update vacant space in Supabase, reverting:", e);
       setSpaces(originalSpaces);
@@ -1816,8 +1840,8 @@ ${query}`;
 
           {/* SECONDARY SUB-HEADER FOR LOGGED IN USERS */}
           {role !== "Besökare" && (
-            <div className="sticky top-20 z-40 bg-[#FAFBFB] border-b border-gray-150 h-12 flex items-center flex-shrink-0">
-              <div className="max-w-7xl w-full mx-auto px-4 md:px-8 flex items-center justify-between">
+            <div className="sticky top-20 z-40 bg-[#FAFBFB] border-b border-gray-150 lg:h-12 h-auto py-2.5 lg:py-0 flex items-center flex-shrink-0">
+              <div className="max-w-7xl w-full mx-auto px-4 md:px-8 flex flex-col lg:flex-row items-center justify-between gap-1.5 lg:gap-0">
                 {/* Left spacer matching main header logo width */}
                 <div className="flex items-center gap-3 opacity-0 pointer-events-none select-none lg:block hidden">
                   <img 
@@ -1829,74 +1853,80 @@ ${query}`;
                 </div>
 
                 {/* Sub-header Navigation Links */}
-                <nav className="flex items-center gap-7 text-[13px] font-bold tracking-wider text-[#0B2C24] w-full lg:w-auto lg:justify-start">
-                  {/* Anslagstavlan Category Dropdown */}
-                  <div className="relative group flex items-center h-full py-2">
-                    <button
-                      onClick={() => {
-                        setSelectedNoticeboardCategory("Alla");
-                        handleTabClick("anslagstavlan");
-                      }}
-                      className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer flex items-center gap-1.5 ${
-                        activeTab === "anslagstavlan" ? "text-[#B68F52]" : ""
-                      }`}
-                    >
-                      ANSLAGSTAVLAN
-                      <ChevronDown className="w-3.5 h-3.5 text-[#0B2C24]/60 group-hover:text-[#B68F52]" />
-                    </button>
-                    
-                    {/* Dropdown Menu */}
-                    <div className="absolute left-0 top-[calc(100%-4px)] mt-2 w-64 bg-white border border-gray-150 rounded-lg shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                <nav className="flex flex-col lg:flex-row items-center gap-y-2 lg:gap-7 text-[13px] font-bold tracking-wider text-[#0B2C24] w-full lg:w-auto lg:justify-start">
+                  {/* First row on mobile: Member links */}
+                  <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 lg:gap-7 w-full lg:w-auto">
+                    {/* Anslagstavlan Category Dropdown */}
+                    <div className="relative group flex items-center h-full py-1 lg:py-2">
                       <button
                         onClick={() => {
                           setSelectedNoticeboardCategory("Alla");
                           handleTabClick("anslagstavlan");
                         }}
-                        className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-bold border-b border-gray-50"
+                        className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer flex items-center gap-1.5 ${
+                          activeTab === "anslagstavlan" ? "text-[#B68F52]" : ""
+                        }`}
                       >
-                        ALLA KATEGORIER
+                        ANSLAGSTAVLAN
+                        <ChevronDown className="w-3.5 h-3.5 text-[#0B2C24]/60 group-hover:text-[#B68F52]" />
                       </button>
-                      {sortedCategories.map((cat) => (
+                      
+                      {/* Dropdown Menu */}
+                      <div className="absolute left-0 top-[calc(100%-4px)] mt-2 w-64 bg-white border border-gray-150 rounded-lg shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                         <button
-                          key={cat}
                           onClick={() => {
-                            setSelectedNoticeboardCategory(cat);
+                            setSelectedNoticeboardCategory("Alla");
                             handleTabClick("anslagstavlan");
                           }}
-                          className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-bold uppercase border-b border-gray-50 last:border-0"
+                          className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-bold border-b border-gray-50"
                         >
-                          {cat.toUpperCase()}
+                          ALLA KATEGORIER
                         </button>
-                      ))}
+                        {sortedCategories.map((cat) => (
+                          <button
+                            key={cat}
+                            onClick={() => {
+                              setSelectedNoticeboardCategory(cat);
+                              handleTabClick("anslagstavlan");
+                            }}
+                            className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-bold uppercase border-b border-gray-50 last:border-0"
+                          >
+                            {cat.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
                     </div>
+
+                    <button
+                      onClick={() => handleTabClick("filer")}
+                      className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
+                        activeTab === "filer" ? "text-[#B68F52]" : ""
+                      }`}
+                    >
+                      FILER
+                    </button>
+
+                    <button
+                      onClick={() => handleTabClick("kontaktboken")}
+                      className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
+                        activeTab === "kontaktboken" ? "text-[#B68F52]" : ""
+                      }`}
+                    >
+                      KONTAKTBOKEN
+                    </button>
                   </div>
 
-                  <button
-                    onClick={() => handleTabClick("filer")}
-                    className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
-                      activeTab === "filer" ? "text-[#B68F52]" : ""
-                    }`}
-                  >
-                    FILER
-                  </button>
-
-                  <button
-                    onClick={() => handleTabClick("kontaktboken")}
-                    className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
-                      activeTab === "kontaktboken" ? "text-[#B68F52]" : ""
-                    }`}
-                  >
-                    KONTAKTBOKEN
-                  </button>
-
-                  <button
-                    onClick={() => handleTabClick("styrelse_drift")}
-                    className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
-                      activeTab === "styrelse_drift" ? "text-[#B68F52]" : ""
-                    }`}
-                  >
-                    STYRELSE &amp; DRIFT
-                  </button>
+                  {/* Second row on mobile: Styrelse & Drift */}
+                  <div className="flex items-center justify-center w-full lg:w-auto pb-1 lg:pb-0">
+                    <button
+                      onClick={() => handleTabClick("styrelse_drift")}
+                      className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer ${
+                        activeTab === "styrelse_drift" ? "text-[#B68F52]" : ""
+                      }`}
+                    >
+                      STYRELSE &amp; DRIFT
+                    </button>
+                  </div>
                 </nav>
 
                 {/* Right spacer matching main header logged in state width */}
@@ -1916,7 +1946,7 @@ ${query}`;
 
           {/* MOBILE MENU DROPDOWN DRAWER */}
           {mobileMenuOpen && (
-            <div className="lg:hidden bg-white border-b border-gray-100 shadow-lg px-6 py-4 space-y-3 flex flex-col font-bold tracking-wider text-[13px] text-[#0B2C24] animate-fade-in absolute top-20 left-0 w-full z-50 max-h-[80vh] overflow-y-auto">
+            <div id="mobile-menu-drawer" className="lg:hidden bg-white border-b border-gray-100 shadow-lg px-6 py-4 space-y-3 flex flex-col font-bold tracking-wider text-[13px] text-[#0B2C24] animate-fade-in absolute top-20 left-0 w-full z-50 max-h-[80vh] overflow-y-auto">
               <button
                 onClick={() => {
                   handleTabClick("hem");
