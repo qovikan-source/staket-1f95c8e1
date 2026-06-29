@@ -1836,6 +1836,163 @@ ${query}`;
                 )}
               </button>
             </div>
+
+            {/* MOBILE MENU DROPDOWN DRAWER */}
+            {mobileMenuOpen && (
+              <div id="mobile-menu-drawer" className="lg:hidden bg-white border-b border-gray-100 shadow-lg px-6 py-4 space-y-3 flex flex-col font-bold tracking-wider text-[13px] text-[#0B2C24] animate-fade-in absolute top-20 left-0 w-full z-50 max-h-[80vh] overflow-y-auto">
+                <button
+                  onClick={() => {
+                    handleTabClick("hem");
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                    activeTab === "hem" ? "text-[#B68F52]" : ""
+                  }`}
+                >
+                  HEM
+                </button>
+                <button
+                  onClick={() => {
+                    handleTabClick("om_oss");
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                    activeTab === "om_oss" ? "text-[#B68F52]" : ""
+                  }`}
+                >
+                  OM OSS
+                </button>
+                <button
+                  onClick={() => {
+                    handleTabClick("vara_foretag");
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                    activeTab === "vara_foretag" ? "text-[#B68F52]" : ""
+                  }`}
+                >
+                  VÅRA FÖRETAG
+                </button>
+                <button
+                  onClick={() => {
+                    handleTabClick("lediga_lokaler");
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                    activeTab === "lediga_lokaler" ? "text-[#B68F52]" : ""
+                  }`}
+                >
+                  LEDIGA LOKALER
+                </button>
+                <button
+                  onClick={() => {
+                    handleTabClick("kontakt");
+                    setMobileMenuOpen(false);
+                  }}
+                  className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                    activeTab === "kontakt" ? "text-[#B68F52]" : ""
+                  }`}
+                >
+                  KONTAKT &amp; JOURNAL
+                </button>
+
+                {role !== "Besökare" && (
+                  <>
+                    <div className="border-b border-slate-100 py-1">
+                      <div className="text-[11px] text-gray-400 font-bold uppercase tracking-widest pb-1">ANSLAGSTAVLAN</div>
+                      <div className="pl-3 py-1 flex flex-col gap-2">
+                        <button
+                          onClick={() => {
+                            setSelectedNoticeboardCategory("Alla");
+                            handleTabClick("anslagstavlan");
+                            setMobileMenuOpen(false);
+                          }}
+                          className="text-left text-xs font-semibold text-gray-700 hover:text-[#B68F52]"
+                        >
+                          Alla Kategorier
+                        </button>
+                        {sortedCategories.map((cat) => (
+                          <button
+                            key={cat}
+                            onClick={() => {
+                              setSelectedNoticeboardCategory(cat);
+                              handleTabClick("anslagstavlan");
+                              setMobileMenuOpen(false);
+                            }}
+                            className="text-left text-xs font-medium text-gray-500 hover:text-[#B68F52]"
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        handleTabClick("filer");
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                        activeTab === "filer" ? "text-[#B68F52]" : ""
+                      }`}
+                    >
+                      FILER
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleTabClick("kontaktboken");
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                        activeTab === "kontaktboken" ? "text-[#B68F52]" : ""
+                      }`}
+                    >
+                      KONTAKTBOKEN
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleTabClick("styrelse_drift");
+                        setMobileMenuOpen(false);
+                      }}
+                      className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
+                        activeTab === "styrelse_drift" ? "text-[#B68F52]" : ""
+                      }`}
+                    >
+                      STYRELSE &amp; DRIFT
+                    </button>
+                  </>
+                )}
+
+                {role === "Besökare" ? (
+                  <button 
+                    onClick={() => {
+                      handleTabClick("login");
+                      setMobileMenuOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 bg-[#0B2C24] text-white py-3 rounded text-xs font-bold font-sans tracking-wide"
+                  >
+                    <User className="w-4 h-4" /> LOGGA IN
+                  </button>
+                ) : (
+                  <div className="pt-2 flex flex-col gap-2">
+                    <span className="text-xs text-gray-500 font-semibold">
+                      Inloggad som {getCurrentUserName()} ({role})
+                    </span>
+                    <button 
+                      onClick={async () => {
+                        await supabase.auth.signOut();
+                        setRole("Besökare");
+                        setCurrentUserProfile(null);
+                        handleTabClick("hem");
+                        setMobileMenuOpen(false);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 bg-slate-800 text-white py-2.5 rounded text-xs font-bold font-sans tracking-wide"
+                    >
+                      LOGGA UT
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </header>
 
           {/* SECONDARY SUB-HEADER FOR LOGGED IN USERS */}
@@ -1944,162 +2101,7 @@ ${query}`;
             </div>
           )}
 
-          {/* MOBILE MENU DROPDOWN DRAWER */}
-          {mobileMenuOpen && (
-            <div id="mobile-menu-drawer" className="lg:hidden bg-white border-b border-gray-100 shadow-lg px-6 py-4 space-y-3 flex flex-col font-bold tracking-wider text-[13px] text-[#0B2C24] animate-fade-in absolute top-20 left-0 w-full z-50 max-h-[80vh] overflow-y-auto">
-              <button
-                onClick={() => {
-                  handleTabClick("hem");
-                  setMobileMenuOpen(false);
-                }}
-                className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
-                  activeTab === "hem" ? "text-[#B68F52]" : ""
-                }`}
-              >
-                HEM
-              </button>
-              <button
-                onClick={() => {
-                  handleTabClick("om_oss");
-                  setMobileMenuOpen(false);
-                }}
-                className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
-                  activeTab === "om_oss" ? "text-[#B68F52]" : ""
-                }`}
-              >
-                OM OSS
-              </button>
-              <button
-                onClick={() => {
-                  handleTabClick("vara_foretag");
-                  setMobileMenuOpen(false);
-                }}
-                className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
-                  activeTab === "vara_foretag" ? "text-[#B68F52]" : ""
-                }`}
-              >
-                VÅRA FÖRETAG
-              </button>
-              <button
-                onClick={() => {
-                  handleTabClick("lediga_lokaler");
-                  setMobileMenuOpen(false);
-                }}
-                className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
-                  activeTab === "lediga_lokaler" ? "text-[#B68F52]" : ""
-                }`}
-              >
-                LEDIGA LOKALER
-              </button>
-              <button
-                onClick={() => {
-                  handleTabClick("kontakt");
-                  setMobileMenuOpen(false);
-                }}
-                className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
-                  activeTab === "kontakt" ? "text-[#B68F52]" : ""
-                }`}
-              >
-                KONTAKT &amp; JOURNAL
-              </button>
 
-              {role !== "Besökare" && (
-                <>
-                  <div className="border-b border-slate-100 py-1">
-                    <div className="text-[11px] text-gray-400 font-bold uppercase tracking-widest pb-1">ANSLAGSTAVLAN</div>
-                    <div className="pl-3 py-1 flex flex-col gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedNoticeboardCategory("Alla");
-                          handleTabClick("anslagstavlan");
-                          setMobileMenuOpen(false);
-                        }}
-                        className="text-left text-xs font-semibold text-gray-700 hover:text-[#B68F52]"
-                      >
-                        Alla Kategorier
-                      </button>
-                      {sortedCategories.map((cat) => (
-                        <button
-                          key={cat}
-                          onClick={() => {
-                            setSelectedNoticeboardCategory(cat);
-                            handleTabClick("anslagstavlan");
-                            setMobileMenuOpen(false);
-                          }}
-                          className="text-left text-xs font-medium text-gray-500 hover:text-[#B68F52]"
-                        >
-                          {cat}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      handleTabClick("filer");
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
-                      activeTab === "filer" ? "text-[#B68F52]" : ""
-                    }`}
-                  >
-                    FILER
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleTabClick("kontaktboken");
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
-                      activeTab === "kontaktboken" ? "text-[#B68F52]" : ""
-                    }`}
-                  >
-                    KONTAKTBOKEN
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleTabClick("styrelse_drift");
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`text-left py-2 hover:text-[#B68F52] border-b border-slate-50 transition-colors ${
-                      activeTab === "styrelse_drift" ? "text-[#B68F52]" : ""
-                    }`}
-                  >
-                    STYRELSE &amp; DRIFT
-                  </button>
-                </>
-              )}
-
-              {role === "Besökare" ? (
-                <button 
-                  onClick={() => {
-                    handleTabClick("login");
-                    setMobileMenuOpen(false);
-                  }}
-                  className="w-full flex items-center justify-center gap-2 bg-[#0B2C24] text-white py-3 rounded text-xs font-bold font-sans tracking-wide"
-                >
-                  <User className="w-4 h-4" /> LOGGA IN
-                </button>
-              ) : (
-                <div className="pt-2 flex flex-col gap-2">
-                  <span className="text-xs text-gray-500 font-semibold">
-                    Inloggad som {getCurrentUserName()} ({role})
-                  </span>
-                  <button 
-                    onClick={async () => {
-                      await supabase.auth.signOut();
-                      setRole("Besökare");
-                      setCurrentUserProfile(null);
-                      handleTabClick("hem");
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 bg-slate-800 text-white py-2.5 rounded text-xs font-bold font-sans tracking-wide"
-                  >
-                    LOGGA UT
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
 
           {/* DYNAMIC WORKSPACE BODY CONTAINER */}
           <div className="flex-grow">
