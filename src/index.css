@@ -101,6 +101,9 @@ All colors MUST be HSL.
 
   html, body {
     max-width: 100%;
+  }
+
+  #root {
     overflow-x: hidden;
   }
 

@@ -277,3 +277,21 @@ robust editing and filtering tools.
 4. **Deploying Production Bundle**:
    - Host the frontend bundle on Netlify, Vercel, or similar static hosts and
      bind the production Supabase Environment variables safely.
+
+---
+
+## 2.1. Mobile Responsiveness, Chatbot Adjustments & View Toggles (June 2026)
+
+- **Touch-Friendly Navigation and Smaller Pagination Choice Pools**:
+  - Resized page index navigation buttons (from `w-9 h-9` to `w-11 h-11`) to prevent missed taps on small touch screens.
+  - Implemented page-limit display logic to show a maximum of **3 page choices at once** in both the Noticeboard (`NoticeboardView.tsx`) and the Document Hub (`DocumentHubView.tsx`), centered relative to the active page view.
+- **Improved Screen Layout Space Efficiency**:
+  - Automatically hide the horizontal "Filtrera Snabbt" category quick buttons on mobile devices using `hidden md:block` styling classes, while keeping the main search bar and standard category dropdown filters intact.
+- **Active Styles in Kontaktboken**:
+  - Linked the "Lista" and "Kort" switch buttons in `ContactBookView.tsx` directly to the `viewMode` state, ensuring visual background/text active states highlight the active view properly.
+- **Fixed Scroll Bouncing on iOS Safari**:
+  - Resolved the bug where vertical scrolling on iOS Safari froze or bounced back prematurely by removing `overflow-x: hidden` from `html` and `body` in `index.css` and attaching the property to `#root` instead.
+- **Chatbot Window and Admin Links**:
+  - Adjusted the float AI chatbot widget positioning parameters (`left-2 right-2 w-auto`) and constraint heights (`max-h-[65vh]`) so that the text fields and message streams fit all mobile views without overflow.
+  - Increased font sizes and spacing for sidebar menu navigation items within the `Administrator` sidebar in `Index.tsx`.
+

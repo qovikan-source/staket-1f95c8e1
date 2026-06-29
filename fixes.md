@@ -65,7 +65,7 @@ Denna fil dokumenterar de utmaningar vi stötte på under utvecklingen, databasm
 
 ## 7. Mismatch vid kodändringar till följd av radbrytningstyper (CRLF vs LF)
 *   **Utmaning:** Automatiska kodersättningar via `replace_file_content` misslyckades upprepade gånger med felmeddelandet `target content not found in file` trots att koden kopierats exakt. Detta berodde på att filerna i Windows-miljön sparats med CRLF-radbrytningar (`\r\n`), medan verktyget tolkade söksträngarna med LF-radbrytningar (`\n`).
-*   **Lösning:** Vi begränsade `TargetContent` till att endast vara enskilda rader som inte innehåller några radbrytningstecken. Ersättningen gjordes därefter genom att byta ut den enskilda raden mot önskad multirad-kod. Detta kringgick helt kompabilitetsproblemen mellan CRLF och LF.
+*   **Lösning:** We begränsade `TargetContent` till att endast vara enskilda rader som inte innehåller några radbrytningstecken. Ersättningen gjordes därefter genom att byta ut den enskilda raden mot önskad multirad-kod. Detta kringgick helt kompabilitetsproblemen mellan CRLF och LF.
 
 ---
 
@@ -107,3 +107,23 @@ Denna fil dokumenterar de utmaningar vi stötte på under utvecklingen, databasm
     3.  **Mobilanpassad Medlemslista:** Skapade en helt ny mobilvy för medlemsregistret i `AdminView.tsx`. Tabellen döljs på skärmar mindre än `md` och ersätts av ett rutnät med responsiva medlemskort som tydligt visar namn, lokal, företag, kontaktuppgifter, rolländring samt lösenordsvisning och åtgärdsknappar.
     4.  **Hero-kort Justering:** Minskat negativt marginalvärde från `-mt-16` till `-mt-6` i `HomeView.tsx` för att trycka ner överlappande element och frilägga mer av herobilden.
     5.  **Scroll-återställning:** Lade till en `useEffect`-lyssnare i `Index.tsx` som automatiskt nollställer rullningspositionen (`scrollTop = 0`) för den mobila navigationslådan varje gång den öppnas, vilket garanterar att länkarna alltid visas uppifrån och ned.
+
+---
+
+## 12. Finjusteringar för mobilvy, kontaktbok och sidbläddring (Juni 2026)
+*   **Utmaning:** Flera mindre layoutproblem upptäcktes i mobilvyn:
+    1.  **Små och trånga sidknappar:** Sidnumreringsknapparna för *Anslagstavlan* och *Filer* var för små att klicka på mobil och visade alla sidnummer samtidigt, vilket tog för mycket skärmutrymme.
+    2.  **Kategorifilter tog för mycket plats:** De horisontella knapparna för "Filtrera Snabbt" under *Anslagstavlan* var onödigt stora och röriga på små mobilskärmar.
+    3.  **Låsning av sidrullning (iOS Safari Scroll Bug):** Ibland låste sig skärmen eller studsade tillbaka abrupt vid vertikal rullning på mobil, särskilt på iPhone (Safari).
+    4.  **Aktiv stil saknades i Kontaktboken:** Knappen för att byta mellan "Lista" och "Kort" i *Kontaktboken* skiftade inte bakgrund eller textfärg, vilket gjorde det otydligt vilken vy som var aktiv.
+    5.  **Otillräcklig scrollhöjd i mobilmenyn:** Utloggningsknappen längst ner i mobilens navigeringslåda blev ibland gömd bakom webbläsarens egna systemfält.
+    6.  **Chattbot-skalan på mobil:** AI-chattbotens fönster blev avklippt och passade inte in på mindre mobilskärmar.
+    7.  **Små administratörslänkar:** Sidomenyns länkar för administratörer upplevdes som för små på surfplattor/mobiler.
+*   **Lösning:**
+    1.  **Begränsad och förstorad sidnumrering:** Sidknapparna har gjorts större (från `w-9 h-9` till `w-11 h-11` på mobil) och begränsats till att visa **högst 3 sidor i taget** (centrerat kring den aktiva sidan) för både *Anslagstavlan* och *Filer*.
+    2.  **Dolda snabbfilter på mobil:** Kategorifilterknapparna för "Filtrera Snabbt" döljs nu helt på mobilskärmar (`hidden md:block`), medan sökfältet och rullgardinsmenyn bevaras.
+    3.  **Flyttad scrollspärr:** Tog bort `overflow-x: hidden` från `html` och `body` i `index.css` (vilket orsakade WebKit-scrollbuggen) och applicerade den istället på rot-diven `#root`. Det återställer mjuk, naturlig webbläsarrullning på iOS.
+    4.  **Dynamisk klassändring för switchar:** Justerade `ContactBookView.tsx` så att klassnamnen för knapparna "Lista" och "Kort" uppdateras dynamiskt baserat på det aktiva `viewMode`-tillståndet.
+    5.  **Ökat bottenavstånd i mobilmenyn:** Ändrade bottenmarginalen i den mobila lådan (`#mobile-menu-drawer`) till `pb-28` så att utloggningsknappen kan rullas upp helt ovanför mobilskärmens kant.
+    6.  **Mobilanpassad chattbot:** Ändrade chattbotens CSS-klasser så att fönstret anpassar sig flexibelt till mobilskärmens sidor (`left-2 right-2 w-auto`) och begränsade maxhöjden till `max-h-[65vh]`.
+    7.  **Större administrationslänkar:** Förstorade menyalternativen i administratörens sidolåda till `text-sm sm:text-base font-semibold` med mer luftig stoppning.
