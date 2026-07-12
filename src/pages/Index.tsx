@@ -2259,7 +2259,9 @@ ${query}`;
       )}
       
       {/* Persistent GDPR Cookie Consent & Preferences Manager */}
-      <CookieConsent onViewPolicy={() => handleTabClick("integritetspolicy")} />
+      {role !== "Administrator" && activeTab !== "administration" && (
+        <CookieConsent onViewPolicy={() => handleTabClick("integritetspolicy")} />
+      )}
     </div>
   );
 }
