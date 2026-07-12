@@ -13,4 +13,20 @@ Allow: /
 User-agent: *
 Allow: /
 
+# Defensive: block any future member / board / admin routes from crawlers.
+# These views currently live as in-page tabs on "/" behind auth and are not
+# separately addressable, but these rules protect future URL splits.
+Disallow: /admin
+Disallow: /admin/
+Disallow: /styrelse
+Disallow: /styrelse/
+Disallow: /medlem
+Disallow: /medlem/
+Disallow: /medlemmar
+Disallow: /medlemmar/
+Disallow: /filer
+Disallow: /filer/
+Disallow: /kontaktboken
+Disallow: /kontaktboken/
+
 Sitemap: https://staket.lovable.app/sitemap.xml
