@@ -149,6 +149,7 @@ export default function Index() {
   const [pendingNoticeId, setPendingNoticeId] = useState<string | null>(null);
   const [highlightedNoticeId, setHighlightedNoticeId] = useState<string | null>(null);
   const [selectedNoticeboardCategory, setSelectedNoticeboardCategory] = useState<NoticeboardCategory | "Alla">("Alla");
+  const [noticeboardDropdownOpen, setNoticeboardDropdownOpen] = useState(false);
 
   // Subtab navigation & editing triggers for Admin panel
   const [adminInitialSubTab, setAdminInitialSubTab] = useState<"användare" | "filer" | "anslagstavla" | "lediga_lokaler" | "ai_support" | "galleri">("användare");
@@ -2045,28 +2046,36 @@ ${query}`;
                   {/* First row on mobile: Member links */}
                   <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 lg:gap-7 w-full lg:w-auto">
                     {/* Anslagstavlan Category Dropdown */}
-                    <div className="relative group flex items-center h-full py-1 lg:py-2">
+                    <div 
+                      className="relative flex items-center h-full py-1 lg:py-2"
+                      onMouseEnter={() => setNoticeboardDropdownOpen(true)}
+                      onMouseLeave={() => setNoticeboardDropdownOpen(false)}
+                    >
                       <button
                         onClick={() => {
                           setSelectedNoticeboardCategory("Alla");
                           handleTabClick("anslagstavlan");
+                          setNoticeboardDropdownOpen(false);
                         }}
                         className={`hover:text-[#B68F52] text-[13px] font-bold tracking-wider text-[#0B2C24] transition-colors cursor-pointer flex items-center gap-1.5 ${
-                          activeTab === "anslagstavlan" ? "text-[#B68F52]" : ""
+                          activeTab === "anslagstavlan" || noticeboardDropdownOpen ? "text-[#B68F52]" : ""
                         }`}
                       >
                         ANSLAGSTAVLAN
-                        <ChevronDown className="w-3.5 h-3.5 text-[#0B2C24]/60 group-hover:text-[#B68F52]" />
+                        <ChevronDown className={`w-3.5 h-3.5 text-[#0B2C24]/60 transition-colors ${noticeboardDropdownOpen ? "text-[#B68F52]" : ""}`} />
                       </button>
                       
                       {/* Dropdown Menu */}
-                      <div className="absolute left-0 top-[calc(100%-4px)] mt-2 w-64 bg-white border border-gray-150 rounded-lg shadow-xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className={`absolute left-0 top-[calc(100%-4px)] mt-2 w-64 bg-white border border-gray-150 rounded-lg shadow-xl py-2 transition-all duration-200 z-50 ${
+                        noticeboardDropdownOpen ? "opacity-100 visible" : "opacity-0 invisible pointer-events-none"
+                      }`}>
                         <button
                           onClick={() => {
                             setSelectedNoticeboardCategory("Alla");
                             handleTabClick("anslagstavlan");
+                            setNoticeboardDropdownOpen(false);
                           }}
-                          className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-bold border-b border-gray-50"
+                          className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-bold border-b border-gray-50 cursor-pointer"
                         >
                           ALLA KATEGORIER
                         </button>
@@ -2076,8 +2085,9 @@ ${query}`;
                             onClick={() => {
                               setSelectedNoticeboardCategory(cat);
                               handleTabClick("anslagstavlan");
+                              setNoticeboardDropdownOpen(false);
                             }}
-                            className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-bold uppercase border-b border-gray-50 last:border-0"
+                            className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-[#F9FAF9] hover:text-[#B68F52] transition-colors font-bold uppercase border-b border-gray-50 last:border-0 cursor-pointer"
                           >
                             {cat.toUpperCase()}
                           </button>
