@@ -479,7 +479,7 @@ export default function DocumentHubView({
     return matchesSearch;
   });
 
-  const ITEMS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = 6;
   const totalPages = Math.ceil(filteredFiles.length / ITEMS_PER_PAGE);
   const paginatedFiles = filteredFiles.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,

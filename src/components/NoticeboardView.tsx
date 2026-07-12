@@ -156,7 +156,7 @@ export default function NoticeboardView({
   const pinnedNotices = filteredNotices.filter((n) => n.isPinned);
   const regularNotices = filteredNotices.filter((n) => !n.isPinned);
 
-  const ITEMS_PER_PAGE = 5;
+  const ITEMS_PER_PAGE = 6;
   const totalPages = Math.ceil(regularNotices.length / ITEMS_PER_PAGE);
   const paginatedRegularNotices = regularNotices.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
